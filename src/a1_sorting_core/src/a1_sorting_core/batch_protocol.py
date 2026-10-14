@@ -23,3 +23,13 @@ def parse_event(text):
     if data.startswith(prefix) and len(data) > len(prefix):
         return 'begin', data[len(prefix):]
     return 'unknown', ''
+
+
+def batch_id_from_spawn_message(message):
+    """从 spawn 的返回文字里取出 batch_0001。对不上时返回空串。"""
+    text = '' if message is None else str(message)
+    open_at = text.find('(')
+    close_at = text.find(')', open_at + 1)
+    if open_at < 0 or close_at < 0:
+        return ''
+    return text[open_at + 1:close_at]

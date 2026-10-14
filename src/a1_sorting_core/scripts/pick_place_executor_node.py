@@ -35,6 +35,7 @@ from a1_interfaces.msg import PartInfo, TaskStatus
 from a1_sorting_core.batch_protocol import BATCH_TOPIC, parse_event
 from a1_sorting_core.panda_geometry import (cartesian_reached, down_pose,
                                             grid_slot)
+from a1_sorting_core.strategies import strategy_by_id
 from a1_sorting_core.scene_utils import SceneClient
 from a1_sorting_core.state_machine import (IllegalTransition, TaskState,
                                            TaskStateMachine)
@@ -58,6 +59,7 @@ class PickPlaceExecutorNode(object):
         self._standby = gp('standby_named', 'ready')
         self._tcp_z = float(gp('tcp_z_offset', 0.105))
         self._pre_h = float(gp('pre_grasp_height', 0.10))
+        self._default_pre_h = self._pre_h
         self._place_h = float(gp('place_height', 0.002))
         self._open_w = float(gp('gripper_open', 0.08))
         self._close_w = float(gp('gripper_close', 0.05))
@@ -82,9 +84,11 @@ class PickPlaceExecutorNode(object):
         self._hand = moveit_commander.MoveGroupCommander(hand_group)
         self._arm.set_planning_time(float(gp('planning_time', 5.0)))
         self._arm.set_num_planning_attempts(5)
-        vs = float(gp('velocity_scaling', 0.5))
-        self._arm.set_max_velocity_scaling_factor(vs)
-        self._arm.set_max_acceleration_scaling_factor(vs)
+        self._default_vs = float(gp('velocity_scaling', 0.5))
+        self._strategy_id = -1
+        self._strategy_name = 'default'
+        self._arm.set_max_velocity_scaling_factor(self._default_vs)
+        self._arm.set_max_acceleration_scaling_factor(self._default_vs)
         self._arm.set_pose_reference_frame(self._frame)
         # 直线规划用规划组默认末端。把它设成和普通规划同一个 link。
         self._arm.set_end_effector_link(self._pose_link)
@@ -131,7 +135,9 @@ class PickPlaceExecutorNode(object):
         task_id = 'task_%04d' % self._seq
         sm = TaskStateMachine()
         self._task_t0 = time.time()
-        rospy.loginfo('== %s 开始: %s (类别 %s) ==', task_id, part.part_id, part.category)
+        self._apply_motion_strategy(part.part_id)
+        rospy.loginfo('== %s 开始: %s (类别 %s, 策略 %s) ==',
+                      task_id, part.part_id, part.category, self._strategy_name)
         if not self._at_standby:
             self._go_standby()
         for attempt in range(1, self._attempts + 1):
@@ -245,6 +251,27 @@ class PickPlaceExecutorNode(object):
         msg.elapsed_sec = 0.0 if self._task_t0 is None else max(0.0, time.time() - self._task_t0)
         self._pub_status.publish(msg)
         rospy.loginfo('%s %s: %s %s', task_id, part.part_id, state.value, detail)
+
+    def _apply_motion_strategy(self, part_id):
+        """每件开始前读策略。没有指定时保持启动时的速度和预抓高度。"""
+        sid = rospy.get_param('/a1/strategy_for/' + part_id, None)
+        if sid is None:
+            sid = rospy.get_param('/a1/active_strategy', -1)
+        spec = strategy_by_id(sid)
+        if spec is None:
+            self._pre_h = self._default_pre_h
+            velocity = self._default_vs
+            self._strategy_id = -1
+            self._strategy_name = 'default'
+        else:
+            self._pre_h = spec.pre_grasp_height
+            velocity = spec.velocity_scaling
+            self._strategy_id = spec.id
+            self._strategy_name = spec.name
+        self._arm.set_max_velocity_scaling_factor(velocity)
+        self._arm.set_max_acceleration_scaling_factor(velocity)
+        rospy.loginfo('策略 %s id=%s 速度比例 %.2f 预抓高度 %.3f',
+                      self._strategy_name, self._strategy_id, velocity, self._pre_h)
 
     # ================================================================ 运动接口
     def _pose(self, target):

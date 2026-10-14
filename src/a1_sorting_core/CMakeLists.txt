@@ -10,5 +10,8 @@ catkin_install_python(PROGRAMS
   scripts/result_recorder_node.py
   scripts/spawn_parts.py
   scripts/run_trials.py
+  scripts/run_strategies.py
+  scripts/run_qlearn.py
+  scripts/analysis.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 install(DIRECTORY launch config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
