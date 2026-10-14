@@ -1,0 +1,43 @@
+<launch>
+  <!-- A1 工件分类搬运(ROS1 Noetic + Panda 移植版)
+       对应组长 ROS2 的 a1_sorting_core/launch/sorting_demo.launch.py
+       roslaunch a1_sorting_core sorting_demo.launch part_colors:="red,green,blue" -->
+  <arg name="start_moveit" default="true"/>               <!-- false: 已单独打开 panda_moveit_config demo.launch -->
+  <arg name="use_rviz" default="true"/>                   <!-- SSH 无显示器时设 false。默认仍打开 RViz -->
+  <arg name="part_colors" default="red,green,red"/>       <!-- 与组长默认相同 -->
+  <arg name="auto_start" default="true"/>                 <!-- false: 需 rosservice call /sort_task start_batch -->
+  <arg name="vision" default="false"/>                    <!-- true: 用 a1_vision 识别颜色登记来料(可选拓展) -->
+  <arg name="inject_failure_parts" default="['']"/>       <!-- 例 "['part_2']":演示失败恢复 -->
+  <arg name="attempts" default="2"/>
+  <arg name="velocity_scaling" default="0.5"/>
+
+  <include if="$(arg start_moveit)" file="$(find panda_moveit_config)/launch/demo.launch">
+    <arg name="use_rviz" value="$(arg use_rviz)"/>
+  </include>
+
+  <rosparam command="load" file="$(find a1_sorting_core)/config/sorting_params.yaml"/>
+
+  <node pkg="a1_sorting_core" type="scene_publisher_node.py" name="scene_publisher" output="screen"/>
+
+  <node pkg="a1_sorting_core" type="task_dispatcher_node.py" name="task_dispatcher" output="screen">
+    <param name="auto_start" value="$(arg auto_start)"/>
+  </node>
+
+  <node pkg="a1_sorting_core" type="pick_place_executor_node.py" name="pick_place_executor" output="screen">
+    <rosparam param="inject_failure_parts" subst_value="true">$(arg inject_failure_parts)</rosparam>
+    <param name="attempts" value="$(arg attempts)"/>
+    <param name="velocity_scaling" value="$(arg velocity_scaling)"/>
+  </node>
+
+  <node pkg="a1_sorting_core" type="result_recorder_node.py" name="result_recorder" output="screen"/>
+
+  <node pkg="a1_sorting_core" type="spawn_parts.py" name="spawn_parts" output="screen">
+    <param name="part_colors" value="$(arg part_colors)"/>
+    <param name="publish_arrival" value="false" if="$(arg vision)"/>
+  </node>
+
+  <group if="$(arg vision)">
+    <rosparam command="load" file="$(find a1_vision)/config/vision_params.yaml"/>
+    <node pkg="a1_vision" type="vision_classifier_node.py" name="vision_classifier" output="screen"/>
+  </group>
+</launch>

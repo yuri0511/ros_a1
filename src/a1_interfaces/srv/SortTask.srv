@@ -1,0 +1,9 @@
+# 分拣任务入口服务(演示/测试用),由任务调度节点提供
+# command:
+#   start_batch     - 把当前已到料的所有工件入队并开始分拣
+#   dispatch_single - 单件派发,part_id 必须填
+string command
+string part_id
+---
+bool accepted
+string message
