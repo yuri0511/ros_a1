@@ -19,9 +19,12 @@ ROS1 版新增:
 - 每件任务最多尝试 attempts 次;规划失败 / 执行失败 / 附着失败都会触发;
 - 重试前做安全恢复(松爪、解附着、回待机位);次数用完回报 FAILED,调度器跳过该件继续下一件;
 - 参数 inject_failure_parts 可对指定工件注入一次"首次抓取失败",用于演示失败恢复流程;
+- grasp_fail_rate_slow/mid/fast 是仿真抓取失败概率。抓到工件前按当前速度档掷一次,
+  失败抛 GraspError,仍走上面的重试;种子 grasp_fail_seed 固定。
 - 未知类别 -> FatalGraspError,不重试直接 FAILED(unknown_category)。
 """
 import queue
+import random
 import sys
 import threading
 import time
@@ -35,7 +38,7 @@ from a1_interfaces.msg import PartInfo, TaskStatus
 from a1_sorting_core.batch_protocol import BATCH_TOPIC, parse_event
 from a1_sorting_core.panda_geometry import (cartesian_reached, down_pose,
                                             grid_slot)
-from a1_sorting_core.strategies import strategy_by_id
+from a1_sorting_core.strategies import grasp_fails, strategy_by_id
 from a1_sorting_core.scene_utils import SceneClient
 from a1_sorting_core.state_machine import (IllegalTransition, TaskState,
                                            TaskStateMachine)
@@ -87,6 +90,13 @@ class PickPlaceExecutorNode(object):
         self._default_vs = float(gp('velocity_scaling', 0.5))
         self._strategy_id = -1
         self._strategy_name = 'default'
+        self._fail_seed = int(gp('grasp_fail_seed', 7))
+        self._fail_rng = random.Random(self._fail_seed)
+        self._fail_rates = {
+            'slow': float(gp('grasp_fail_rate_slow', 0.02)),
+            'mid': float(gp('grasp_fail_rate_mid', 0.05)),
+            'fast': float(gp('grasp_fail_rate_fast', 0.15)),
+        }
         self._arm.set_max_velocity_scaling_factor(self._default_vs)
         self._arm.set_max_acceleration_scaling_factor(self._default_vs)
         self._arm.set_pose_reference_frame(self._frame)
@@ -106,6 +116,9 @@ class PickPlaceExecutorNode(object):
         rospy.Subscriber(BATCH_TOPIC, String, self._on_batch_event)
         rospy.loginfo('取放执行节点就绪(%s),料区 %s,颜色路由 %s',
                       self._arm_name, sorted(self._bins), self._color_to_bin)
+        rospy.loginfo('仿真抓取失败概率 slow=%.2f mid=%.2f fast=%.2f 种子 %d',
+                      self._fail_rates['slow'], self._fail_rates['mid'],
+                      self._fail_rates['fast'], self._fail_seed)
 
     # ================================================================ 任务主流程
     def _worker(self):
@@ -134,15 +147,15 @@ class PickPlaceExecutorNode(object):
         self._seq += 1
         task_id = 'task_%04d' % self._seq
         sm = TaskStateMachine()
-        self._task_t0 = time.time()
         self._apply_motion_strategy(part.part_id)
         rospy.loginfo('== %s 开始: %s (类别 %s, 策略 %s) ==',
                       task_id, part.part_id, part.category, self._strategy_name)
         if not self._at_standby:
             self._go_standby()
+        # 从第一次尝试开始计时。重试花掉的时间留在记录里。
+        self._task_t0 = time.time()
         for attempt in range(1, self._attempts + 1):
             self._attempt = attempt
-            self._task_t0 = time.time()
             if attempt > 1:
                 sm.reset()   # 重试 = 新一轮状态周期(IDLE 重新出发)
             try:
@@ -159,6 +172,8 @@ class PickPlaceExecutorNode(object):
                 self._grip(close=False)
                 self._move(down_pose(center, self._tcp_z, self._pre_h), 'pre_grasp')
                 self._line(down_pose(center, self._tcp_z, 0.0), 'descend_pick')
+                if self._roll_grasp_failure(part.part_id):
+                    raise GraspError('grasp_failed')
                 self._attach(part.part_id)      # 先附着再闭爪:手指与工件接触被允许
                 self._grip(close=True, part_id=part.part_id)
                 self._line(down_pose(center, self._tcp_z, self._pre_h), 'lift')
@@ -270,8 +285,17 @@ class PickPlaceExecutorNode(object):
             self._strategy_name = spec.name
         self._arm.set_max_velocity_scaling_factor(velocity)
         self._arm.set_max_acceleration_scaling_factor(velocity)
-        rospy.loginfo('策略 %s id=%s 速度比例 %.2f 预抓高度 %.3f',
-                      self._strategy_name, self._strategy_id, velocity, self._pre_h)
+        rospy.loginfo('策略 %s id=%s 速度比例 %.2f 预抓高度 %.3f 抓取失败概率 %.2f',
+                      self._strategy_name, self._strategy_id, velocity, self._pre_h,
+                      self._fail_rates.get(self._strategy_name, 0.0))
+
+    def _roll_grasp_failure(self, part_id):
+        """按当前速度档的配置概率决定这次抓取失败。未选策略时概率为 0。"""
+        rate = self._fail_rates.get(self._strategy_name, 0.0)
+        if not grasp_fails(self._fail_rng, rate):
+            return False
+        rospy.logwarn('%s: 速度档 %s 仿真抓取失败(概率 %.2f)', part_id, self._strategy_name, rate)
+        return True
 
     # ================================================================ 运动接口
     def _pose(self, target):

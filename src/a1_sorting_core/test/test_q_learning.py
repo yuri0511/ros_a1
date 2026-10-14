@@ -1,7 +1,10 @@
 """策略编号、奖励和 Q 表更新。不需要 ROS。"""
+import random
+from pathlib import Path
+
 from a1_sorting_core.batch_protocol import batch_id_from_spawn_message
 from a1_sorting_core.q_learning import (TabularQ, placement_reward, state_key)
-from a1_sorting_core.strategies import all_strategies, strategy_by_id
+from a1_sorting_core.strategies import all_strategies, grasp_fails, strategy_by_id
 
 
 def test_three_speeds_share_the_same_height():
@@ -11,6 +14,31 @@ def test_three_speeds_share_the_same_height():
     assert strategy_by_id(1).name == 'mid'
     assert strategy_by_id(9) is None
     assert strategy_by_id('nope') is None
+
+
+def test_grasp_failure_rates_stay_in_config_and_repeat():
+    text = (Path(__file__).resolve().parents[1] / 'config' / 'sorting_params.yaml').read_text(
+        encoding='utf-8')
+    assert 'grasp_fail_seed: 7' in text
+    assert 'grasp_fail_rate_slow: 0.02' in text
+    assert 'grasp_fail_rate_mid: 0.05' in text
+    assert 'grasp_fail_rate_fast: 0.15' in text
+
+    def sequence():
+        rng = random.Random(7)
+        return [grasp_fails(rng, 0.15) for _ in range(30)]
+
+    assert sequence() == sequence()
+    assert any(sequence()) and not all(sequence())
+    quiet = random.Random(7)
+    assert grasp_fails(quiet, 0.0) is False
+    fresh = random.Random(7)
+    assert quiet.random() == fresh.random()
+    assert grasp_fails(random.Random(1), 1.0) is True
+    rng = random.Random(7)
+    draws = [grasp_fails(rng, 0.15) for _ in range(4000)]
+    ratio = sum(draws) / float(len(draws))
+    assert 0.12 < ratio < 0.18
 
 
 def test_state_uses_the_fixed_bin_rule():

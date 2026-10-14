@@ -39,6 +39,13 @@ pick_place_executor:
   planning_time: 5.0
   attempts: 2                      # 与组长相同:总尝试次数(含首试)
   inject_failure_parts: ['']       # 例 ['part_2']:该件首次尝试注入失败,演示失败恢复
+  # 仿真里按速度档掷抓取失败。这不是真机测出来的故障率。
+  # 每次抓到工件前掷一次。失败抛 GraspError,走原来的重试;次数用完才记 FAILED。
+  # 种子固定,同一次仿真进程里的失败序列可以重复。未选策略时概率为 0。
+  grasp_fail_seed: 7
+  grasp_fail_rate_slow: 0.02
+  grasp_fail_rate_mid: 0.05
+  grasp_fail_rate_fast: 0.15
   # 类别 -> 料区(组长 legacy 默认:暖色 red/yellow -> bin_A,冷色 green/blue -> bin_B)
   bin_for_red: bin_A
   bin_for_green: bin_B

@@ -36,3 +36,20 @@ def strategy_by_id(strategy_id):
 
 def all_strategies():
     return list(STRATEGIES)
+
+
+def grasp_fails(rng, rate):
+    """按这一档的概率决定本次抓取是否失败。
+
+    概率小于等于 0 时不掷骰子，默认速度不会消耗随机序列。
+    同一个 Random 实例、同一个种子，序列可以重复。
+    """
+    try:
+        probability = float(rate)
+    except (TypeError, ValueError):
+        probability = 0.0
+    if probability <= 0.0:
+        return False
+    if probability >= 1.0:
+        return True
+    return rng.random() < probability
