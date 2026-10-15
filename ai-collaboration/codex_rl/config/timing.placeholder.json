@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "timing_model_version": "placeholder-v1",
+  "is_placeholder": true,
+  "overlap_validated": false,
+  "allow_arm_overlap": true,
+  "allow_prefeed_busy_arm": true,
+  "color_order": [
+    "blue",
+    "yellow",
+    "red",
+    "green"
+  ],
+  "color_to_arm": [
+    0,
+    0,
+    1,
+    1
+  ],
+  "feed_seconds": {
+    "blue": 4.0,
+    "yellow": 4.0,
+    "red": 4.0,
+    "green": 4.0
+  },
+  "pick_seconds": {
+    "blue": 5.0,
+    "yellow": 5.0,
+    "red": 5.0,
+    "green": 5.0
+  },
+  "post_pick_seconds": {
+    "blue": 9.0,
+    "yellow": 11.0,
+    "red": 9.0,
+    "green": 11.0
+  },
+  "eta_bin_edges_seconds": [
+    5.0,
+    10.0,
+    20.0
+  ],
+  "idle_weight": 0.05,
+  "seed": 42,
+  "request_delay_seconds": 1.0
+}
