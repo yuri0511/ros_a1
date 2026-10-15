@@ -56,3 +56,18 @@ Grok 在 HANDOFF.md 提供数据后，先核对安全退出/READY/送料预取�
 默认 50,000 局，ε 每局线性衰减，首局 0.5、末局 0.05；局内保持不变。训练元数据记录两端值及 schedule。评估不做 ε 探索。
 `comparison.csv` 新增 `q_decision_steps` 和 `unknown_state_fallback_steps`，分母是 Q 策略实际调用的决策次数（包括 WAIT，不含内部自动处理的事件）。已知状态 Q 值并列时使用规则打破平局，不算未知状态回退。串行/规则行这两列为 0，不表示它们使用 Q 表。
 评估同时输出 `comparison.summary.json`，按策略汇总均值与回退率。旧 5,000 局表的相同种子复评保存在 `comparison_5000.csv` 及对应 summary；旧表可从前一 Git 提交获取。
+
+
+## Gazebo v1 成功段均值实验（2026-10-16）
+
+配置 `config/timing.gazebo-v1.json` 使用 HANDOFF 末尾修绕远路后的仿真秒均值，样本绿3/蓝6/黄5/红9，失败和重试未计入。原占位配置和产物保持不变。
+
+```bash
+python3 -m dual_arm_rl.train --config config/timing.gazebo-v1.json --output artifacts/gazebo-v1/q_table.json --episodes 50000 --epsilon-start 0.5 --epsilon-end 0.05 --seed 42
+python3 -m dual_arm_rl.qtable --config config/timing.gazebo-v1.json --table artifacts/gazebo-v1/q_table.json
+python3 -m dual_arm_rl.evaluate --config config/timing.gazebo-v1.json --table artifacts/gazebo-v1/q_table.json --batches 30 --seed 1 --output artifacts/gazebo-v1/seed_1.csv
+```
+
+评估命令的 seed 和输出文件依次替换为 1..5。配置为 is_placeholder=false、overlap_validated=false，Q 表仍 deployment_ready=false。模型源码与奖励没有改变。
+
+注意测量边界与原模型假设不完全一致：feed 仅到停推进，缺推板回位/停稳时间；pick 到 carry_clear 时手仍在取件点上方，不代表已经验证安全退出。此轮按用户指定数值直接做成功路径模型实验，未补造回位时间，继承的 request_delay_seconds=1.0 不能解释为实测回位仿真秒。重叠及忙臂预送料仍是假设；输出不可当作实际 Gazebo 完整批次时间或安全验证。完整测量口径见配置 measurement_metadata 与 REVIEW.md。

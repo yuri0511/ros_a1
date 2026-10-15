@@ -1,0 +1,84 @@
+{
+  "config": "config/timing.gazebo-v1.json",
+  "table_sha256": "2c13fab92af4affec343c6af04a021e841df51b3a505bf4c4c247afd03fbd1bb",
+  "batches": 150,
+  "per_seed": [
+    {
+      "seed": 1,
+      "serial": 191.73433333333332,
+      "rule": 131.01433333333333,
+      "q_learning": 128.28333333333333,
+      "saved_seconds": 2.7310000000000074,
+      "saved_percent": 2.08450474884428,
+      "wins": 17,
+      "ties": 9,
+      "losses": 4,
+      "q_steps": 242,
+      "fallbacks": 0
+    },
+    {
+      "seed": 2,
+      "serial": 191.46766666666667,
+      "rule": 134.61066666666667,
+      "q_learning": 130.658,
+      "saved_seconds": 3.9526666666666728,
+      "saved_percent": 2.936369579429074,
+      "wins": 16,
+      "ties": 9,
+      "losses": 5,
+      "q_steps": 242,
+      "fallbacks": 0
+    },
+    {
+      "seed": 3,
+      "serial": 191.73,
+      "rule": 134.349,
+      "q_learning": 130.18666666666667,
+      "saved_seconds": 4.162333333333337,
+      "saved_percent": 3.0981498435666346,
+      "wins": 20,
+      "ties": 5,
+      "losses": 5,
+      "q_steps": 242,
+      "fallbacks": 0
+    },
+    {
+      "seed": 4,
+      "serial": 191.29233333333335,
+      "rule": 131.13033333333334,
+      "q_learning": 126.81133333333334,
+      "saved_seconds": 4.319000000000006,
+      "saved_percent": 3.293669656906238,
+      "wins": 20,
+      "ties": 9,
+      "losses": 1,
+      "q_steps": 240,
+      "fallbacks": 0
+    },
+    {
+      "seed": 5,
+      "serial": 189.66933333333333,
+      "rule": 134.28333333333333,
+      "q_learning": 129.852,
+      "saved_seconds": 4.431333333333343,
+      "saved_percent": 3.299987588432426,
+      "wins": 20,
+      "ties": 7,
+      "losses": 3,
+      "q_steps": 242,
+      "fallbacks": 0
+    }
+  ],
+  "aggregate": {
+    "serial": 191.17873333333333,
+    "rule": 133.07753333333335,
+    "q_learning": 129.15826666666666,
+    "saved_seconds": 3.919266666666673,
+    "saved_percent": 2.945100174685138,
+    "wins": 93,
+    "ties": 39,
+    "losses": 18,
+    "q_steps": 1208,
+    "fallbacks": 0
+  }
+}
