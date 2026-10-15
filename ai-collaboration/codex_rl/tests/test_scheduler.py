@@ -7,7 +7,7 @@ import unittest
 
 from dual_arm_rl.model import Model, WAIT, load_config, rule_action, run, validate_config
 from dual_arm_rl.qtable import choose, load, new_table, save, state_key, validate
-from dual_arm_rl.train import train
+from dual_arm_rl.train import train, epsilon_at
 from dual_arm_rl.evaluate import evaluate
 
 
@@ -167,6 +167,38 @@ class QTableTests(unittest.TestCase):
             costs.append(run(c, batch, lambda _: next(actions)).time)
         t = train(c, episodes=1500, batch=batch, seed=7)
         self.assertEqual(run(c, batch, lambda m: choose(t, m)).time, min(costs))
+
+    def test_linear_epsilon_schedule(self):
+        self.assertEqual(epsilon_at(0, 50000), 0.5)
+        self.assertAlmostEqual(epsilon_at(49999, 50000), 0.05)
+        self.assertAlmostEqual(epsilon_at(1, 3), 0.275)
+        self.assertEqual(epsilon_at(0, 1), 0.5)
+        with self.assertRaises(ValueError):
+            epsilon_at(0, 10, 0.05, 0.5)
+        table = train(config(), episodes=3, batch_size=2)
+        self.assertEqual(table["training"]["epsilon_start"], 0.5)
+        self.assertEqual(table["training"]["epsilon_end"], 0.05)
+
+    def test_fallback_counter_only_counts_missing_rows(self):
+        c = config()
+        t = new_table(c)
+        m = Model(c, [1, 0, 1, 0])
+        stats = {}
+        choose(t, m, stats)
+        self.assertEqual(stats, {"decision_steps": 1, "unknown_state_fallback_steps": 1})
+        t["q_values"][state_key(m.state())] = [0.0]*5
+        choose(t, m, stats)  # known row tie uses rule, but is NOT unknown fallback
+        self.assertEqual(stats, {"decision_steps": 2, "unknown_state_fallback_steps": 1})
+
+    def test_empty_table_evaluation_counts_every_q_decision(self):
+        rows = evaluate(config(), new_table(config()), batches=3, batch_size=4)
+        for row in rows:
+            if row["policy"] == "q_learning":
+                self.assertGreaterEqual(row["q_decision_steps"], 4)
+                self.assertEqual(row["q_decision_steps"], row["unknown_state_fallback_steps"])
+            else:
+                self.assertEqual(row["q_decision_steps"], 0)
+                self.assertEqual(row["unknown_state_fallback_steps"], 0)
 
     def test_paired_evaluation(self):
         c = config()

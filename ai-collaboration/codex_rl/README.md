@@ -8,7 +8,7 @@
 
 ```bash
 python3 -m unittest discover -s tests -v
-python3 -m dual_arm_rl.train --episodes 5000 --seed 42
+python3 -m dual_arm_rl.train --episodes 50000 --epsilon-start 0.5 --epsilon-end 0.05 --seed 42
 python3 -m dual_arm_rl.qtable
 python3 -m dual_arm_rl.evaluate --batches 30 --seed 2026
 ```
@@ -49,3 +49,10 @@ PLAN.md 定义十元素状态、五动作顺序、ETA 边界含义。状态 key 
 当前只含确定性成功路径。未建模随机失败、恢复轨迹、箱格耗时、实际碰撞及共享 MoveIt 逐轨迹排队，因此没有失败奖励或实测成功率。RECOVERY 不在 Q 表决策状态中：出现异常必须由确定性逻辑处置，不得靠 Q 表解锁。
 
 Grok 在 HANDOFF.md 提供数据后，先核对安全退出/READY/送料预取语义，再更新配置及时长版本、重训、重新验证。配置哈希改变后旧 Q 表会被拒绝。若箱格、执行槽或异常对时间有明显影响，需要扩展模型及 schema，不能仅替换平均值。此轮不制作分析图，CSV 已为后续 analysis.py 留出输入。
+
+
+## 2026-10-15 训练与回退计数更新
+
+默认 50,000 局，ε 每局线性衰减，首局 0.5、末局 0.05；局内保持不变。训练元数据记录两端值及 schedule。评估不做 ε 探索。
+`comparison.csv` 新增 `q_decision_steps` 和 `unknown_state_fallback_steps`，分母是 Q 策略实际调用的决策次数（包括 WAIT，不含内部自动处理的事件）。已知状态 Q 值并列时使用规则打破平局，不算未知状态回退。串行/规则行这两列为 0，不表示它们使用 Q 表。
+评估同时输出 `comparison.summary.json`，按策略汇总均值与回退率。旧 5,000 局表的相同种子复评保存在 `comparison_5000.csv` 及对应 summary；旧表可从前一 Git 提交获取。

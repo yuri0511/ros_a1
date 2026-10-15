@@ -196,3 +196,40 @@ HANDOFF 有实测后再修改配置版本并重训；若实际资源或箱格影
 ## 2026-10-15 GitHub 分支提交
 
 开工已读 HANDOFF.md，仍为空。用户授权将共享目录和代码提交并推送至 yuri0511/ros_a1 的 dual-arm-rl 分支。使用独立克隆，从 origin/main（125c8d2）创建分支，仓库内路径为 ai-collaboration/，没有改变原仓库现有源码。保留 PLAN/HANDOFF/REVIEW 及 codex_rl 全部源码、配置、测试和占位产物；不提交 Python 缓存。复制后重新运行 17 项测试全部通过，Q 表 2885 状态校验通过。此记录与交付文件一起提交；实际 push 结果以 Git 远端与聊天回执为准。
+
+
+## 2026-10-15 ε 衰减与 50,000 局复评
+
+开工先读 HANDOFF.md，仍为空。本轮只修改离线训练/评估，时间占位配置、模型、奖励、批次生成方式均不变。
+
+训练：episodes=50000，seed=42，alpha=0.2，gamma=1；ε 按局线性从 0.5 衰减到 0.05，局内保持恒定。第 0 局为 0.5，第 49999 局为 0.05。表含 3052 个状态。评估：30 批，每批 8 件，seed=2026，无 ε 探索。逐批核对新旧批次库存、原始顺序一致，两个基线的逐行结果也完全一致。
+
+| 策略 | 平均批次时间（模型秒） | Q 决策步数 | 未知状态回退步数 | 回退率 |
+|---|---:|---:|---:|---:|
+| 原版串行抽象 | 159.1333 | 不适用 | 不适用 | 不适用 |
+| 简单规则 | 100.8667 | 不适用 | 不适用 | 不适用 |
+| 旧 Q：5000 局，固定 ε=0.2 | 109.4333 | 294 | 1 | 0.3401% |
+| 新 Q：50000 局，ε=0.5→0.05 | 99.3000 | 252 | 0 | 0% |
+
+新 Q 比简单规则平均少 1.5667 秒（约 1.55%），比旧 Q 少 10.1333 秒（约 9.26%）。旧 Q 仅一次未知状态回退，因此旧结果落后并非主要由回退造成。两项训练设置同时改变，本次不能单独归因于 ε 衰减或局数。
+
+统计口径：每次 Q 策略选择动作计一步，含 WAIT，不含 step 内部自动推进事件。只有 state_key 在 q_values 中缺失才算“未知状态回退”。已知状态 Q 值并列时调用规则打破平局不算回退；0 回退也不等于每个动作的 Q 值都充分训练。串行和规则 CSV 行相关计数填 0，含义为不适用。
+
+改动文件（相对于 ai-collaboration/）：
+- codex_rl/dual_arm_rl/train.py：线性 ε 调度、50000 局默认值、CLI 两端参数、训练元数据；保留显式固定 ε 的测试接口。
+- codex_rl/dual_arm_rl/qtable.py：可选评估计数器，区分真实未知状态回退。
+- codex_rl/dual_arm_rl/evaluate.py：逐批决策/回退列，汇总均值和回退率，写出 summary JSON，记录表 SHA-256 与训练元数据。
+- codex_rl/tests/test_scheduler.py：新增 ε 首末/中间值、回退与平局区别、全未知表计数测试，总计 20 项。
+- codex_rl/README.md：更新命令和统计定义。
+- codex_rl/artifacts/q_table.json：新训练表。
+- codex_rl/artifacts/comparison.csv、comparison.summary.json：新评估明细/汇总。
+- codex_rl/artifacts/comparison_5000.csv、comparison_5000.summary.json：旧表同种子复评，包含回退计数；旧表可从提交 01e5a92 获取，summary 已记录其哈希和 Git 引用。
+- REVIEW.md：本记录。
+
+复现命令（在 codex_rl 下）：
+python3 -m dual_arm_rl.train --episodes 50000 --epsilon-start 0.5 --epsilon-end 0.05 --seed 42
+python3 -m dual_arm_rl.evaluate --batches 30 --seed 2026
+python3 -m dual_arm_rl.qtable
+python3 -m unittest discover -s tests -q
+
+验证：20/20 测试通过；3052 状态的 Q 表通过校验；新旧评估批次和两个基线逐行一致。全部仍是占位时长的模型结果，未验证跨种子泛化，也不是 Gazebo 测量；deployment_ready=false。

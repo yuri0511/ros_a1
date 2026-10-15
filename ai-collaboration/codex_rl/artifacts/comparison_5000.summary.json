@@ -1,0 +1,41 @@
+{
+  "evaluation_seed": 2026,
+  "batch_size": 8,
+  "config": "config/timing.placeholder.json",
+  "table": "artifacts/q_table.json",
+  "is_placeholder": true,
+  "results": {
+    "serial": {
+      "batches": 30,
+      "mean_makespan_seconds": 159.13333333333333,
+      "q_decision_steps": 0,
+      "unknown_state_fallback_steps": 0,
+      "unknown_state_fallback_rate": null
+    },
+    "rule": {
+      "batches": 30,
+      "mean_makespan_seconds": 100.86666666666666,
+      "q_decision_steps": 0,
+      "unknown_state_fallback_steps": 0,
+      "unknown_state_fallback_rate": null
+    },
+    "q_learning": {
+      "batches": 30,
+      "mean_makespan_seconds": 109.43333333333334,
+      "q_decision_steps": 294,
+      "unknown_state_fallback_steps": 1,
+      "unknown_state_fallback_rate": 0.003401360544217687
+    }
+  },
+  "table_sha256": "2e541f4f31801a2baf64e21e38f7e59c09a59875ee3d9eba69d326d0c9a84cbb",
+  "training": {
+    "episodes": 5000,
+    "seed": 42,
+    "batch_size": 8,
+    "fixed_batch": null,
+    "alpha": 0.2,
+    "epsilon": 0.2,
+    "gamma": 1.0
+  },
+  "table_git_ref": "01e5a92:ai-collaboration/codex_rl/artifacts/q_table.json"
+}

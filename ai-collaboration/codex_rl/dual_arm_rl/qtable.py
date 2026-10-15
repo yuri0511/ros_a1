@@ -87,12 +87,16 @@ def save(path, table, config):
     tmp.replace(path)
 
 
-def choose(table, model):
+def choose(table, model, stats=None):
     legal = model.legal_actions()
     if not legal:
         raise ValueError("No decision in terminal state")
+    if stats is not None:
+        stats["decision_steps"] = stats.get("decision_steps", 0) + 1
     row = table["q_values"].get(state_key(model.state()))
     if row is None:
+        if stats is not None:
+            stats["unknown_state_fallback_steps"] = stats.get("unknown_state_fallback_steps", 0) + 1
         return rule_action(model)
     best = max(row[a] for a in legal)
     candidates = [a for a in legal if row[a] == best]
