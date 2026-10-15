@@ -3,7 +3,8 @@ import random
 from pathlib import Path
 
 from a1_sorting_core.batch_protocol import batch_id_from_spawn_message
-from a1_sorting_core.q_learning import (TabularQ, placement_reward, state_key)
+from a1_sorting_core.q_learning import (TabularQ, epsilon_schedule,
+                                       placement_reward, state_key)
 from a1_sorting_core.strategies import all_strategies, grasp_fails, strategy_by_id
 
 
@@ -50,6 +51,13 @@ def test_reward_pays_for_placement_and_charges_time():
     assert abs(placement_reward('PLACED', 10) - 8.0) < 1e-9
     assert abs(placement_reward('FAILED', 10) - (-12.0)) < 1e-9
     assert placement_reward('MISPLACED', 0) == -10.0
+
+
+def test_epsilon_falls_from_half_to_five_hundredths():
+    assert epsilon_schedule(0, 100, 0.5, 0.05) == 0.5
+    assert abs(epsilon_schedule(99, 100, 0.5, 0.05) - 0.05) < 1e-9
+    values = [epsilon_schedule(index, 100, 0.5, 0.05) for index in range(100)]
+    assert all(values[index] >= values[index + 1] - 1e-12 for index in range(99))
 
 
 def test_update_moves_toward_reward_and_freeze_stops_it():

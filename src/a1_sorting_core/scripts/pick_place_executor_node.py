@@ -21,6 +21,7 @@ ROS1 版新增:
 - 参数 inject_failure_parts 可对指定工件注入一次"首次抓取失败",用于演示失败恢复流程;
 - grasp_fail_rate_slow/mid/fast 是仿真抓取失败概率。抓到工件前按当前速度档掷一次,
   失败抛 GraspError,仍走上面的重试;种子 grasp_fail_seed 固定。
+  服务 ~reset_grasp_seed 把随机序列拨回这个种子,方便同一条序列对比不同策略。
 - 未知类别 -> FatalGraspError,不重试直接 FAILED(unknown_category)。
 """
 import queue
@@ -33,6 +34,7 @@ import moveit_commander
 import rospy
 from geometry_msgs.msg import Pose
 from std_msgs.msg import String
+from std_srvs.srv import Empty, EmptyResponse
 
 from a1_interfaces.msg import PartInfo, TaskStatus
 from a1_sorting_core.batch_protocol import BATCH_TOPIC, parse_event
@@ -119,6 +121,13 @@ class PickPlaceExecutorNode(object):
         rospy.loginfo('仿真抓取失败概率 slow=%.2f mid=%.2f fast=%.2f 种子 %d',
                       self._fail_rates['slow'], self._fail_rates['mid'],
                       self._fail_rates['fast'], self._fail_seed)
+        rospy.Service('~reset_grasp_seed', Empty, self._reset_grasp_seed)
+
+    def _reset_grasp_seed(self, _req):
+        """把抓取失败的随机序列拨回配置里的种子。"""
+        self._fail_rng = random.Random(self._fail_seed)
+        rospy.loginfo('抓取失败随机序列重置到种子 %d', self._fail_seed)
+        return EmptyResponse()
 
     # ================================================================ 任务主流程
     def _worker(self):

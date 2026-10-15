@@ -30,6 +30,18 @@ def state_key(color):
     return '%s|%s' % (name, BIN_FOR.get(name, 'unknown'))
 
 
+def epsilon_schedule(index, count, start=0.5, end=0.05):
+    """第 index 件的探索率。index 从 0 起，第一件是 start，最后一件是 end。"""
+    if int(count) <= 1:
+        return float(end)
+    fraction = float(index) / float(int(count) - 1)
+    if fraction < 0.0:
+        fraction = 0.0
+    if fraction > 1.0:
+        fraction = 1.0
+    return float(start) + (float(end) - float(start)) * fraction
+
+
 def placement_reward(result, elapsed_sec, time_coef=REWARD_TIME_COEF):
     """PLACED 得 +10，其余结果得 -10，再减去耗时乘系数。"""
     base = PLACED_BONUS if result == 'PLACED' else FAILURE_PENALTY
@@ -50,6 +62,8 @@ class TabularQ(object):
         self.alpha = float(alpha)
         self.gamma = float(gamma)
         self.epsilon = float(epsilon)
+        self.epsilon_start = float(epsilon)
+        self.epsilon_end = float(epsilon)
         self.time_coef = float(time_coef)
         self.rng = random.Random(seed)
         self.seed = int(seed)
@@ -68,10 +82,11 @@ class TabularQ(object):
         best = max(row[action] for action in self.actions)
         return [action for action in self.actions if row[action] == best]
 
-    def choose(self, state):
+    def choose(self, state, epsilon=None):
         """训练时按 epsilon 探索。冻结时选 Q 最大的动作，并列时取最小编号。"""
         self._ensure(state)
-        if not self.frozen and self.rng.random() < self.epsilon:
+        explore = self.epsilon if epsilon is None else float(epsilon)
+        if not self.frozen and self.rng.random() < explore:
             return self.rng.choice(self.actions)
         bests = self.greedy_actions(state)
         if not self.frozen:
@@ -102,6 +117,8 @@ class TabularQ(object):
             'alpha': self.alpha,
             'gamma': self.gamma,
             'epsilon': self.epsilon,
+            'epsilon_start': self.epsilon_start,
+            'epsilon_end': self.epsilon_end,
             'time_coef': self.time_coef,
             'seed': self.seed,
             'frozen': self.frozen,

@@ -4,6 +4,7 @@ from __future__ import annotations
 import rospy
 from a1_interfaces.msg import PartResult
 from a1_interfaces.srv import SortTask, SpawnParts
+from std_srvs.srv import Empty
 from a1_sorting_core.batch_protocol import (PART_RESULT_TOPIC,
                                             batch_id_from_spawn_message)
 
@@ -27,6 +28,12 @@ class BatchRunner(object):
     def clear_part_strategies(self):
         if rospy.has_param('/a1/strategy_for'):
             rospy.delete_param('/a1/strategy_for')
+
+    def reset_grasp_seed(self):
+        """让执行器把抓取失败的随机序列拨回配置种子。"""
+        name = '/pick_place_executor/reset_grasp_seed'
+        rospy.wait_for_service(name, 30.0)
+        rospy.ServiceProxy(name, Empty)()
 
     def use_one_strategy(self, strategy_id):
         """整批工件使用同一种策略。"""

@@ -17,6 +17,7 @@ def main():
                         default=os.path.expanduser('~/.ros/a1_strategy_compare.csv'))
     parser.add_argument('--q-csv',
                         default=os.path.expanduser('~/.ros/a1_qlearn_steps.csv'))
+    parser.add_argument('--compare-csv', default='')
     parser.add_argument('--out-dir',
                         default=os.path.expanduser('~/.ros/a1_analysis'))
     args = parser.parse_args()
@@ -24,11 +25,13 @@ def main():
     root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src'))
     if root not in sys.path:
         sys.path.insert(0, root)
-    from a1_sorting_core.analysis_report import write_report
+    from a1_sorting_core.analysis_report import write_comparison, write_report
     strategy_csv = args.strategy_csv if os.path.exists(args.strategy_csv) else None
     q_csv = args.q_csv if os.path.exists(args.q_csv) else None
     text = write_report(strategy_csv, q_csv, args.out_dir)
     print(text, end='')
+    if args.compare_csv and os.path.exists(args.compare_csv):
+        print(write_comparison(args.compare_csv, args.out_dir), end='')
     print('图写在 %s' % args.out_dir)
 
 

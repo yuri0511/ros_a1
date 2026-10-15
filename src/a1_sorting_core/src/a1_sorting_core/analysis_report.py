@@ -95,14 +95,17 @@ def bar_svg(title, labels, values, ylabel, path):
     left, top, plot_h = 70, 60, 280
     parts = [_svg_header(width, height, title)]
     parts.append('<text x="16" y="%d" font-size="12">%s</text>' % (top + 12, _escape(ylabel)))
-    peak = max(values) if values else 1.0
-    if peak <= 0:
-        peak = 1.0
+    low = min(0.0, min(values) if values else 0.0)
+    high = max(values) if values else 1.0
+    if high <= low:
+        high = low + 1.0
+    span = high - low
+    zero_y = top + 40 + plot_h * ((high - 0.0) / span)
     slot = 560 / max(1, len(values))
     for index, (label, value) in enumerate(zip(labels, values)):
-        bar_h = plot_h * (value / peak)
+        bar_h = plot_h * (abs(value) / span)
         x = left + index * slot + slot * 0.2
-        y = top + 40 + plot_h - bar_h
+        y = zero_y - bar_h if value >= 0 else zero_y
         parts.append(
             '<rect x="%.1f" y="%.1f" width="%.1f" height="%.1f" fill="#3b6ea5"/>'
             % (x, y, slot * 0.6, bar_h))
@@ -139,6 +142,58 @@ def line_svg(title, values, path):
                  % (top + plot_h + 36, low, high))
     parts.append('</svg>\n')
     Path(path).write_text(''.join(parts), encoding='utf-8')
+
+
+COMPARE_ORDER = ('frozen', 'slow', 'mid', 'fast')
+
+
+def condition_summary(rows):
+    """按对比条件汇总。失败留在分母里。顺序是冻结、慢、中、快。"""
+    grouped = defaultdict(list)
+    for row in rows:
+        grouped[row.get('condition') or row.get('strategy_name') or ''].append(row)
+    ordered = [name for name in COMPARE_ORDER if name in grouped]
+    ordered.extend(name for name in sorted(grouped) if name not in ordered)
+    summaries = []
+    for name in ordered:
+        items = grouped[name]
+        elapsed = [value for value in (_float(row.get('elapsed_sec')) for row in items)
+                   if value is not None]
+        placed = sum(1 for row in items if row.get('result') == 'PLACED')
+        reward = mean_reward(items)
+        summaries.append({
+            'condition': name,
+            'count': len(items),
+            'placed': placed,
+            'success_rate': (placed / len(items)) if items else 0.0,
+            'mean_elapsed': (sum(elapsed) / len(elapsed)) if elapsed else 0.0,
+            'mean_reward': 0.0 if reward is None else reward,
+        })
+    return summaries
+
+
+def write_comparison(compare_csv, out_dir):
+    """写出同一随机种子下冻结策略和三个固定档的表和图。"""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    rows = read_csv(compare_csv)
+    summaries = condition_summary(rows)
+    lines = ['同一抓取种子下的对比（失败计入分母）']
+    for item in summaries:
+        lines.append(
+            '%s: %d 件, 成功 %d, 成功率 %.3f, 平均耗时 %.3f 秒, 平均奖励 %.3f'
+            % (item['condition'], item['count'], item['placed'],
+               item['success_rate'], item['mean_elapsed'], item['mean_reward']))
+    text = '\n'.join(lines) + '\n'
+    (out / 'compare_summary.txt').write_text(text, encoding='utf-8')
+    labels = [item['condition'] for item in summaries]
+    bar_svg('对比成功率', labels, [item['success_rate'] for item in summaries],
+            'PLACED / 全部件数', out / 'compare_success_rate.svg')
+    bar_svg('对比平均耗时', labels, [item['mean_elapsed'] for item in summaries],
+            '秒', out / 'compare_mean_time.svg')
+    bar_svg('对比平均奖励', labels, [item['mean_reward'] for item in summaries],
+            '奖励', out / 'compare_mean_reward.svg')
+    return text
 
 
 def write_report(strategy_csv, q_csv, out_dir):

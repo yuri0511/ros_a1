@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420">
+<rect width="100%" height="100%" fill="white"/>
+<text x="24" y="32" font-size="18">对比平均奖励</text>
+<text x="16" y="72" font-size="12">奖励</text><rect x="98.0" y="107.5" width="84.0" height="272.5" fill="#3b6ea5"/><text x="140.0" y="404" font-size="12" text-anchor="middle">frozen</text><text x="140.0" y="101.5" font-size="12" text-anchor="middle">6.48</text><rect x="238.0" y="115.3" width="84.0" height="264.7" fill="#3b6ea5"/><text x="280.0" y="404" font-size="12" text-anchor="middle">slow</text><text x="280.0" y="109.3" font-size="12" text-anchor="middle">6.29</text><rect x="378.0" y="100.0" width="84.0" height="280.0" fill="#3b6ea5"/><text x="420.0" y="404" font-size="12" text-anchor="middle">mid</text><text x="420.0" y="94.0" font-size="12" text-anchor="middle">6.66</text><rect x="518.0" y="177.6" width="84.0" height="202.4" fill="#3b6ea5"/><text x="560.0" y="404" font-size="12" text-anchor="middle">fast</text><text x="560.0" y="171.6" font-size="12" text-anchor="middle">4.81</text></svg>
