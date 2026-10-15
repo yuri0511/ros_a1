@@ -1,0 +1,269 @@
+<?xml version="1.0"?>
+<!-- A1 双臂工作站整机 xacro:在 ur5e_cell.urdf.xacro(单臂)基础上追加第二台
+     UR5e(arm2,tf_prefix=arm2_),与 arm1 同款低肩立柱**南北镜像**(布局 v2)。
+
+     为什么是独立文件而不是给单臂文件加 dual 开关:官方
+     ur_sim_control.launch.py 固定只向 description_file 传
+     name/ur_type/tf_prefix/safety*/simulation_controllers 参数,自定义
+     dual:=true 传不进去。
+
+     几何(布局 v2,2026-10-04 G1,详见 docs/layout_v2_spec.md 与
+     docs/notes_kinematics_v2.md;旧 docs/dual_arm_contract.md 记高肩旧态)
+     - arm1 立柱 (0.60, +0.47) 桌北缘外侧落地,rpy(0,0,-pi/2) 朝 -y,
+       基座 z=0.402、pan 轴 z=0.5645;
+     - arm2 立柱 (0.60, -0.47) 桌南缘外侧落地,rpy(0,0,+pi/2) 朝 +y,
+       同款尺寸 => 两臂链同构(镜像只差 mount 刚体变换,G0 SELFTEST 实测);
+       旧"高肩立柱坐桌面 (0.95,0,0.92)、基座 1.122、肩高 1.2845"整体废弃
+       (G0 §12 定罪 arm2 吃不到 arm1 绿域的根因 = 肩高 +13.25cm);
+     - 单臂文件 = 双臂 arm1 的北排 legacy 口径(蓝/黄),两版几何同值,
+       故本轮 v2 两版一并改(单臂文件不再是"零改动");
+     - tf 前缀:arm1 无前缀(保持既有命名),arm2 一律 arm2_。 -->
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="$(arg name)">
+  <xacro:arg name="name" default="ur"/>
+  <xacro:arg name="ur_type" default="ur5e"/>
+  <xacro:arg name="tf_prefix" default=""/>
+  <xacro:arg name="safety_limits" default="false"/>
+  <xacro:arg name="safety_pos_margin" default="0.15"/>
+  <xacro:arg name="safety_k_position" default="20"/>
+  <xacro:arg name="simulation_controllers" default=""/>
+
+  <xacro:include filename="$(find a1_cell_sim)/urdf/ur_macro_damped.xacro"/>
+  <xacro:include filename="$(find ur_simulation_gz)/urdf/ur_gz.ros2_control.xacro"/>
+  <xacro:include filename="$(find a1_cell_sim)/urdf/gripper.urdf.xacro"/>
+
+  <xacro:arg name="joint_limit_params" default="$(find ur_description)/config/$(arg ur_type)/joint_limits.yaml"/>
+  <xacro:arg name="kinematics_params" default="$(find ur_description)/config/$(arg ur_type)/default_kinematics.yaml"/>
+  <xacro:arg name="physical_params" default="$(find ur_description)/config/$(arg ur_type)/physical_parameters.yaml"/>
+  <xacro:arg name="visual_params" default="$(find ur_description)/config/$(arg ur_type)/visual_parameters.yaml"/>
+
+  <!-- 根链接 world(固定于 Gazebo 世界) -->
+  <link name="world"/>
+
+  <!-- ============ arm1:与单臂版完全一致(v2:北缘外落地,朝 -y) ============ -->
+  <link name="pedestal">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.06" length="0.40"/></geometry>
+      <material name="pedestal_dark"><color rgba="0.2 0.2 0.22 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.06" length="0.40"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="15.0"/>
+      <inertia ixx="0.20" iyy="0.20" izz="0.14" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+  <joint name="world_pedestal" type="fixed">
+    <!-- 布局 v2:arm1 在 (0.60, 0.47) 桌北缘外侧落地,rpy(0,0,-pi/2) 朝 -y;
+         低肩(pan 轴世界 z=0.5645)与单臂版同值;半径 0.12→0.06(Lead 定档,
+         消解与桌体重叠,坐标未动)。 -->
+    <origin xyz="0.60 0.47 0.20" rpy="0 0 -1.5707963267948966"/>
+    <parent link="world"/>
+    <child link="pedestal"/>
+  </joint>
+
+  <!-- UR5e 本体,挂在立柱顶面上方 2mm(底座网格底面与立柱顶面点接触会
+       被 MoveIt 判为自碰撞,故抬升留隙) -->
+  <xacro:ur_robot
+    name="ur"
+    tf_prefix=""
+    parent="pedestal"
+    joint_limits_parameters_file="$(arg joint_limit_params)"
+    kinematics_parameters_file="$(arg kinematics_params)"
+    physical_parameters_file="$(arg physical_params)"
+    visual_parameters_file="$(arg visual_params)"
+    safety_limits="$(arg safety_limits)"
+    safety_pos_margin="$(arg safety_pos_margin)"
+    safety_k_position="$(arg safety_k_position)"
+    force_abs_paths="true"
+    joint_dynamics_damping="3.0"
+    >
+    <origin xyz="0 0 0.202" rpy="0 0 0"/>
+  </xacro:ur_robot>
+
+  <xacro:simple_gripper parent="tool0" prefix="">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:simple_gripper>
+
+  <!-- ============ arm2:布局 v2 低肩镜像(南缘外落地,朝 +y) ============
+       旧高立柱(0.95,0,0.92 坐桌面、基座 1.122、肩高 1.2845)整体废弃——
+       G0 §12 定罪"arm2 吃不到 arm1 绿域的根因 = 肩高 +13.25cm";v2 低肩
+       + 箱 r≈0.36 后带载 τ_lift 箱格最大 13.30(旧墙 36.3~44.1),
+       力矩墙构造性消解(notes_kinematics_v2 汇总)。
+       链接名沿用 pedestal2 ⇒ a1_cell_dual.srdf.xacro 既有
+       pedestal2↔arm2_base_link* 禁用对继续生效(勿加跨臂禁用对)。 -->
+  <link name="pedestal2">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.06" length="0.40"/></geometry>
+      <material name="pedestal2_dark"><color rgba="0.22 0.2 0.2 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><cylinder radius="0.06" length="0.40"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="15.0"/>
+      <inertia ixx="0.20" iyy="0.20" izz="0.14" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+  <joint name="world_pedestal2" type="fixed">
+    <!-- arm2 与 arm1 同款低 pedestal,(0.60,-0.47) 桌南缘外侧落地,
+         rpy(0,0,+pi/2) 朝 +y;圆柱 z 0..0.40、base 0.402、pan 轴 0.5645
+         两臂相同 ⇒ 两臂链同构,只差 mount 刚体变换(G0 SELFTEST 实测)。
+         半径减径与桌体留隙理由同 arm1(静空 table_body +42.0mm PASS)。 -->
+    <origin xyz="0.60 -0.47 0.20" rpy="0 0 1.5707963267948966"/>
+    <parent link="world"/>
+    <child link="pedestal2"/>
+  </joint>
+
+  <xacro:ur_robot
+    name="ur_arm2"
+    tf_prefix="arm2_"
+    parent="pedestal2"
+    joint_limits_parameters_file="$(arg joint_limit_params)"
+    kinematics_parameters_file="$(arg kinematics_params)"
+    physical_parameters_file="$(arg physical_params)"
+    visual_parameters_file="$(arg visual_params)"
+    safety_limits="$(arg safety_limits)"
+    safety_pos_margin="$(arg safety_pos_margin)"
+    safety_k_position="$(arg safety_k_position)"
+    force_abs_paths="true"
+    joint_dynamics_damping="3.0"
+    >
+    <origin xyz="0 0 0.202" rpy="0 0 0"/>
+  </xacro:ur_robot>
+
+  <xacro:simple_gripper parent="arm2_tool0" prefix="arm2_">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:simple_gripper>
+
+  <!-- 接触观测:不新增碰撞体。传感器里的碰撞名必须是 sdf 合并固定关节后的名字,
+       否则话题在,但永远没有接触消息。 -->
+  <xacro:macro name="link_contact_sensor" params="link collision extra:=''">
+    <gazebo reference="${link}">
+      <sensor name="${link}_contact" type="contact">
+        <always_on>1</always_on>
+        <update_rate>50</update_rate>
+        <contact>
+          <collision>${collision}</collision>
+          <xacro:if value="${extra != ''}">
+            <collision>${extra}</collision>
+          </xacro:if>
+          <topic>/a1_contact/${link}</topic>
+        </contact>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+  <xacro:link_contact_sensor link="pedestal" collision="pedestal_collision" extra="pedestal_fixed_joint_lump__base_link_inertia_collision_1"/>
+  <xacro:link_contact_sensor link="shoulder_link" collision="shoulder_link_collision"/>
+  <xacro:link_contact_sensor link="upper_arm_link" collision="upper_arm_link_collision"/>
+  <xacro:link_contact_sensor link="forearm_link" collision="forearm_link_collision"/>
+  <xacro:link_contact_sensor link="wrist_1_link" collision="wrist_1_link_collision"/>
+  <xacro:link_contact_sensor link="wrist_2_link" collision="wrist_2_link_collision"/>
+  <xacro:link_contact_sensor link="wrist_3_link" collision="wrist_3_link_collision" extra="wrist_3_link_fixed_joint_lump__gripper_base_collision_collision_1"/>
+  <xacro:link_contact_sensor link="pedestal2" collision="pedestal2_collision" extra="pedestal2_fixed_joint_lump__arm2_base_link_inertia_collision_1"/>
+  <xacro:link_contact_sensor link="arm2_shoulder_link" collision="arm2_shoulder_link_collision"/>
+  <xacro:link_contact_sensor link="arm2_upper_arm_link" collision="arm2_upper_arm_link_collision"/>
+  <xacro:link_contact_sensor link="arm2_forearm_link" collision="arm2_forearm_link_collision"/>
+  <xacro:link_contact_sensor link="arm2_wrist_1_link" collision="arm2_wrist_1_link_collision"/>
+  <xacro:link_contact_sensor link="arm2_wrist_2_link" collision="arm2_wrist_2_link_collision"/>
+  <xacro:link_contact_sensor link="arm2_wrist_3_link" collision="arm2_wrist_3_link_collision" extra="arm2_wrist_3_link_fixed_joint_lump__arm2_gripper_base_collision_collision_1"/>
+
+  <!-- gz_ros2_control 插件:一个插件管理本模型全部 ros2_control 系统,
+       控制器参数由 simulation_controllers 传入(两臂 JTC/夹爪均在其中) -->
+  <gazebo reference="world">
+  </gazebo>
+  <gazebo>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(arg simulation_controllers)</parameters>
+    </plugin>
+  </gazebo>
+
+  <!-- 数值口径:initial_positions = G0 定档 standby(其世界落点已实测,与 sorting_params*.yaml 的 standby_joints 三处同值);终版锚表见 docs/evidence/G0_anchors_v2.json。本文件的几何(立柱位置/半径/yaw)是结构性定档。⚠ TODO(Lead 单发)arm2 standby 新值重验中,到位后本块与 yaml 两处同步改。
+     UR 关节的 ros2_control 描述(官方宏)。两臂各自设"待机位"初始关节角,
+       出生即待机,消除首段跨构型大转移(Pilz PTP 会因自碰撞拒解)。
+       布局 v2(2026-10-04 G0 定档,notes_kinematics_v2 §1)——两臂 standby
+       **不对称**,泊位方位错开(arm1 朝世界 +x 东端、arm2 朝 -x 西端),
+         arm1 tool0 (1.035,+0.470,1.080)、arm2 tool0 (0.300,-0.470,1.150);
+       standby×standby 互探 +230.6mm,全圈 24 方位 arm1 +19.0mm /
+       arm2 +9.6mm 全 PASS,两臂均无钉死。
+       为什么两臂不能同族(G0 结构性结论 A):base_link→base_link_inertia
+       内建 rpy(0,0,pi) 两臂同值 ⇒ tool0 关于 y=0 镜像要求两臂 pan 相差
+       pi,于是两臂躯干在世界系朝同一侧倾——"完美关节孪生"与"两臂躯干
+       各自朝舷外"先天互斥,故 standby 逐臂独立搜(锚表仍镜像可比)。
+       旧"arm1 停泊让位 +y 侧 carry_anchor3"约束随 v2 失效:两臂分居
+       南北 + 泊位错开方位后互探 +230mm,不再需要让位。 -->
+  <xacro:ur_ros2_control
+    name="ur"
+    tf_prefix=""
+    initial_positions="${dict(
+      shoulder_pan_joint=1.2593,
+      shoulder_lift_joint=-1.6371,
+      elbow_joint=1.1284,
+      wrist_1_joint=-1.0621,
+      wrist_2_joint=-1.5708,
+      wrist_3_joint=-1.8822)}"
+  />
+  <xacro:ur_ros2_control
+    name="ur_arm2"
+    tf_prefix="arm2_"
+    initial_positions="${dict(
+      shoulder_pan_joint=1.1104,
+      shoulder_lift_joint=-1.8345,
+      elbow_joint=1.0582,
+      wrist_1_joint=-0.7945,
+      wrist_2_joint=-1.5708,
+      wrist_3_joint=1.1104)}"
+  />
+
+  <!-- 两臂夹爪关节的 ros2_control 描述(链接名带 arm2_ 前缀) -->
+  <ros2_control name="gripper_system" type="system">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+    <joint name="gripper_finger_left_joint">
+      <command_interface name="effort">
+        <param name="min">-50</param>
+        <param name="max">50</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="gripper_finger_right_joint">
+      <command_interface name="effort">
+        <param name="min">-50</param>
+        <param name="max">50</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </ros2_control>
+  <ros2_control name="arm2_gripper_system" type="system">
+    <hardware>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+    </hardware>
+    <joint name="arm2_gripper_finger_left_joint">
+      <command_interface name="effort">
+        <param name="min">-50</param>
+        <param name="max">50</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="arm2_gripper_finger_right_joint">
+      <command_interface name="effort">
+        <param name="min">-50</param>
+        <param name="max">50</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </ros2_control>
+</robot>

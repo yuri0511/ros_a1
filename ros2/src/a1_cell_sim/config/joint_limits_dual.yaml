@@ -1,0 +1,42 @@
+# A1 双臂工作站的关节限值(MoveIt 时间参数化/Pilz 需要)。
+# 官方 ur_moveit_config/config/joint_limits.yaml 只含无前缀关节名,
+# arm2_ 前缀关节缺加速度限值会导致 Pilz 报
+# "acceleration limit not set for group arm2_ur_manipulator" 并间歇性
+# 拒绝规划。此处两臂关节同值(官方保守值 5.0)。
+joint_limits:
+  shoulder_pan_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  shoulder_lift_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  elbow_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  wrist_1_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  wrist_2_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  wrist_3_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  arm2_shoulder_pan_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  arm2_shoulder_lift_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  arm2_elbow_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  arm2_wrist_1_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  arm2_wrist_2_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+  arm2_wrist_3_joint:
+    has_acceleration_limits: true
+    max_acceleration: 5.0

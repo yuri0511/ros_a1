@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A1 双臂工作站 SRDF:在 a1_cell.srdf.xacro(单臂)基础上追加 arm2
+     (tf_prefix=arm2_)的规划组与碰撞禁用。
+
+     为什么手写 arm2 段:官方 ur_moveit_config/srdf/ur_macro.srdf.xacro 的
+     ur_srdf 宏无前缀参数(组名/链/禁用对全部硬编码无前缀名),不能二次
+     实例化;此处按同一惯例为 arm2_ 前缀链接补齐。
+
+     跨臂碰撞对(arm1 各链接 vs arm2 各链接、双立柱对侧臂)全部保持启用(勿加禁用对)。
+     单一 move_group 管双组,跨臂对是真实的互避约束,不能禁用。
+
+     robot 名称必须与 URDF 一致(cell_bringup 以 name:=ur 渲染描述文件)。 -->
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="$(arg name)">
+  <xacro:arg name="name" default="ur"/>
+
+  <xacro:include filename="$(find ur_moveit_config)/srdf/ur_macro.srdf.xacro"/>
+  <xacro:ur_srdf/>
+
+  <!-- ============ arm2 规划组(链式,含 arm2_ 前缀全部关节) ============ -->
+  <group name="arm2_ur_manipulator">
+    <chain base_link="arm2_base_link" tip_link="arm2_tool0"/>
+  </group>
+
+  <!-- ============ arm2 本体邻接/固有接触(与官方 UR 禁用对同构) ============ -->
+  <disable_collisions link1="arm2_base_link" link2="arm2_base_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="arm2_base_link_inertia" link2="arm2_shoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="arm2_tool0" link2="arm2_wrist_1_link" reason="Never"/>
+  <disable_collisions link1="arm2_tool0" link2="arm2_wrist_2_link" reason="Never"/>
+  <disable_collisions link1="arm2_tool0" link2="arm2_wrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="arm2_forearm_link" link2="arm2_upper_arm_link" reason="Adjacent"/>
+  <disable_collisions link1="arm2_forearm_link" link2="arm2_wrist_1_link" reason="Adjacent"/>
+  <disable_collisions link1="arm2_shoulder_link" link2="arm2_upper_arm_link" reason="Adjacent"/>
+  <disable_collisions link1="arm2_wrist_1_link" link2="arm2_wrist_2_link" reason="Adjacent"/>
+  <disable_collisions link1="arm2_wrist_1_link" link2="arm2_wrist_3_link" reason="Never"/>
+  <disable_collisions link1="arm2_wrist_2_link" link2="arm2_wrist_3_link" reason="Adjacent"/>
+
+  <!-- ============ arm1 立柱(与单臂版一致) ============ -->
+  <disable_collisions link1="pedestal" link2="base_link" reason="Adjacent"/>
+  <disable_collisions link1="pedestal" link2="base_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="pedestal" link2="shoulder_link" reason="Adjacent"/>
+  <!-- 立柱紧贴基座,臂部大幅回转时网格与立柱边缘的交叠属安装邻接误差 -->
+  <disable_collisions link1="pedestal" link2="upper_arm_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="forearm_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="wrist_1_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="wrist_2_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="wrist_3_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="tool0" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="gripper_base" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="gripper_finger_left_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="gripper_finger_right_link" reason="Never"/>
+
+  <!-- ============ arm1 夹爪基座(与单臂版一致) ============ -->
+  <disable_collisions link1="gripper_base" link2="tool0" reason="Adjacent"/>
+  <disable_collisions link1="gripper_base" link2="wrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_base" link2="wrist_2_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="wrist_1_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="forearm_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="upper_arm_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="shoulder_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="base_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="base_link_inertia" reason="Never"/>
+
+  <!-- ============ arm1 手指(与单臂版一致) ============ -->
+  <disable_collisions link1="gripper_finger_left_link" link2="gripper_base" reason="Adjacent"/>
+  <disable_collisions link1="gripper_finger_right_link" link2="gripper_base" reason="Adjacent"/>
+  <disable_collisions link1="gripper_finger_left_link" link2="gripper_finger_right_link" reason="Never"/>
+  <xacro:macro name="finger_disables" params="finger">
+    <disable_collisions link1="${finger}" link2="tool0" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="wrist_3_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="wrist_2_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="wrist_1_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="forearm_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="upper_arm_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="shoulder_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="base_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="base_link_inertia" reason="Never"/>
+  </xacro:macro>
+  <xacro:finger_disables finger="gripper_finger_left_link"/>
+  <xacro:finger_disables finger="gripper_finger_right_link"/>
+
+  <!-- ============ arm2 立柱(布局 v2:南缘外落地,同 arm1 惯例,链接名沿用
+       pedestal2 ⇒ 既有 arm2 禁用对继续生效,无需新增) ============ -->
+  <disable_collisions link1="pedestal2" link2="arm2_base_link" reason="Adjacent"/>
+  <disable_collisions link1="pedestal2" link2="arm2_base_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="pedestal2" link2="arm2_shoulder_link" reason="Adjacent"/>
+  <disable_collisions link1="pedestal2" link2="arm2_upper_arm_link" reason="Never"/>
+  <disable_collisions link1="pedestal2" link2="arm2_forearm_link" reason="Never"/>
+  <disable_collisions link1="pedestal2" link2="arm2_wrist_1_link" reason="Never"/>
+  <disable_collisions link1="pedestal2" link2="arm2_wrist_2_link" reason="Never"/>
+  <disable_collisions link1="pedestal2" link2="arm2_wrist_3_link" reason="Never"/>
+  <disable_collisions link1="pedestal2" link2="arm2_tool0" reason="Never"/>
+  <disable_collisions link1="pedestal2" link2="arm2_gripper_base" reason="Never"/>
+  <disable_collisions link1="pedestal2" link2="arm2_gripper_finger_left_link" reason="Never"/>
+  <disable_collisions link1="pedestal2" link2="arm2_gripper_finger_right_link" reason="Never"/>
+
+  <!-- ============ arm2 夹爪基座 ============ -->
+  <disable_collisions link1="arm2_gripper_base" link2="arm2_tool0" reason="Adjacent"/>
+  <disable_collisions link1="arm2_gripper_base" link2="arm2_wrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="arm2_gripper_base" link2="arm2_wrist_2_link" reason="Never"/>
+  <disable_collisions link1="arm2_gripper_base" link2="arm2_wrist_1_link" reason="Never"/>
+  <disable_collisions link1="arm2_gripper_base" link2="arm2_forearm_link" reason="Never"/>
+  <disable_collisions link1="arm2_gripper_base" link2="arm2_upper_arm_link" reason="Never"/>
+  <disable_collisions link1="arm2_gripper_base" link2="arm2_shoulder_link" reason="Never"/>
+  <disable_collisions link1="arm2_gripper_base" link2="arm2_base_link" reason="Never"/>
+  <disable_collisions link1="arm2_gripper_base" link2="arm2_base_link_inertia" reason="Never"/>
+
+  <!-- ============ arm2 手指 ============ -->
+  <disable_collisions link1="arm2_gripper_finger_left_link" link2="arm2_gripper_base" reason="Adjacent"/>
+  <disable_collisions link1="arm2_gripper_finger_right_link" link2="arm2_gripper_base" reason="Adjacent"/>
+  <disable_collisions link1="arm2_gripper_finger_left_link" link2="arm2_gripper_finger_right_link" reason="Never"/>
+  <xacro:macro name="arm2_finger_disables" params="finger">
+    <disable_collisions link1="${finger}" link2="arm2_tool0" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="arm2_wrist_3_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="arm2_wrist_2_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="arm2_wrist_1_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="arm2_forearm_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="arm2_upper_arm_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="arm2_shoulder_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="arm2_base_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="arm2_base_link_inertia" reason="Never"/>
+  </xacro:macro>
+  <xacro:arm2_finger_disables finger="arm2_gripper_finger_left_link"/>
+  <xacro:arm2_finger_disables finger="arm2_gripper_finger_right_link"/>
+
+  <!-- ============ 跨臂对:全部启用(真实互避约束,勿加禁用) ============ -->
+</robot>

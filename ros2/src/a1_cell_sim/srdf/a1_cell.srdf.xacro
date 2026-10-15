@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A1 工作站 SRDF:官方 UR 语义描述 + 自制夹爪/立柱的碰撞禁用。
+
+为什么需要自制 SRDF(课程自研内容之一):
+官方 ur_moveit_config 的 SRDF 不认识本包追加的夹爪与立柱链接,
+MoveIt 规划前的自碰撞检查会把"夹爪 vs 腕部连杆"这类安装邻接/
+固有接触判为碰撞,导致首条轨迹规划即失败(CheckStartStateCollision)。
+此处按 MoveIt Setup Assistant 的惯例补 disable_collisions:
+- Adjacent: 刚性相连或滑动副邻接的链接对;
+- Never:    运动学上不可能真正接触的链接对
+            (UR 腕部碰撞网格天然侵入 tool0 下方,夹爪被迫加长,
+             折叠构型下网格与夹爪几何重叠属网格简化误差)。
+
+robot 名称必须与 URDF 一致:ur_sim_control.launch.py 固定以
+name:=ur 渲染描述文件,官方 SRDF 用 ur_type 命名会导致
+"Semantic description is not specified for the same robot"告警。
+-->
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="$(arg name)">
+  <xacro:arg name="name" default="ur"/>
+
+  <xacro:include filename="$(find ur_moveit_config)/srdf/ur_macro.srdf.xacro"/>
+  <xacro:ur_srdf/>
+
+  <!-- ============ 立柱 ============ -->
+  <disable_collisions link1="pedestal" link2="base_link" reason="Adjacent"/>
+  <disable_collisions link1="pedestal" link2="base_link_inertia" reason="Adjacent"/>
+  <disable_collisions link1="pedestal" link2="shoulder_link" reason="Adjacent"/>
+  <!-- 立柱紧贴基座,臂部大幅回转时网格与立柱边缘的交叠属安装邻接误差 -->
+  <disable_collisions link1="pedestal" link2="upper_arm_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="forearm_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="wrist_1_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="wrist_2_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="wrist_3_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="tool0" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="gripper_base" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="gripper_finger_left_link" reason="Never"/>
+  <disable_collisions link1="pedestal" link2="gripper_finger_right_link" reason="Never"/>
+
+  <!-- ============ 夹爪基座 ============ -->
+  <disable_collisions link1="gripper_base" link2="tool0" reason="Adjacent"/>
+  <disable_collisions link1="gripper_base" link2="wrist_3_link" reason="Adjacent"/>
+  <disable_collisions link1="gripper_base" link2="wrist_2_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="wrist_1_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="forearm_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="upper_arm_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="shoulder_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="base_link" reason="Never"/>
+  <disable_collisions link1="gripper_base" link2="base_link_inertia" reason="Never"/>
+
+  <!-- ============ 手指 ============ -->
+  <disable_collisions link1="gripper_finger_left_link" link2="gripper_base" reason="Adjacent"/>
+  <disable_collisions link1="gripper_finger_right_link" link2="gripper_base" reason="Adjacent"/>
+  <disable_collisions link1="gripper_finger_left_link" link2="gripper_finger_right_link" reason="Never"/>
+  <xacro:macro name="finger_disables" params="finger">
+    <disable_collisions link1="${finger}" link2="tool0" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="wrist_3_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="wrist_2_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="wrist_1_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="forearm_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="upper_arm_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="shoulder_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="base_link" reason="Never"/>
+    <disable_collisions link1="${finger}" link2="base_link_inertia" reason="Never"/>
+  </xacro:macro>
+  <xacro:finger_disables finger="gripper_finger_left_link"/>
+  <xacro:finger_disables finger="gripper_finger_right_link"/>
+</robot>

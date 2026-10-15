@@ -1,0 +1,890 @@
+"""任务调度节点:来料登记 -> 任务队列 -> 串行派发(可选双臂接力)。
+
+接口(均为自定义接口,见 a1_interfaces):
+- 订阅 /parts/arrival (PartInfo):视觉节点发布的来料登记;
+- 订阅 /task/status (TaskStatus):执行节点(arm1/arm2)的状态回报,
+  用于推进队列;msg.arm 空串视为 arm1(兼容旧消息);
+- 发布 /task/command (PartInfo):向 arm1 执行节点派发单件任务;
+- 发布 relay_command_topic (PartInfo,默认 /task/command_arm2):
+  relay_mode=true 时,当前件 arm1 COMPLETED 后延迟 relay_delay 秒,
+  把该件(目录缓存里的 PartInfo)派发给 arm2 码放;
+- 服务 /sort_task (SortTask):start_batch / dispatch_single /
+  dispatch_to 外部入口。dispatch_to = "指定箱派发"(2026-10-06
+  语言指挥模式):抓取仍走既有锚表路径,仅放置目标箱由命令指定——
+  决策逻辑在纯逻辑模块 dispatch_logic.plan_sort_task(可离线单测),
+  本节点只做 ROS 桥接;合法箱名单与箱->臂路由由参数 bin_arm_map
+  (如 ['bin_blue:arm1','bin_red:arm2',...])给出,非法箱名拒绝并在
+  message 回执说明。
+
+串行保证(接力或单臂):同一时刻整条流水线只有一个任务在跑——
+当前件的 arm1 分拣 -> (接力)arm2 码放全部到达终态后才派发下一件;
+arm1 FAILED 则跳过接力直接下一件。
+并联分色(arm2_colors 非空)改为每条臂一个执行槽,两件可以同时在途。
+取件区仍是一把全局锁:派发时占用,收到 ZONE_CLEAR 才放开。
+ZONE_CLEAR 不是 CARRYING。来料按「谁闲推谁」,一次仍只推一件。
+
+推进决策在纯逻辑类 RelaySequencer(便于单元测试),本节点只做
+ROS 桥接:终态喂给 on_terminal,按返回的延迟动作起墙钟 timer
+(节点 use_sim_time=True,/clock 中断时 sim-time timer 永不触发会
+卡死派发,故用 threading.Timer),到期后调用 try_dispatch /
+on_relay_ready 并发布对应命令。
+
+流水线模式扩展(契约 §5/§6;新参数默认值=旧行为完全回归):
+- demand_spawn=true:启动即发一条 spawn_topic 请求(data='random')
+  并令推板前进(belt_speed);首条请求/前进命令延迟
+  belt_first_cmd_delay(墙钟,默认 20s)发布,防止早于 ros_gz 桥/gz
+  JointController 订阅就绪被丢(volatile 命令丢件 -> 第一件冻结带尾
+  死锁)。此后每件完全终态(relay_mode 下含 arm2 终态,判据=
+  on_terminal 受理且无 RELAY 动作)且已请求件数 < demand_parts 时,
+  延迟 dispatch_delay 再发一条并再推进(发生在 30s+ 后,桥已就绪,
+  不再延迟)。spawn 发布者用 transient_local QoS(depth=1):spawn
+  常驻节点由 cell_bringup 延迟启动,volatile 会丢首件请求,
+  transient_local 由迟到订阅者补收;
+- belt_control=true(推板控制,契约 §4 推板方案:TrackController 表面
+  速度在 dartsim 上不稳定已放弃;参数名沿用 belt_* 减少 yaml 面积):
+  订阅 /overhead_logical,任一未完全终态工件 world_x(=camera_x+rel_z,
+  见 camera_pose 模块)>= belt_stop_x 时发 belt_speed_topic 一条
+  -0.25(推板回位命令,不是 0.0!)并打"停推进"日志。停板不再用墙钟
+  belt_settle_delay:同一条逻辑相机消息里读模型名 pusher 的 world_x,
+  回到起点附近(SDF 姿态 x=0.12,容差 0.02)才发 0.0 并重触发
+  try_dispatch。消息时间戳是仿真时间,超过 home_timeout_sim 仍未
+  回到起点才按仿真时间兜底停板。回位期间 try_dispatch 挂起。
+  belt_control=false 时零订阅零命令发布(旧行为)。
+  已终态工件(已入箱,x>=0.56)不参与判停推进,否则从第二件起会在
+  推进开始瞬间误触发回位。
+
+L1 方案 a 扩展(2026-10-06 用户拍板;belt_control=true 且 demand_spawn=
+false 的 legacy 轮专属,pipeline/dual 零差):
+- 串推链 prime:桥就绪延迟(同 belt_first_cmd_delay)且来料满 3 件后
+  advance(belt_speed)定时 belt_chain_advance_s(=5s)-> 回位(-0.25)->
+  settle(2.6s)停板,此后推板零命令。机理(六轮取证定案):三件出生
+  占带面 0.50/0.58/0.66 且件间 3cm 空档,取件推碰沿带接力漂移,第 3
+  件 0.94-1.12 入 NO_IK 死区(L1);串推把整条链**匀速推过 2cm 矮挡停
+  板**落入板后停放带(x≈0.67-0.95,件间零空档、已离带,后续取件推碰
+  不再有接力行程),推行准静态无弹射。曾试"贴板轻串"(observe 0.675
+  判停)反而把指压挤压集中到中间件、件被侧弹下带((0.895,-0.182)
+  pre_grasp FAILED),弃;纯 5s 定时+宽窗 12/12 PLACED 定案。prime 期间
+  派发挂起(_priming);旧 observe 判停在 legacy 轮旁路(出生帧 0.58/
+  0.66 在线上会首帧误触发与 prime 链打架)。
+- 停位窗派发闸:派发前队首件 world_x(逻辑相机缓存)须落在
+  [0.40, 1.00](停放带/出生带恒放行;>1.00 = L1 真死区,<0.40 = 串推
+  失败留带尾,越窗挂起 belt_dispatch_recheck_s 复检,连续超
+  belt_dispatch_wait_max(=3) 次兜底放行并告警——绝不卡轮,执行器既有
+  NO_IK/重试通道读数不失真)。无观测放行(no_camera_pose 重试语义兜底)。
+  纯逻辑与计数在 pipeline_logic.DispatchWindowGate(离线可单测)。
+"""
+import threading
+import time
+
+import rclpy
+from rclpy.node import Node
+from rclpy.qos import (QoSDurabilityPolicy, QoSProfile,
+                       QoSReliabilityPolicy)
+from ros_gz_interfaces.msg import LogicalCameraImage
+from std_msgs.msg import Float64, String
+
+from a1_interfaces.msg import PartInfo, TaskStatus
+from a1_interfaces.srv import SortTask
+from a1_sorting_core.camera_pose import CameraPoseCache, world_xy_from_rel
+from a1_sorting_core.dispatch_logic import parse_bin_arm_map, plan_sort_task
+from a1_sorting_core.pipeline_logic import (BeltController,
+                                            DispatchWindowGate,
+                                            choose_idle_feed)
+from a1_sorting_core.relay_sequencer import DISPATCH, RELAY, RelaySequencer
+
+TERMINAL_STATES = ('COMPLETED', 'FAILED')
+
+
+class TaskDispatcherNode(Node):
+
+    def __init__(self):
+        super().__init__('task_dispatcher')
+        self.declare_parameter('auto_start', False)   # 来料后是否自动开始分拣
+        self.declare_parameter('dispatch_delay', 1.0)  # 上一件结束后延迟派发(秒)
+        # ---- 双臂接力 ----
+        self.declare_parameter('relay_mode', False)   # true: arm1 完成后接力 arm2
+        self.declare_parameter('relay_command_topic', '/task/command_arm2')
+        self.declare_parameter('relay_delay', 1.0)    # arm1 完成到派发 arm2 的延迟(秒)
+        # ---- 双臂并联分色(2026-10-04 Phase1) ----
+        # 非空时启用:逗号分隔的颜色类别(如 'yellow')在派发时直接路由给
+        # arm2 执行节点(经 relay_command_topic),arm2 从带尾取件投其
+        # bin_for_* 目标箱;其余颜色照旧 arm1。并联激活时接力语义
+        # (arm1 完成后二次码放)整体关闭——arm1 的终态即完全终态,
+        # arm2 路由件的 arm2 终态即完全终态。空 = 经典接力/单臂不变。
+        self.declare_parameter('arm2_colors', '')
+        # ---- R1-P1 停轮闸(2026-10-04 终审;默认关=定案态零行为差)----
+        # 收到 detail=motion_session_wedged 的终态 ⇒ 执行器所在 move_group
+        # 会话已中毒(后续目标一律 -4),立即停派发+停来料并丢弃队列剩余件。
+        # 否则一轮 6 件会空转出 6 个 FAILED,失败率读数被架构缺陷放大
+        # (上轮 E2 的 6/6 FAILED 即此失真,P2 复核注记)。停轮后由外层
+        # 受控重启 move_group 再整轮重跑。
+        self.declare_parameter('halt_on_wedge', False)
+        # ---- 指定箱派发(2026-10-06 语言指挥模式) ----
+        # 箱名 -> 执行臂 的合法名单与路由表,字符串列表形如
+        # ['bin_blue:arm1', 'bin_red:arm2']。空表 = 调度器不校验箱名、
+        # 不按箱路由(dispatch_to 仍接受,箱名交由执行器按本臂
+        # bin_names 校验;路由沿用既有按色路由)——默认空,旧行为零差。
+        # 默认 [''] 占位(rclpy 空数组会被推断成 BYTE_ARRAY 类型,与
+        # 参数文件里的字符串数组冲突;'' 在 parse_bin_arm_map 中忽略,
+        # 等价空表 = 不校验箱名,旧行为零差)
+        self.declare_parameter('bin_arm_map', [''])
+        self._bin_arm_map = parse_bin_arm_map(
+            ','.join(str(v) for v in
+                     self.get_parameter('bin_arm_map').value))
+        # part_id -> 放置目标箱覆盖(dispatch_to 写入,派发时注入命令,
+        # 该件到达完全终态时清除,防串到下一轮同 id 件)
+        self._bin_overrides: dict[str, str] = {}
+        # ---- 按需来料(契约 §5) ----
+        self.declare_parameter('demand_spawn', False)  # true: 按需逐件生成
+        # 单轮总来料数;<=0 = 无限持续来料(演示模式:每件完全终态后
+        # 请求下一件,配合 recorder 入箱回收长期运行不堆料)
+        self.declare_parameter('demand_parts', 3)
+        # 按需来料颜色:'random' 随机 red/green;指定 red/green 则强制
+        # 同色(验收压测用:三件同箱触发全部 3 格含 +y 边缘格)
+        self.declare_parameter('demand_color', 'random')
+        self.declare_parameter('spawn_topic', '/parts/request_spawn')  # String
+        # ---- 推板控制(契约 §4 推板方案,参数名沿用 belt_* 减少 yaml 面积) ----
+        self.declare_parameter('belt_control', False)  # true: 判停推进+派发门控
+        self.declare_parameter(
+            'belt_speed_topic', '/model/pusher/joint/pusher_slide/cmd_vel')
+        self.declare_parameter('belt_speed', 0.1)      # 推板前进速度 m/s(+x)
+        self.declare_parameter('belt_stop_x', 0.40)    # 停推进 world_x 阈值
+        self.declare_parameter('belt_settle_delay', 2.6)  # 回位命令->板停(派发放行)等待 s
+        self.declare_parameter('camera_xy', [0.65, 0.0])  # 逻辑相机安装 xy
+        # 首条 spawn 请求/推板前进命令的延迟(墙钟秒):dispatcher 启动即发
+        # 会早于 ros_gz 桥与 gz TrackController 的订阅就绪(两段发现
+        # 握手),volatile 带速命令被丢 -> 第一件冻结带尾死锁;统一
+        # 延迟 N 秒发布(spawn 是 transient_local 本不怕迟到,一并延迟
+        # 简单可靠)。0 = 不延迟(立即发布)
+        self.declare_parameter('belt_first_cmd_delay', 20.0)
+        # ---- L1 方案 a(2026-10-06 拍板):legacy 串推链 + 停位窗派发闸 ----
+        # legacy 轮(belt_control=true 且 demand_spawn=false)专属,两段:
+        # ① prime 一次性串推(三命令时序复用 pipeline:前进/回位/停板,
+        #    同 belt_first_cmd_delay 等桥就绪):advance belt_speed 定时
+        #    belt_chain_advance_s -> 回位 -0.25 -> belt_settle_delay 后
+        #    停板 0.0 放行首件派发。三件被匀速推过 2cm 矮挡停板落入板后
+        #    停放带(x≈0.67-0.95,件间零空档、已离带),取件推碰不再有
+        #    沿带接力行程,L1 漂移(0.94-1.12 NO_IK)源头消解。此后再无
+        #    任何推进命令(legacy 无逐件来料)。prime 期间派发挂起
+        #    (_priming 闸)。旧 observe 判停在 legacy 轮旁路:出生帧
+        #    0.58/0.66 在 0.58 线上/前,首帧即回位与 prime 链打架。
+        # ② 派发前队首件 world_x 须在停位窗 [0.40, 1.00]:越窗挂起
+        #    belt_dispatch_recheck_s 复检,超 belt_dispatch_wait_max 次
+        #    兜底放行并告警(绝不卡轮;执行器 NO_IK 通道不受影响)。
+        # demand_spawn 轮(pipeline/dual)两段逻辑均不激活,行为零差;
+        # belt_control=false 时亦全关(回退旧行为)。
+        self.declare_parameter('belt_chain_advance_s', 5.0)
+        # 停位窗(实测标定,2026-10-06 六轮取证定案):串推 5s 定时链把
+        # 三件匀速推过 2cm 矮挡停板、停进板后停放带 x≈0.67-0.95
+        # ("贴板轻串"变体实证会把中间件"瓜籽"侧弹下带,弃)。窗
+        # [0.40, 1.00]:停放带+出生带恒放行;>1.00 = L1 真死区(NO_IK
+        # 样本 1.00-1.12)越窗挂起复检;<0.40 = 串推失败留带尾,同拦。
+        self.declare_parameter('belt_dispatch_window_lo', 0.40)
+        self.declare_parameter('belt_dispatch_window_hi', 1.00)
+        self.declare_parameter('belt_dispatch_recheck_s', 2.0)
+        self.declare_parameter('belt_dispatch_wait_max', 3)
+
+        self._auto_start = bool(self.get_parameter('auto_start').value)
+        self._dispatch_delay = float(self.get_parameter('dispatch_delay').value)
+        self._demand_spawn = bool(self.get_parameter('demand_spawn').value)
+        self._demand_parts = int(self.get_parameter('demand_parts').value)
+        # demand_parts <= 0 -> 无限持续来料(演示模式,见 §5 注释)
+        self._demand_unlimited = self._demand_parts <= 0
+        self._demand_color = str(self.get_parameter('demand_color').value)
+        self._spawn_topic = str(self.get_parameter('spawn_topic').value)
+        self._belt_control = bool(self.get_parameter('belt_control').value)
+        self._belt_speed_topic = str(
+            self.get_parameter('belt_speed_topic').value)
+        self._belt_speed = float(self.get_parameter('belt_speed').value)
+        self._belt_stop_x = float(self.get_parameter('belt_stop_x').value)
+        self._belt_settle_delay = float(
+            self.get_parameter('belt_settle_delay').value)
+        self._belt_first_cmd_delay = float(
+            self.get_parameter('belt_first_cmd_delay').value)
+        # L1 方案 a 参数(demand_spawn=true 的 pipeline/dual 轮全部不激活)
+        self._legacy_prime = self._belt_control and not self._demand_spawn
+        self._belt_chain_advance_s = float(
+            self.get_parameter('belt_chain_advance_s').value)
+        self._win_lo = float(self.get_parameter('belt_dispatch_window_lo').value)
+        self._win_hi = float(self.get_parameter('belt_dispatch_window_hi').value)
+        self._recheck_s = float(
+            self.get_parameter('belt_dispatch_recheck_s').value)
+        self._wait_max = int(self.get_parameter('belt_dispatch_wait_max').value)
+        self._priming = self._legacy_prime   # prime 期间挂起派发
+        self._prime_timer = None             # advance->回位的保险 timer
+        self._prime_started = False          # 起链唯一性闸(双路触发)
+        self._prime_retracting = False       # 回位唯一性闸(observe/定时双入口)
+        self._prime_t0 = time.monotonic()
+        self._prime_ready_at = 0.0           # legacy_prime 时覆盖为桥就绪延迟
+        self._gate = DispatchWindowGate(
+            self._win_lo, self._win_hi, self._wait_max)
+        self._window_timer = None
+
+        self._lock = threading.Lock()
+        self._catalog: dict[str, PartInfo] = {}  # part_id -> 最新来料信息
+        self._order: list[str] = []              # 来料顺序
+        self._arm2_colors = {
+            c.strip() for c in str(
+                self.get_parameter('arm2_colors').value).split(',') if c.strip()}
+        self._halt_on_wedge = bool(self.get_parameter('halt_on_wedge').value)
+        self._halted = False   # R1-P1 停轮标志(halt_on_wedge 开启且收到判死)
+        # 并联分色激活时接力语义关闭:非路由色 arm1 终态即完全终态,
+        # 路由色由 arm2 一次做完(见 RelaySequencer 并联注释)
+        relay_mode = bool(self.get_parameter('relay_mode').value)
+        parallel_active = bool(self._arm2_colors)
+        # 指定箱派发的可用臂:只有双臂确实在线(relay 或并联)时才允许把
+        # 件路由到 arm2;单臂配置下 bin_arm_map 里的 arm2 箱在入队即被
+        # 拒绝(回执说明),避免派发到无人订阅的 /task/command_arm2 卡死
+        self._available_arms = {'arm1'} | (
+            {'arm2'} if (relay_mode or parallel_active) else set())
+        if self._bin_arm_map:
+            self._bin_arm_map = {
+                b: a for b, a in self._bin_arm_map.items()
+                if a in self._available_arms}
+        # 并联才开每臂一槽。接力/单臂仍是全局一个 _current。
+        self._per_arm_slots = parallel_active
+        self._feed_inflight = False
+        self._belt_part_id = None
+        self._off_belt: set[str] = set()
+        self._last_feed_arm = None
+        self._feed_counts = {'blue': 0, 'yellow': 0, 'red': 0, 'green': 0}
+        self._seq = RelaySequencer(
+            relay_mode=relay_mode and not parallel_active,
+            relay_delay=float(self.get_parameter('relay_delay').value),
+            dispatch_delay=float(self.get_parameter('dispatch_delay').value),
+            per_arm_slots=self._per_arm_slots)
+        self._next_timer = None   # dispatch_delay 定时器
+        self._relay_timer = None  # relay_delay 定时器
+        self._spawn_timer = None  # dispatch_delay 延迟的来料请求定时器
+        self._settle_timer = None  # 回位命令 -> 板停(settle)墙钟定时器
+
+        # ---- 流水线:按需来料 + 带控状态 ----
+        self._spawned = 0                       # 已请求来料数(_spawned 计数器)
+        self._finished_parts: set[str] = set()  # 完全终态件(判停推进时排除)
+        self._pub_spawn = None
+        self._pub_belt = None
+        self._cam_cache = None
+        self._belt = None
+        if self._demand_spawn:
+            # transient_local(depth=1):spawn 常驻节点晚于本节点启动时
+            # 补收首件请求(volatile 会丢,见模块注释)
+            self._pub_spawn = self.create_publisher(
+                String, self._spawn_topic,
+                QoSProfile(depth=1,
+                           durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+                           reliability=QoSReliabilityPolicy.RELIABLE))
+        if self._demand_spawn or self._belt_control:
+            # 推板速度命令发布:前进(demand_spawn 路径)/回位/停板
+            # (belt_control 路径),值分别为 belt_speed / -0.25 / 0.0
+            self._pub_belt = self.create_publisher(
+                Float64, self._belt_speed_topic, 10)
+        if self._belt_control:
+            cam_xy = [float(v) for v in self.get_parameter('camera_xy').value]
+            self._cam_cache = CameraPoseCache((cam_xy[0], cam_xy[1]))
+            self._belt = BeltController(stop_x=self._belt_stop_x,
+                                        settle_delay=self._belt_settle_delay,
+                                        advance_speed=self._belt_speed)
+            self.create_subscription(LogicalCameraImage, '/overhead_logical',
+                                     self._on_logical, 10)
+        if self._legacy_prime:
+            # L1 方案 a:串推定时链(与 BeltController 解耦——legacy 无逐件
+            # 来料,belt.start() 永不调用,observe 恒 None,旧 settle 门控
+            # 对 legacy 恒放行;停位保障由本 prime 链 + 派发窗门控承担)。
+            # prime 三命令时序复用 pipeline:advance(belt_speed)->
+            # retract(-0.25)-> stop(0.0,间隔 belt_settle_delay)。触发条件:
+            # 桥就绪延迟 belt_first_cmd_delay 已过 且 目录已有 >=3 件
+            # (batch 三件一次生成;不足 3 件时 +15s 兜底照推,窗口门控
+            # 仍保护);此后再无任何推进命令。保险见 _prime_retract。
+            self._prime_ready_at = self._belt_first_cmd_delay
+            self._prime_t0 = time.monotonic()
+            self._prime_timer = threading.Timer(
+                self._prime_ready_at, lambda: self._prime_maybe_start(False))
+            self._prime_timer.daemon = True
+            self._prime_timer.start()
+            self.get_logger().info(
+                f'L1 串推链已排程:≥{self._belt_first_cmd_delay}s 且来料'
+                f'满 3 件后前进 {self._belt_chain_advance_s}s -> 回位 -> '
+                f'{self._belt_settle_delay}s 停板放行派发'
+                f'(停位窗 [{self._win_lo}, {self._win_hi}])')
+
+        self._pub_command = self.create_publisher(PartInfo, '/task/command', 10)
+        relay_topic = str(self.get_parameter('relay_command_topic').value)
+        self._pub_relay = self.create_publisher(PartInfo, relay_topic, 10)
+        self.create_subscription(PartInfo, '/parts/arrival', self._on_arrival, 10)
+        self.create_subscription(TaskStatus, '/task/status', self._on_status, 10)
+        self.create_service(SortTask, '/sort_task', self._on_sort_task)
+        if parallel_active:
+            mode = (f'双臂并联分色(arm2 专收: {sorted(self._arm2_colors)}'
+                    f', 每臂一个执行槽, 取件区互斥, 来料=谁闲推谁)')
+        elif relay_mode:
+            mode = '双臂接力'
+        else:
+            mode = '单臂'
+        self.get_logger().info(
+            f'调度器就绪({mode}): /sort_task 服务可用 '
+            f'(start_batch/dispatch_single/dispatch_to)'
+            + (f', 指定箱合法名单: {sorted(self._bin_arm_map)}'
+               if self._bin_arm_map else ''))
+        if self._demand_spawn or self._belt_control:
+            if self._belt is not None:
+                home_note = (
+                    f'回位后等推板回到 x<='
+                    f'{self._belt.home_x + self._belt.home_tol:.2f},'
+                    f'仿真时间兜底 {self._belt.home_timeout_sim:.0f}s')
+            else:
+                home_note = f'回位后 settle {self._belt_settle_delay}s'
+            self.get_logger().info(
+                f'流水线: 按需来料 {self._demand_spawn}'
+                f'(计划 '
+                 + ('持续无限' if self._demand_unlimited
+                    else f'{self._demand_parts} 件')
+                 + f', 话题 {self._spawn_topic}), '
+                f'推板控制 {self._belt_control}'
+                f'(前进 {self._belt_speed} m/s, 停推进线 x>={self._belt_stop_x}, '
+                f'{home_note})')
+        if self._demand_spawn:
+            # 首件请求 + 推板前进。首条命令延迟 belt_first_cmd_delay(墙钟
+            # Timer)发布:防止早于 gz 桥/TrackController 订阅就绪被丢
+            # (见参数注释);延迟期间无任何来料,门控/计数均不受影响
+            if self._belt_first_cmd_delay > 0.0:
+                self._destroy_spawn_timer()
+                self._spawn_timer = threading.Timer(
+                    self._belt_first_cmd_delay,
+                    self._request_spawn_and_start_belt)
+                self._spawn_timer.daemon = True
+                self._spawn_timer.start()
+                self.get_logger().info(
+                    f'首件来料请求与推板前进延迟 {self._belt_first_cmd_delay}s '
+                    f'发布(等待 ros_gz 桥/gz 世界就绪)')
+            else:
+                self._request_spawn_and_start_belt()
+
+    # ---------------------------------------------------------------- 来料
+    def _on_arrival(self, msg: PartInfo):
+        with self._lock:
+            if msg.part_id not in self._catalog:
+                self._order.append(msg.part_id)
+                self.get_logger().info(
+                    f'来料登记: {msg.part_id} (类别 {msg.category})')
+                if self._auto_start:
+                    self._seq.enqueue(msg.part_id)
+                if self._per_arm_slots and self._belt_part_id is None:
+                    self._belt_part_id = msg.part_id
+            self._catalog[msg.part_id] = msg
+            hook = (self._legacy_prime and not self._prime_started
+                    and len(self._catalog) >= 3)
+        if hook:
+            # L1 串推:满 3 件即试探(_prime_maybe_start 内自校验桥就绪,
+            # 未就绪则等排程 timer,幂等安全)
+            self._prime_maybe_start(False)
+        if self._auto_start:
+            self._try_dispatch()
+
+    # ---------------------------------------------------------------- 服务
+    def _on_sort_task(self, request, response):
+        with self._lock:
+            known = set(self._catalog)
+            # 既有按色路由结果作为 default_arm(并联激活且队列为空时
+            # 无从 peek,这里只影响新入队件的初始建议;真正派发时刻在
+            # _try_dispatch 按覆盖箱名再定)
+            decision = plan_sort_task(
+                request.command, request.part_id,
+                getattr(request, 'target_bin', ''),
+                known, queue_size=self._seq.queue_size,
+                bin_arm_map=self._bin_arm_map,
+                busy_parts=self._seq.busy_parts())
+            if decision.accepted and decision.enqueue_all:
+                # 在途件(排队中/执行中)跳过:enqueue 只对 _queued/_done
+                # 去重,对执行中的 _current 会重新入队 -> 该件终态后被
+                # 二次派发(语音/外部 start_batch 撞 auto_start 时实证)
+                busy = self._seq.busy_parts()
+                for part_id in self._order:
+                    if part_id not in busy:
+                        self._seq.enqueue(part_id)
+                decision.message = (f'已入队 {self._seq.queue_size} 件,'
+                                    '开始分拣')
+            elif decision.accepted and decision.enqueue:
+                if decision.clear_override:
+                    self._bin_overrides.pop(decision.part_id, None)
+                    cached = self._catalog.get(decision.part_id)
+                    if cached is not None:
+                        cached.target_bin_override = ''
+                if decision.target_bin:
+                    self._bin_overrides[decision.part_id] = \
+                        decision.target_bin
+                    cached = self._catalog.get(decision.part_id)
+                    if cached is not None:
+                        cached.target_bin_override = decision.target_bin
+                self._seq.enqueue(decision.part_id)
+        response.accepted = decision.accepted
+        response.message = decision.message
+        self.get_logger().info(
+            f'/sort_task[{request.command}]: {decision.message}')
+        if response.accepted:
+            self._try_dispatch()
+        return response
+
+    # ---------------------------------------------------------------- 状态
+    def _on_status(self, msg: TaskStatus):
+        if msg.state == 'ZONE_CLEAR':
+            self._on_zone_clear(msg)
+            return
+        if msg.state not in TERMINAL_STATES:
+            return
+        # R1-P1 停轮:执行器报告 move_group 会话楔死判死 ⇒ 停派发+停来料
+        # (中毒会话内任何后续件都只会产出 -4 假 FAILED,读数失真)
+        if (self._halt_on_wedge and msg.state == 'FAILED'
+                and 'motion_session_wedged' in (msg.detail or '')
+                and not self._halted):
+            self._halted = True
+            with self._lock:
+                dropped = self._seq.queue_size
+            self._destroy_spawn_timer()
+            self._destroy_next_timer()
+            self.get_logger().error(
+                f'HALT_ON_WEDGE: {msg.part_id} 报会话楔死,停派发停来料,'
+                f'队列剩余 {dropped} 件不再消耗(等受控重启 move_group 后'
+                f'整轮重跑;失败率读数只计到判死件为止)')
+            return
+        actions = None
+        full_terminal = False
+        with self._lock:
+            accepted, actions = self._seq.on_terminal(
+                msg.part_id, msg.arm, msg.state)
+            if accepted:
+                arm = msg.arm or 'arm1'   # 空串视为 arm1(兼容旧消息)
+                stage = 'arm2 接力' if arm == 'arm2' else 'arm1 分拣'
+                summary = (f'{msg.part_id} {stage}完成'
+                           if msg.state == 'COMPLETED'
+                           else f'{msg.part_id} {stage}失败({msg.detail})')
+                self.get_logger().info(f'任务终态: {summary},'
+                                       f'队列剩余 {self._seq.queue_size} 件')
+                # 完全终态 = on_terminal 受理且无 RELAY 动作(单臂任意
+                # 终态 / relay 模式 arm1 FAILED 或 arm2 终态);复用
+                # DISPATCH 动作同源的判断,此后才允许来下一件
+                full_terminal = not any(kind == RELAY for kind, _ in actions)
+                if full_terminal:
+                    self._finished_parts.add(msg.part_id)
+                    # 指定箱覆盖防串:完全终态后清除该件残留覆盖
+                    # (缓存命令同步清空,防同名件下一轮串用)
+                    self._bin_overrides.pop(msg.part_id, None)
+                    cached = self._catalog.get(msg.part_id)
+                    if cached is not None:
+                        cached.target_bin_override = ''
+                    # L1 停位窗计数随件销账(同名件下一轮重新计数)
+                    self._gate.forget(msg.part_id)
+        if actions:
+            self._schedule(actions)
+        if full_terminal and self._demand_spawn:
+            if self._per_arm_slots:
+                self._request_spawn_and_start_belt()
+            else:
+                self._schedule_next_spawn()
+
+    def _on_zone_clear(self, msg: TaskStatus):
+        """安全退出。只开取件区锁,不把这条臂标成空闲。"""
+        arm = msg.arm or 'arm1'
+        with self._lock:
+            released = self._seq.release_zone(msg.part_id, arm)
+            if released:
+                self._off_belt.add(msg.part_id)
+                if self._belt_part_id == msg.part_id:
+                    self._belt_part_id = None
+                    self._feed_inflight = False
+        if not released:
+            return
+        self.get_logger().info(
+            f'取件区释放: {msg.part_id} {arm} 事件 {msg.detail}')
+        self._try_dispatch()
+        if self._per_arm_slots and self._demand_spawn:
+            self._request_spawn_and_start_belt()
+
+    # ---------------------------------------------------------------- 来料请求
+    def _schedule_next_spawn(self):
+        """完全终态后来下一件(契约 §5):延迟 dispatch_delay 再发请求。"""
+        if self._halted:      # R1-P1 停轮:不再来料
+            return
+        with self._lock:
+            if not self._demand_unlimited \
+                    and self._spawned >= self._demand_parts:
+                return
+        self._destroy_spawn_timer()
+        self._spawn_timer = threading.Timer(
+            self._dispatch_delay, self._request_spawn_and_start_belt)
+        self._spawn_timer.daemon = True
+        self._spawn_timer.start()
+
+    def _request_spawn_and_start_belt(self):
+        """发一条来料请求并令推板前进;计数进 _spawned。
+
+        并联时不发 random:谁闲推谁,一次只占一个送料槽。
+        取件区还被占、或已经有一件在送,这次直接返回。
+        """
+        with self._lock:
+            if self._halted:
+                return
+            if not self._demand_unlimited \
+                    and self._spawned >= self._demand_parts:
+                return
+            color = self._demand_color
+            feed_note = ''
+            if self._per_arm_slots:
+                if self._feed_inflight or self._seq.zone_arm is not None:
+                    return
+                choice = choose_idle_feed(
+                    self._seq.idle_arms(), self._last_feed_arm,
+                    self._feed_counts)
+                if choice is None:
+                    return
+                arm, color = choice
+                self._last_feed_arm = arm
+                self._feed_counts[color] = self._feed_counts.get(color, 0) + 1
+                self._feed_inflight = True
+                feed_note = f', 闲臂 {arm}'
+            self._spawned += 1
+            spawned = self._spawned
+            if self._belt_control:
+                self._destroy_settle_timer()
+                self._belt.start()   # 复位本轮回位/settle,门控关闭
+        request = String()
+        request.data = color
+        self._pub_spawn.publish(request)
+        self.get_logger().info(
+            f'按需来料: 已请求 {spawned}'
+            + ('' if self._demand_unlimited
+               else f'/{self._demand_parts}')
+            + f'({self._spawn_topic} <- {color}{feed_note})')
+        if self._belt_control:
+            cmd = Float64()
+            cmd.data = self._belt_speed
+            self._pub_belt.publish(cmd)
+            self.get_logger().info(f'推板前进: {self._belt_speed} m/s')
+
+    # ---------------------------------------------------------------- 推板控制
+    def _prime_maybe_start(self, force=False):
+        """prime 触发判定:桥就绪 + (来料满 3 件 或 force 兜底)。
+
+        两条腿:① 桥就绪时刻到 -> 本方法非 force 判定,满 3 件即推;
+        ② 满件前 arrival 钩子调本方法(force=False)提前试探;
+        ③ 就绪 +15s 仍未满 3 件(spawn 病态)force 兜底照推,窗门控仍
+        保护。未满足且非 force -> +2s 自检重试(arrival 钩子双保险)。
+        _prime_started 保证 advance 只发一次(多路触发去重)。
+        """
+        self._prime_timer = None
+        if self._prime_started:
+            return
+        if time.monotonic() < self._prime_t0 + self._prime_ready_at:
+            # 桥未就绪:等就绪时刻的排程 timer,不自作主张推板
+            return
+        with self._lock:
+            n = len(self._catalog)
+            enough = n >= 3
+        if not enough and not force:
+            self._prime_timer = threading.Timer(
+                2.0, lambda: self._prime_maybe_start(
+                    time.monotonic() >= self._prime_t0
+                    + self._prime_ready_at + 15.0))
+            self._prime_timer.daemon = True
+            self._prime_timer.start()
+            return
+        if not enough and force:
+            self.get_logger().warn(
+                f'L1 串推兜底触发:来料仅 {n} 件(未满 3),照常串推')
+        self._prime_started = True
+        self._prime_advance()
+
+    def _prime_advance(self):
+        """L1 串推链第 1 步:定时推进 belt_chain_advance_s(=5s)后回位。
+
+        取证定案(2026-10-06 六轮):"贴板轻串"(observe 0.675 判停)
+        反而制造新缺陷——链贴板后指压挤压集中到中间件,件被当"瓜籽"
+        侧弹下带(r3 part_2 -> (0.895,-0.182) 出带 pre_grasp FAILED);
+        定时 5s 把整条链匀速推过 2cm 矮板落入停放带(0.82-0.95,板后
+        桌面无带面低摩擦),推行全程准静态无弹射(v1 三轮 12/12 PLACED
+        实证),取件推碰不再沿带接力(件间零空档且已离带)。此后再无
+        任何推进命令(legacy 无逐件来料,永不 second start)。
+        """
+        cmd = Float64()
+        cmd.data = self._belt_speed
+        self._pub_belt.publish(cmd)
+        self.get_logger().info(
+            f'[L1 串推] 推板前进 {self._belt_speed} m/s × '
+            f'{self._belt_chain_advance_s}s(链推过矮板入停放带 0.82-0.95)')
+        self._prime_timer = threading.Timer(
+            self._belt_chain_advance_s, self._prime_retract)
+        self._prime_timer.daemon = True
+        self._prime_timer.start()
+
+    def _prime_retract(self):
+        """L1 串推链第 2 步:回位命令(同 pipeline 回位值 -0.25)。
+
+        单一入口 = advance 定时 5s 到点;_prime_retracting 幂等闸保留
+        (timer 重复触发/停机竞态防护)。
+        """
+        with self._lock:
+            if self._prime_retracting:
+                return
+            self._prime_retracting = True
+            self._prime_timer = None
+        cmd = Float64()
+        cmd.data = self._belt.retract_speed
+        self._pub_belt.publish(cmd)
+        self.get_logger().info(
+            f'[L1 串推] 推板回位 {self._belt.retract_speed} m/s,'
+            f'{self._belt_settle_delay}s 后停板放行派发')
+        self._prime_timer = threading.Timer(
+            self._belt_settle_delay, self._prime_settled)
+        self._prime_timer.daemon = True
+        self._prime_timer.start()
+
+    def _prime_settled(self):
+        """L1 串推链第 3 步:停板(0.0)并解除派发挂起。此后推板零命令。"""
+        cmd = Float64()
+        cmd.data = self._belt.stop_speed
+        self._pub_belt.publish(cmd)
+        self._prime_timer = None
+        with self._lock:
+            self._priming = False
+        self.get_logger().info('[L1 串推] 停板完成,链已串紧,放行派发')
+        self._try_dispatch()
+
+    def _destroy_prime_timer(self):
+        if self._prime_timer is not None:
+            self._prime_timer.cancel()
+            self._prime_timer = None
+
+    def _pusher_world_x(self, msg: LogicalCameraImage) -> float | None:
+        """逻辑相机里 pusher 模型的世界 x。看不见时返回 None。"""
+        cam_xy = self._cam_cache.camera_xy
+        for model in msg.model:
+            if model.name != 'pusher':
+                continue
+            position = model.pose.position
+            return world_xy_from_rel(
+                cam_xy, position.x, position.y, position.z)[0]
+        return None
+
+    def _on_logical(self, msg: LogicalCameraImage):
+        """判停推进:未完全终态工件 world_x 越线 -> 发推板回位命令一次。
+
+        已终态工件(已入箱,x>=0.56)被排除,否则从第二件起会在推进
+        开始瞬间误触发回位;world_x 换算见 camera_pose 模块(rel_z 分量)。
+        回位命令(-0.25,不是 0.0)之后,用同一条消息里的 pusher 世界坐标
+        等它回到起点附近再发板停;时间戳用消息上的仿真时间做兜底,
+        不再用墙钟 2.6 秒。
+        """
+        self._cam_cache.update(
+            (m.name, m.pose.position.x, m.pose.position.y, m.pose.position.z)
+            for m in msg.model)
+        if self._per_arm_slots:
+            # 只看这一件正在送的工件。上一件已经离区、还在搬运时,
+            # 它的坐标不能再触发停推进。
+            part = self._belt_part_id
+            names = ([part] if part and part not in self._off_belt
+                     and part not in self._finished_parts else [])
+        else:
+            names = [name for name in self._cam_cache.known_parts()
+                     if name not in self._finished_parts]
+        xs = []
+        for name in names:
+            xy = self._cam_cache.get(name)
+            if xy is not None:
+                xs.append(xy[0])
+        sim_now = (float(msg.header.stamp.sec)
+                   + float(msg.header.stamp.nanosec) * 1e-9)
+        pusher_x = self._pusher_world_x(msg)
+        with self._lock:
+            # L1 legacy 轮旁路:prime 定时链自带回位,旧 observe 判停在
+            # legacy 出生帧(0.58/0.66 在 0.58 线上/前)会首帧误触发,
+            # 与 prime 链打架 -> _legacy_prime 时不喂 _belt.observe。
+            cmd_value = (None if self._legacy_prime
+                         else self._belt.observe(xs, sim_now))
+            stop_value = None
+            stop_reason = ''
+            if not self._legacy_prime:
+                stop_value = self._belt.observe_pusher(pusher_x, sim_now)
+                if stop_value is not None:
+                    stop_reason = self._belt.home_reason
+        if cmd_value is not None:
+            # 取证(2026-10-06 问题①):触发帧打印参与判停的全部件坐标
+            det = {}
+            for n in self._cam_cache.known_parts():
+                xy = self._cam_cache.get(n)
+                det[n] = round(xy[0], 3) if xy else None
+            self.get_logger().info(
+                f'[停推进取证] xs={sorted(round(x, 3) for x in xs)} '
+                f'known={det} finished={sorted(self._finished_parts)} '
+                f'pusher_x={None if pusher_x is None else round(pusher_x, 3)}')
+            cmd = Float64()
+            cmd.data = cmd_value
+            self._pub_belt.publish(cmd)
+            self._destroy_settle_timer()
+            self.get_logger().info(
+                f'停推进: 工件 world_x >= {self._belt_stop_x},'
+                f'推板回位({cmd_value} m/s),'
+                f'等到推板回到起点 x<='
+                f'{self._belt.home_x + self._belt.home_tol:.2f} 再停板')
+        if stop_value is not None:
+            cmd = Float64()
+            cmd.data = stop_value
+            self._pub_belt.publish(cmd)
+            shown = '无' if pusher_x is None else f'{pusher_x:.3f}'
+            if stop_reason == 'position':
+                self.get_logger().info(
+                    f'推板已回到起点附近(world_x={shown}),停板并允许派发')
+            else:
+                self.get_logger().warn(
+                    f'推板回位已过仿真时间 {self._belt.home_timeout_sim:.0f}s'
+                    f'仍未到起点(world_x={shown}),按仿真时间停板并允许派发')
+            self._try_dispatch()
+
+    def _schedule(self, actions):
+        """按 RelaySequencer 给出的延迟动作起墙钟 timer(见模块注释)。"""
+        for kind, delay in actions:
+            if kind == RELAY:
+                self._destroy_relay_timer()
+                self._relay_timer = threading.Timer(delay, self._send_relay)
+                self._relay_timer.daemon = True
+                self._relay_timer.start()
+            elif kind == DISPATCH:
+                if self._next_timer is None:
+                    self._next_timer = threading.Timer(delay, self._try_dispatch)
+                    self._next_timer.daemon = True
+                    self._next_timer.start()
+
+    # ---------------------------------------------------------------- 派发
+    def _try_dispatch(self):
+        self._destroy_next_timer()
+        if self._halted:      # R1-P1 停轮闸(见 halt_on_wedge)
+            return
+        with self._lock:
+            # L1 方案 a(仅 legacy prime 链激活):串推未完成前挂起派发
+            if self._priming:
+                self.get_logger().info('派发挂起: L1 串推链进行中')
+                return
+            # belt_control=true 的门控:推板未回位停稳则挂起,等 settle
+            # 完成事件或下一次 arrival 再触发(契约 §6 步骤 5)。
+            # legacy 轮 BeltController.start() 永不触发(无逐件来料),
+            # _running=False -> 本门控恒放行;pipeline 行为零差。
+            if (self._belt_control
+                    and not self._belt.may_dispatch(time.monotonic())):
+                self.get_logger().info('派发挂起: 等待推板回位停稳(settle)')
+                return
+            # 并联分色:按队首选件类别决定执行臂(peek 不出队,真正
+            # 的出队与阶段登记在 try_dispatch(arm) 一次完成)。
+            # 指定箱派发(2026-10-06)优先于按色路由:该件有
+            # target_bin 覆盖时按 bin_arm_map 定臂;映射表未含该箱
+            # (bin_arm_map 为空)则维持按色路由,箱名交由执行器校验。
+            next_id = self._seq.peek()
+            # ---- L1 方案 a②:停位窗派发闸(仅 legacy prime 轮激活;
+            # 每拍现场读缓存,复检只由 2s 保险 timer 驱动——越窗件若
+            # 不再被相机刷新,计数兜底放行,绝不因缺观测死锁)----
+            if (self._legacy_prime and next_id is not None
+                    and self._cam_cache is not None):
+                xy = self._cam_cache.get(next_id)
+                wx = xy[0] if xy else None
+                verdict, note = self._gate.decide(next_id, wx)
+                if verdict == 'hold':
+                    self.get_logger().info(f'派发挂起(停位窗): {note}')
+                    if self._window_timer is None:
+                        self._window_timer = threading.Timer(
+                            self._recheck_s, self._window_recheck)
+                        self._window_timer.daemon = True
+                        self._window_timer.start()
+                    return
+                if verdict == 'force_allow':
+                    self.get_logger().warn(
+                        f'停位窗兜底放行(挂起超限): {note}'
+                        '(该件将按既有通道执行,NO_IK 读数不失真)')
+            to_arm2 = (next_id is not None and self._arm2_colors
+                       and self._catalog[next_id].category
+                       in self._arm2_colors)
+            if next_id is not None and next_id in self._bin_overrides:
+                ovr_arm = self._bin_arm_map.get(
+                    self._bin_overrides[next_id])
+                if ovr_arm is not None:
+                    to_arm2 = ovr_arm == 'arm2'
+            part_id = self._seq.try_dispatch(
+                'arm2' if to_arm2 else 'arm1')
+            command = None
+            if part_id is None and next_id is not None and self._per_arm_slots:
+                self.get_logger().info(
+                    f'派发挂起: {next_id} 取件区='
+                    f'{self._seq.zone_arm or "空"} '
+                    f'arm1槽={self._seq.slot("arm1") or "空"} '
+                    f'arm2槽={self._seq.slot("arm2") or "空"}')
+            if part_id is not None:
+                command = self._catalog[part_id]
+                ovr = self._bin_overrides.get(part_id, '')
+                if ovr and command.target_bin_override != ovr:
+                    # 派发副本注入覆盖(不污染缓存:缓存即命令本身时
+                    # 已在服务回调写入,这里仅兜底同步)
+                    command.target_bin_override = ovr
+        if command is not None:
+            ovr_note = (f' [指定箱 {command.target_bin_override}]'
+                        if getattr(command, 'target_bin_override', '')
+                        else '')
+            if to_arm2:
+                self._pub_relay.publish(command)
+                self.get_logger().info(
+                    f'并联派发: {part_id} (类别 {command.category})'
+                    f' -> arm2{ovr_note}'
+                    + ('，取件区上锁' if self._per_arm_slots else ''))
+            else:
+                self._pub_command.publish(command)
+                self.get_logger().info(
+                    f'派发任务: {part_id} (类别 {command.category})'
+                    f'{ovr_note}'
+                    + ('，取件区上锁' if self._per_arm_slots else ''))
+
+    def _window_recheck(self):
+        """停位窗越窗后的复检触发(2s 墙钟;窗口自愈=件被碰回带内,
+        或计数到上限兜底放行)。"""
+        self._window_timer = None
+        self._try_dispatch()
+
+    def _send_relay(self):
+        self._destroy_relay_timer()
+        with self._lock:
+            part_id = self._seq.on_relay_ready()
+            command = self._catalog[part_id] if part_id is not None else None
+        if command is not None:
+            self._pub_relay.publish(command)
+            self.get_logger().info(
+                f'派发接力任务: {part_id} -> arm2 (类别 {command.category})')
+
+    def _destroy_next_timer(self):
+        if self._next_timer is not None:
+            self._next_timer.cancel()
+            self._next_timer = None
+
+    def _destroy_relay_timer(self):
+        if self._relay_timer is not None:
+            self._relay_timer.cancel()
+            self._relay_timer = None
+
+    def _destroy_spawn_timer(self):
+        if self._spawn_timer is not None:
+            self._spawn_timer.cancel()
+            self._spawn_timer = None
+
+    def _destroy_settle_timer(self):
+        if self._settle_timer is not None:
+            self._settle_timer.cancel()
+            self._settle_timer = None
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = TaskDispatcherNode()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()

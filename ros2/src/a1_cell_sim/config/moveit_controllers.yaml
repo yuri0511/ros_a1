@@ -1,0 +1,31 @@
+# A1 工作站的 MoveIt 控制器管理配置。
+# 与官方 ur_moveit_config 的差异:cell_bringup 只激活了
+# joint_trajectory_controller(initial_joint_controller 参数),
+# 故此处仅登记该控制器并设为默认,避免 MoveIt 尝试调用
+# 未激活的 scaled_joint_trajectory_controller。
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+trajectory_execution:
+  allowed_execution_duration_scaling: 1.2
+  allowed_goal_duration_margin: 0.5
+  # 0.01->0.15(2026-10-03):P 控制失速构型(家族屏障)下,前一目标
+  # 完成时物理位姿与命令位姿差 0.05-0.08 rad,0.01 起点校验会确定性
+  # 拒掉后续所有目标(CONTROL_FAILED)卡死梯子;0.15 容住稳态偏差
+  allowed_start_tolerance: 0.15
+  execution_duration_monitoring: false
+
+moveit_simple_controller_manager:
+  controller_names:
+    - joint_trajectory_controller
+
+  joint_trajectory_controller:
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_1_joint
+      - wrist_2_joint
+      - wrist_3_joint

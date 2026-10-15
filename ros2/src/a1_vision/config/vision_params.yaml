@@ -1,0 +1,21 @@
+# A1 视觉分类参数
+/vision_classifier:
+  ros__parameters:
+    camera_topic: /overhead_camera       # gz-sim 8 图像发布在 <topic> 原样话题
+    camera_info_topic: /camera_info
+    logical_camera_topic: /overhead_logical
+    parts: [part_1, part_2, part_3]
+    # 相机安装位姿:必须与 a1_cell_sim 世界模型中的相机一致
+    camera.x: -0.10    # 布局 v2 G1 终档:柱 (-0.10,-0.48),头高 2.10,
+    camera.y: -0.48    # 图像 h_fov 1.35(与 sorting_params.yaml camera_xy /
+    camera.z: 2.10     # SDF 两 pose 同值;单测 test_world_camera_pose_matches_params 把关)
+    camera.roll_deg: 0.0
+    camera.pitch_deg: 90.0    # 俯视(视线向下)
+    camera.yaw_deg: 0.0
+    # 分类稳定性
+    # h_fov1.35/头高2.10:50mm 工件 ≈15px 直径 → 半径 14 窗口(28px)已远超
+    # 工件,混边占比升高;半径收到 7(窗口 14px≈块宽)保核心像素。
+    # G2 快照对账实测后可再调(g7 备料 docs/evidence/g2_prep/)。
+    sample_radius: 7
+    min_ratio: 0.20
+    stable_count: 3

@@ -1,0 +1,487 @@
+# 锚值状态(2026-10-05 03:3x G1 收口重灌完成):本文件全部关节锚 = 终版
+#    权威数据源 **docs/evidence/G0_anchors_v3.json**(5 位发布;v2 的 R4 修订:
+#    w3 归一到离 OLD standby 行程最短分支、三处舍入超闸锚热启动提精,发布最大
+#    残差 37.3µm ≤ 40µm 闸)。值由脚本逐字落盘零手抄;单测 (g) 项 4 段×75 组
+#    逐值核对 ⇒ 锚表再重发即刻抓漂移。
+#    两处原 TODO 已由 Lead 定档解除:①arm2 standby = **OLD 保留**(kinematics
+#    重验残差 0.0mm;quick 新档被否——standby→带尾笛卡尔腿穿自身 pan 轴投影
+#    死区,路由级 NOSOL-SEG);②相机柱终档 **[−0.10, −0.48] + 图像相机 h_fov
+#    1.2→1.35**(FOV 轴语义更正:480px 窄轴=世界 x,带缘三点走窄轴;−0.05 被
+#    relB→standby 腿 7.9mm 触边弃用)——本文件 camera_xy/recorder camera.x
+#    与 SDF 两 pose 已同步 −0.10(vision 侧 yaml 由 vision 队员跟进,Lead 转)。
+#    契约注记:pick×pick 互探 +0.1mm ⇒ **双臂不得同时到带尾、单槽串行**
+#    (调度器已串行,零行为差;relay 段与 run_acceptance dual 注释已落)。
+# 流水线模式参数覆盖(pipeline:=true 时由 sorting_demo.launch.py 追加加载,
+# 后加载覆盖 sorting_params.yaml 的同名参数;legacy 模式完全不加载本文件)。
+# 几何依据 docs/pipeline_contract.md §10 + **布局 v2 docs/layout_v2_spec.md**;
+# 全部关节锚值 = G0 定档表 docs/notes_kinematics_v2.md §1/§2(离线预检:
+# FK ≤0.04mm、带载 τ_lift<30 N·m、mesh 净空 真缺口 0;Lead 亲测复核)。
+# ============================================================ 布局 v2(2026-10-04 G1)
+# arm1(北排)= bin_blue(0.30,+0.28) / bin_yellow(0.90,+0.28);
+# arm2(南排)= bin_red(0.30,-0.28) / bin_green(0.90,-0.28);四箱一箱一色绝不混色。
+# 两臂同款低肩镜像(基座 (0.60,±0.47) 桌缘外落地,pan 轴 z=0.5645),
+# 相机立柱终档 (-0.10,-0.48) 头高 2.10(图像 h_fov 1.35)。
+# **选档口径(Lead 派单 + G0 notes)**:默认启用 **A 档**(carryA z=1.08 +
+# settle 0.99/0.954 触底对)。旧 E122 用 B 档(carryB 1.22 + 低释 relB 1.046)
+# 是为了绕 arm2 高肩的 τ 墙 36.3~44.1 N·m;v2 低肩镜像后两臂 τ 逐值对称、
+# 箱格 carryA τ 最大仅 13.30、settle ≤12.50(墙已构造性消解),A 档 τ 远优,
+# 故默认 A 档。**B 档整组锚值以注释保留在本文件末尾区,G3 楔死备选档**
+# (Lead 实测后可能提升为定档),默认不启用。
+# 带驱动方案:TrackController 在 dartsim 上不稳定已弃;推板真实接触推进
+# (世界 pusher 模型,JointController 速度话题,见 §4 修订)。
+/task_dispatcher:
+  ros__parameters:
+    demand_spawn: true          # 按需来料:终态后请求下一件(§5)
+    demand_parts: 3             # 单轮总来料数(轮内 part_1..3);launch
+                                # 参数 demo_parts 会覆盖此值(默认 0=
+                                # 无限持续来料,演示路径)
+    demand_color: random         # random=随机四色池(spawn_parts.RANDOM_COLORS);
+                                 # 可强制同色压测三格
+    spawn_topic: /parts/request_spawn
+    camera_xy: [-0.10, -0.48]   # 问题①定罪修复(2026-10-06):v2 柱终档
+                                # 同值;此前缺失 ⇒ 判停用默认 0.65,world_x
+                                # 恒偏 +0.75,停推进线 0.58 在工件出生帧
+                                # 即触发(取证:part 出生 0.18 判 0.93),
+                                # 推板 85ms 即回位,物块滞留带缘从未被推
+    belt_control: true          # 来料推进+停位+派发门控(语义见上,发推板命令)
+    belt_speed_topic: /model/pusher/joint/pusher_slide/cmd_vel
+    belt_speed: 0.1             # 推板前进速度 m/s
+    belt_stop_x: 0.58           # 工件 world_x 停位线 -> 板回位(停位 x≈0.60;
+                                # 给探针 +x 0.04 后前缘留 4cm 挡板余量)。
+                                # 2026-10-04 用户拍板拉长带:带面 x 0.35→0.60
+                                # (覆盖 0.15..0.75)、挡停板 0.47→0.71、推板
+                                # 上限 0.44→0.59,本值随之 0.34→0.58(带与板
+                                # 同向平移 +0.24 ⇒ "停位→板内缘"相对几何与旧值
+                                # 逐字等价:工件前缘 0.625 对板内缘 0.705 = 8cm,
+                                # 与旧 0.385 对 0.465 同)。**注:带尾取件目标
+                                # 随停位右移到 (0.60, 0),相关 carry/pick 锚值
+                                # 待 Lead 重发新锚表后再接(当前锚表按旧基座帧解,
+                                # Lead 已判定作废)。**
+    belt_settle_delay: 2.6      # 板回位(1.3s)+停稳+视觉投票余量,后才派发
+    # ---- 指定箱派发(2026-10-06 语言指挥模式) ----
+    # dispatch_to 命令的合法箱名单 + 箱->执行臂路由表。单臂轮(dual_arm
+    # 关)里 arm2 箱在节点启动时自动剔除 -> 语音"放到红箱"会被服务回执
+    # 拒绝而非静默失败;双臂轮四箱全合法。抓取段不受影响(锚表路径),
+    # 仅放置目标箱被命令覆盖;红线锚值/判据阈值零改动。
+    bin_arm_map: ['bin_blue:arm1', 'bin_yellow:arm1',
+                  'bin_red:arm2', 'bin_green:arm2']
+
+/pick_place_executor:
+  ros__parameters:
+    # 规划仍走 move_group。执行改走本臂关节控制器,另一台臂才能同时动。
+    # 默认关。流水线这轮打开。不删 move_group 发送前的执行槽等待。
+    split_plan_execute: true
+    controller_action: /joint_trajectory_controller/follow_joint_trajectory
+    pose_from_camera: true      # 取件 xy 用逻辑相机真值(推板停位由物理决定,
+                                # PartInfo.pose 是推进中识别值,会过期)
+    feed_z: 0.805               # 带面工件静置中心(带顶 0.78 + 半边 0.025)
+    # 相机安装 xy:布局 v2 定档(与基表同值,显式重复以自证接线完整;
+    # 唯一改动点在基表 sorting_params.yaml,代码默认 0.65/0.0 不动)
+    camera_xy: [-0.10, -0.48]
+    # 静态下垂标记(弯肘族近零,0=无补偿;留参数作文档)
+    # 判定目标 = anchor - 此值;补偿本身已加进 anchor 关节角)
+    # 沿革:2026-10-02 的近直肘族锚**内含 +0.2306 rad 前置补偿**(满伸展下
+    # P 控制稳态下垂);布局 v2 的 A 档锚 = G0 **纯 FK 目标值**(逐锚 FK
+    # 残差 ≤37µm,未含下垂前置),因 v2 全族 lift ∈ -1.70~-2.06 属深折族
+    # (2026-10-02 实证"深折构型零下垂,tool0 精确到命令值")。若 G2/G3
+    # 实测 carry 位下垂超 place_release 闸 tol 0.05,按物理成因处理并报
+    # Lead,**不许放宽判据掩盖**(铁律 1)。
+    carry_lift_comp: 0.0
+    # ---- 放置锚定 A 档(终版数据源 = docs/evidence/G0_anchors_v3.json,
+    #      Lead 2026-10-05 03:3x G1 收口重灌;值由脚本从 JSON 落盘,零手抄)。
+    #    闸(一字未放宽):fk<=40um、带载 tau_lift<30N·m、净距惩罚后>=8mm
+    #    belt_stop(沿 v2 定案口径)= [0.6, 0.0];v3 meta.pole_final = -0.1(相机柱终档,G1 已按此接 SDF/yaml)。
+    #    v3 = v2 的 R4 修订:w3 归一到离 OLD standby 最短行程分支    #    (±2π 同位姿);发布残差最大 37.3um,arm1 最大 PTP 2.81 rad。
+    #    64 锚 0 NOSOL;A 档带载 tau 最大 13.26(箱格),两臂逐值对称。
+    #    槽位映射(Lead 硬约束):carry_anchor{1..6} 六槽一一对应六格,
+    #    arm1 1..3=蓝格/4..6=黄格,arm2 1..3=红格/4..6=绿格;
+    #    carry_anchorN_xy = 名义格心(箱心 + bin_grid_offsets,与 JSON
+    #    target 的 xy 逐值一致)⇒ _settle_pairs 键互异;六槽全非 NaN。
+    #    B 档(carryB 1.22 / relB 1.046)全套见文件末尾注释区,G3 备选。
+    carry_anchor1_xy: [0.27, 0.23]
+    carry_anchor1_joints: [-1.2748, -1.7008, 1.1843, -1.0543, -1.5708, -4.41639]  # blue1.carryA tau=13.26 tau_c=14.509 fk=13.29us pan=-1.2748 r=0.408
+    carry_anchor2_xy: [0.30, 0.28]
+    carry_anchor2_joints: [-1.391, -1.8225, 1.277, -1.0253, -1.5708, -4.53259]  # blue2.carryA tau=7.944 tau_c=9.01 fk=15.05us pan=-1.3910 r=0.355
+    carry_anchor3_xy: [0.27, 0.33]
+    carry_anchor3_joints: [-1.5506, -1.8149, 1.2717, -1.0277, -1.5708, -4.69219]  # blue3.carryA tau=8.279 tau_c=9.357 fk=37.3us pan=-1.5506 r=0.358
+    carry_anchor4_xy: [0.87, 0.23]
+    carry_anchor4_joints: [0.4662, -1.8085, 1.2673, -1.0296, -1.5708, -2.6754]  # yellow1.carryA tau=8.557 tau_c=9.644 fk=25.93us pan=+0.4662 r=0.361
+    carry_anchor5_xy: [0.90, 0.28]
+    carry_anchor5_joints: [0.6214, -1.8225, 1.277, -1.0253, -1.5708, -2.5202]  # yellow2.carryA tau=7.944 tau_c=9.01 fk=7.19us pan=+0.6214 r=0.355
+    carry_anchor6_xy: [0.87, 0.33]
+    carry_anchor6_joints: [0.6388, -1.937, 1.3468, -0.9806, -1.5708, -2.5028]  # yellow3.carryA tau=2.887 tau_c=3.772 fk=17.43us pan=+0.6388 r=0.304
+    carry_settle_top1_joints: [-1.2748, -1.7855, 1.5016, -1.2869, -1.5708, -4.41639]  # blue1.setTopA tau=11.481 tau_c=12.729 fk=6.47us pan=-1.2748 r=0.408
+    carry_settle_bottom1_joints: [-1.2748, -1.8056, 1.6112, -1.3764, -1.5708, -4.41639]  # blue1.setBotA tau=11.063 tau_c=12.312 fk=20.32us pan=-1.2748 r=0.408
+    carry_settle_top2_joints: [-1.391, -1.9125, 1.589, -1.2473, -1.5708, -4.53259]  # blue2.setTopA tau=6.108 tau_c=7.174 fk=11.98us pan=-1.3910 r=0.355
+    carry_settle_bottom2_joints: [-1.391, -1.936, 1.6989, -1.3337, -1.5708, -4.53259]  # blue2.setBotA tau=5.638 tau_c=6.703 fk=12.9us pan=-1.3910 r=0.355
+    carry_settle_top3_joints: [-1.5506, -1.9044, 1.584, -1.2504, -1.5708, -4.69219]  # blue3.setTopA tau=6.448 tau_c=7.526 fk=18.7us pan=-1.5506 r=0.358
+    carry_settle_bottom3_joints: [-1.5506, -1.9276, 1.6938, -1.337, -1.5708, -4.69219]  # blue3.setBotA tau=5.982 tau_c=7.059 fk=26.72us pan=-1.5506 r=0.358
+    carry_settle_top4_joints: [0.4662, -1.8977, 1.5798, -1.2528, -1.5708, -2.6754]  # yellow1.setTopA tau=6.73 tau_c=7.817 fk=30.99us pan=+0.4662 r=0.361
+    carry_settle_bottom4_joints: [0.4662, -1.9208, 1.6896, -1.3396, -1.5708, -2.6754]  # yellow1.setBotA tau=6.267 tau_c=7.354 fk=21.75us pan=+0.4662 r=0.361
+    carry_settle_top5_joints: [0.6214, -1.9125, 1.589, -1.2473, -1.5708, -2.5202]  # yellow2.setTopA tau=6.108 tau_c=7.174 fk=10.92us pan=+0.6214 r=0.355
+    carry_settle_bottom5_joints: [0.6214, -1.936, 1.6989, -1.3337, -1.5708, -2.5202]  # yellow2.setBotA tau=5.638 tau_c=6.703 fk=12.84us pan=+0.6214 r=0.355
+    carry_settle_top6_joints: [0.6388, -2.036, 1.6566, -1.1914, -1.5708, -2.5028]  # yellow3.setTopA tau=0.956 tau_c=1.841 fk=28.08us pan=+0.6388 r=0.304
+    carry_settle_bottom6_joints: [0.63875, -2.06435, 1.76723, -1.27368, -1.5708, -2.50284]  # yellow3.setBotA tau=0.418 tau_c=1.303 fk=2.7us pan=+0.6388 r=0.304
+    settle_touch_z: 0.958           # 触底判定:tool0 世界 z ≤ 此值
+                                    # (触底几何位 0.954,零下垂下末级
+                                    # 必达;+4mm 容 TF/微振;定值不动)
+    place_drop_clearance: 0.09  # 松爪高度:指尖(tool0-0.231)须高出箱壁顶
+                                # 0.815(0.06 时低 3mm,手指犁壁甩飞工件,联调实证)
+    attach_follow: verified_only  # 验证通过后纯物理夹持搬运(§8 联调修订)
+    attach_rate_hz: 80.0        # 跟随提频(搬运失真修复 2026-10-09;默认 40=legacy)
+    # 预收口(2026-10-08 晚,HANDOFF-20261008 §十六):闭爪前先把两指
+    # 内缘间隙收到 0.052+2*gap=62mm(工件 50mm 两侧各余 6mm),把轻触
+    # 段单指空扫从 41mm 压到 ~6mm,消掉"单指长距推楔工件→对侧指卡
+    # 全开限位钉死"构型。0=禁用(legacy 零行为差)。
+    gripper_pre_close_gap: 0.005
+    gripper_pre_close_force: -1.5
+    gripper_pre_close_wait: 0.5
+    gripper_descend_gap: 0.015   # 下探收窄:82mm 入带(带缘余量 27mm)
+    pick_center_tol: 0.008   # 实测对中:偏心>8mm 悬停平移重下探(§十六;0=禁用)
+    pick_center_max: 0.05    # 偏心>50mm 判失败走重试(带面漂移超窗,不硬追)
+    gripper_close_lift_z: 0.012  # 闭爪抬深:指底离带 10mm,消蹭带冻结(§十六)
+    vel_scale: 0.2               # 2026-10-05 G2:带尾构型 verify_probe/lift
+    acc_scale: 0.2               # 短 LIN 的 elbow 需求 6.10 rad/s² 踩 Pilz
+                                 # 5.0 硬限(0.25 时三轮两轮随机耗尽;降 vel
+                                 # 拉长时间,加速度需求 ∝1/t² 降至 ~3.9)。
+                                 # 0.2 的 >60s 爬行前科属 leg2 边界 LIN,
+                                 # 该腿已被 carry_anchor/settle 全锚 PTP
+                                 # 替代退役(2026-10-04),风险前提不存在
+    # 2026-10-02:acc 0.2 时 leg2 LIN(边界位姿)时间参数化疑似被拉成
+    # >60s 爬行轨迹(JTC 受理后 60s 无完成,executor 超时;0.3 时上会话
+    # 多轮 ~2s 完成)——维持 0.3 不动
+    # carry_safe_z:布局 v2 **两臂统一 1.08**(G0 carryA 域 = z 1.08,τ ≤13.3)。
+    # 沿革:旧 1.05(单臂箱 (0.35/0.50,0.20) 时代)与旧 1.22(arm2 高肩 B 档)
+    # 均随 v2 作废;carry_safe_z 仅用于 carry_rise(取件点上方 LIN)+
+    # 释放闸目标,箱口搬运高度由 6 个 carry_anchor 关节角承载。
+    carry_safe_z: 1.08
+    # open_loop JTC 下命令完成早于物理到位(错位 ~0.5s),采样窗必须覆盖
+    # 探针的物理运动全程:0.5s 不够,1.5s 实证稳定
+    verify_sample_span: 1.5
+    tcp_z_offset: 0.204         # 2026-10-04 Phase0 定档(原 0.208):减小=指尖
+                                # 更低/包覆更深(URDF 实算指尖=feed_z+tcp_z-0.231,
+                                # 0.208 时名义指尖高于块底仅 2mm,pick_settle 闸
+                                # ±20mm 容差使包覆在 28-48mm 浮动,浅咬即扫帚
+                                # 首败);0.204 名义穿带面 2mm,带面接触把深度
+                                # 方差截断,包覆钉在 ~50mm。实证 EG1a 两批 32 件:
+                                # attempt-1 失败 2/32=6.2%(基线 4/24=16.7%),
+                                # 0 新签名,16+16 全 PLACED。合法域 [0.201,0.231]。
+                                # **G0 的 pick204 锚即按 tcp=0.204 解**(tool0
+                                # 1.009),与本值自洽。legacy 0.211 不动。
+    # 箱内 3 格:对角布局(与每臂 6 个 carry anchor 一一对应;y ±0.05:
+    # 相邻格方块 |Δy|=5cm 恰好零穿透,消除互碰弹开——±0.045 时角线互穿
+    # 2x5mm,物理引擎把后放件推离落点 4.5cm,2026-10-03 实证。G0 复核:
+    # 蓝/黄格心 = 箱心+本偏移,与 §2 锚表 FK xy 逐值一致)
+    bin_grid_offsets.x: [-0.03, 0.0, -0.03]
+    bin_grid_offsets.y: [-0.05, 0.0, 0.05]
+    # ---- 路由与料区(arm1 = 北排,不暴露南排)----
+    # 四箱一箱一色:blue→bin_blue、yellow→bin_yellow。
+    # red/green 也给了映射(便于读),但 **bin_names 只含北排两箱** ⇒
+    # 误路由到 arm1 的红/绿件由 _bin_for() 以 unknown_category 立即判
+    # FAILED(不动臂、不投错箱)——双臂并联时红/绿由 dispatcher 的
+    # arm2_colors 路由给 arm2,arm1 永远不该碰南排。
+    # (Lead 派单口径:按 launch 现有 override 逻辑,launch 不覆盖执行器
+    #  bin_names ⇒ 由本文件决定,单臂/双臂都只给北排,防南排暴露。)
+    bin_for_blue: bin_blue
+    bin_for_yellow: bin_yellow
+    bin_for_red: bin_red
+    bin_for_green: bin_green
+    bin_names: [bin_blue, bin_yellow]
+    # place_joints_* 必须显式全 NaN(节点内置默认值非 NaN:bin_A/bin_B 是
+    # 朝天夹爪时代旧标定、新箱名默认 [0]*6 全零构型,都会架空 carry_anchor 链)
+    place_joints_bin_blue: [.nan, .nan, .nan, .nan, .nan, .nan]
+    place_joints_bin_yellow: [.nan, .nan, .nan, .nan, .nan, .nan]
+    bin_blue.x: 0.30
+    bin_blue.y: 0.28
+    bin_blue.z: 0.745             # 箱内静置中心(内底 0.72 + 0.025)
+    bin_yellow.x: 0.90
+    bin_yellow.y: 0.28
+    bin_yellow.z: 0.745
+# 带尾远距取件:LIN 采样有 KDL 分支翻转 + Pilz 加速度违规双重风险
+# (2026-10-05 G2 实证:descend_1/3 elbow 6.10 rad/s² 超 1.5 限,三轮
+# 确定性 PLANNING_FAILED),与 arm2 段/本文件锚位注释契约一致用 PTP
+    pick_descend_linear: false
+    descend_steps: 3
+    # ---- 带尾取件锚(终版口径:belt_stop = (0.60, 0),拉长带后新停位)----
+    # 协议真序(与执行器一致):先 PTP 到带尾上空 rise(tool0 z=1.080),
+    # 再按 center_z + tcp_z_offset 垂直下探(pick_descend_linear=false)
+    # 到 JSON.pick 的 tool0 z=1.009(tcp 0.204 定档下的
+    # 抓取深度)⇒ pick 锚已并入 "rise + 笛卡尔下探",不作独立生效键,
+    # 只在下方注释留标定对照。
+    # **服务带契约 |y| <= 0.019**(Lead 00:3x 硬约束):终版表只解 y=0
+    # 一条;旧 ±0.05 兜底槽(带外 r 0.573、tau 28.8 余量小)已删 ⇒
+    # 第二槽置 1e9 哨兵禁用,越带服务属违约而非配置缺口。
+    pick_anchor1_xy: [0.60, 0.0]
+    pick_anchor1_joints: [-0.2876, -1.552, 1.0458, -1.0646, -1.5708, -3.42919]  # rise tau=19.613 tau_c=21.072 fk=22.94us pan=-0.2876 r=0.470
+    pick_anchor2_xy: [1e9, 1e9]
+    pick_anchor2_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    # 下探目标标定对照(JSON.pick,同 xy,tool0 z=1.009):
+    #   [-0.2876, -1.6237, 1.3136, -1.2607, -1.5708, -3.42919]  # pick tau=18.083 tau_c=19.542 fk=32.05us pan=-0.2876 r=0.470
+    # 下探目标标定对照(JSON.pick,同 xy,tool0 z=1.009):
+    #   [-0.2876, -1.6237, 1.3136, -1.2607, -1.5708, 2.8540]  # pick tau=18.083 tau_c=19.542 fk=3.95us pan=-0.2876 r=0.470
+    # 箱内取件锚(6 槽)全部置空:xy>=1e8 在执行器内被过滤(并联/流水线
+    # 都不经箱内取件)
+    pick_grasp_anchor1_xy: [1e9, 1e9]
+    pick_grasp_anchor1_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor2_xy: [1e9, 1e9]
+    pick_grasp_anchor2_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor3_xy: [1e9, 1e9]
+    pick_grasp_anchor3_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor4_xy: [1e9, 1e9]
+    pick_grasp_anchor4_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor5_xy: [1e9, 1e9]
+    pick_grasp_anchor5_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor6_xy: [1e9, 1e9]
+    pick_grasp_anchor6_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+
+# ---- arm2:布局 v2 南排红/绿独立分拣臂(dual_arm+arm2_colors 时启用)----
+# 本段重写为 v2 口径(2026-10-04 G1):arm2 从"高肩立柱投 bin_C 的
+# 实验臂"改为"与 arm1 同款低肩镜像、朝 +y、管南排 bin_red/bin_green"。
+# 锚表 = docs/notes_kinematics_v2.md §2 arm2 表(G0 离线预检,与 arm1 表
+# **逐值对称** ⇒ 孪生成立;τ 墙 36.3~44.1 在低肩+箱 r≈0.36 下消解)。
+# 旧 E122 高 carry(1.22)+低释(1.046)全套 B 档锚以注释保留在文件末尾,
+# 作"G3 楔死备选档"(Lead 派单:默认不启用)。
+/pick_place_relay:
+  ros__parameters:
+    split_plan_execute: true
+    controller_action: /arm2_joint_trajectory_controller/follow_joint_trajectory
+    arm_name: arm2
+    command_topic: /task/command_arm2
+    pose_from_camera: true
+    camera_xy: [-0.10, -0.48]
+    group_name: arm2_ur_manipulator
+    planning_frame: world
+    tool_frame: arm2_tool0
+    joint_names: [arm2_shoulder_pan_joint, arm2_shoulder_lift_joint,
+                  arm2_elbow_joint, arm2_wrist_1_joint, arm2_wrist_2_joint,
+                  arm2_wrist_3_joint]
+    gripper_topic: /arm2_gripper_controller/commands
+    gripper_status_topic: /arm2/gripper/status
+    gripper_open: 8.0
+    gripper_closed: -8.0
+    gripper_joint_count: 2
+    gripper_wait: 1.0
+    # ---- 取件源:传送带尾(停位 x≈0.34-0.38,y≈0;与 arm1 同一带尾)----
+    feed_z: 0.805               # 带面工件静置中心(带顶 0.78+半边 0.025)
+    tcp_z_offset: 0.204         # Phase0 定档,与 arm1 同(带面取件同几何)
+    verify_probe_offset: 0.04   # 带面探针全幅(基表 0.033 是箱内缩幅)
+    verify_probe_linear: false  # G3:arm2 深折构型短 LIN 被 Pilz 拉成
+                                  # >60s 爬行(r1c 实证);PTP 端点位移不变,
+                                  # 弧线由 verify_follow 物理判据兜底
+    verify_probe_pan_delta_rad: 0.085  # G3 根治:关节空间 pan 弧探针
+                                       # (离线 FK 标定 +0.085 rad ⇒ tool0 −x 40mm,
+                                       #  远离挡停板;零在线 IK,消 60s 悬置竞态)
+    verify_sample_span: 1.5
+    attach_follow: verified_only
+    attach_rate_hz: 80.0        # 跟随提频(搬运失真修复 2026-10-09;默认 40=legacy)
+    # 预收口(同 arm1 段注释,§十六):arm2 钉死实录 L=+0.040/R=-0.003
+    gripper_pre_close_gap: 0.005
+    gripper_pre_close_force: -1.5
+    gripper_pre_close_wait: 0.5
+    gripper_descend_gap: 0.015   # 下探收窄:82mm 入带(带缘余量 27mm)
+    pick_center_tol: 0.008   # 实测对中:偏心>8mm 悬停平移重下探(§十六;0=禁用)
+    pick_center_max: 0.05    # 偏心>50mm 判失败走重试(带面漂移超窗,不硬追)
+    gripper_close_lift_z: 0.012  # 闭爪抬深:指底离带 10mm,消蹭带冻结(§十六)
+    place_drop_clearance: 0.09  # settle 触底链激活(同 arm1 放入式放置)
+    settle_touch_z: 0.958       # 触底判定同 arm1(触底几何 0.954+4mm 容差)
+    # ---- 待机位 = G0 定档 arm2 值(与 dual xacro initial_positions 同值)----
+    standby_x: 0.300
+    # ✔ 原 TODO①已解除(Lead 2026-10-05 03:3x 定档):**arm2 standby = OLD 保留**
+    #   值 [1.1104, -1.8345, 1.0582, -0.7945, -1.5708, 1.1104] 即终值(kinematics
+    #   重验残差 0.0mm,G0_g0full.json standby.arm2.keep)。quick 新档(az=90°/180°)
+    #   被否决:standby→带尾的笛卡尔腿直穿自身 pan 轴投影(局部 r→0,家族带内
+    #   IK 无解 = NOSOL-SEG,路由级事实)。三处同步(xacro/两表 relay/单测常量)
+    #   已由 (h) 闸锁死,勿单点改。
+    standby_y: -0.470
+    standby_z: 1.150
+    standby_joints: [1.1104, -1.8345, 1.0582, -0.7945, -1.5708, 1.1104]
+    # ---- 契约注记(G0 终档,Lead 2026-10-05)----
+    # pick×pick 互探实测 **仅 +0.1mm**(两臂同时到带尾 = 亚毫米级互撞,
+    # G0_g0full.json mutual_special;其余互探最紧 +225.7mm ⇒ 只有带尾
+    # 共域危险)⇒ **双臂不得同时到带尾,单槽串行**是硬契约。现状:
+    # task_dispatcher 的派发门控(belt_control 停推进→settle→单件放行)
+    # 已天然串行化(带尾同一时刻只有一件、只有一个臂在取),本注记
+    # 固化"为什么",调度器零行为改动。若未来加并行取件优化,必须先
+    # 重解互探(勿依赖 +0.1mm 之上还有余量——那就是零)。
+    # ---- 带尾取件锚(终版口径:belt_stop = (0.60, 0),拉长带后新停位)----
+    # 协议真序(与执行器一致):先 PTP 到带尾上空 rise(tool0 z=1.080),
+    # 再按 center_z + tcp_z_offset 垂直下探(pick_descend_linear=false)
+    # 到 JSON.pick 的 tool0 z=1.009(tcp 0.204 定档下的
+    # 抓取深度)⇒ pick 锚已并入 "rise + 笛卡尔下探",不作独立生效键,
+    # 只在下方注释留标定对照。
+    # **服务带契约 |y| <= 0.019**(Lead 00:3x 硬约束):终版表只解 y=0
+    # 一条;旧 ±0.05 兜底槽(带外 r 0.573、tau 28.8 余量小)已删 ⇒
+    # 第二槽置 1e9 哨兵禁用,越带服务属违约而非配置缺口。
+    pick_anchor1_xy: [0.60, 0.0]
+    pick_anchor1_joints: [-0.2876, -1.552, 1.0458, -1.0646, -1.5708, -0.2876]  # rise tau=19.613 tau_c=21.072 fk=22.94us pan=-0.2876 r=0.470
+    pick_anchor2_xy: [1e9, 1e9]
+    pick_anchor2_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    # 下探目标标定对照(JSON.pick,同 xy,tool0 z=1.009):
+    #   [-0.2876, -1.6237, 1.3136, -1.2607, -1.5708, -0.2876]  # pick tau=18.083 tau_c=19.542 fk=32.05us pan=-0.2876 r=0.470
+    # 下探目标标定对照(JSON.pick,同 xy,tool0 z=1.009):
+    #   [-0.2876, -1.6237, 1.3136, -1.2607, -1.5708, -0.2876]  # pick tau=18.083 tau_c=19.542 fk=3.95us pan=-0.2876 r=0.470
+    # 箱内取件锚 6 槽全部置空(xy>=1e8 被过滤)
+    pick_grasp_anchor1_xy: [1e9, 1e9]
+    pick_grasp_anchor1_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor2_xy: [1e9, 1e9]
+    pick_grasp_anchor2_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor3_xy: [1e9, 1e9]
+    pick_grasp_anchor3_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor4_xy: [1e9, 1e9]
+    pick_grasp_anchor4_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor5_xy: [1e9, 1e9]
+    pick_grasp_anchor5_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_grasp_anchor6_xy: [1e9, 1e9]
+    pick_grasp_anchor6_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    pick_descend_linear: false
+    descend_steps: 3
+    pre_grasp_height: 0.08
+    lift_height: 0.06
+    lift_rungs: 3              # 浅折带载 P 稳态误差大,小步建矩(基表结论)
+    carry_safe_z: 1.08         # 布局 v2 两臂统一(旧 1.22 高 carry 属 E122
+                               # B 档,见文件末尾备选档注释)
+    vel_scale: 0.2               # G3(2026-10-05):0.25 时 arm2 带尾构型
+    acc_scale: 0.2               # verify_probe LIN 在 t≈0.54s IK 采样踩
+                                 # Pilz 加速度限(r1b 三轮耗尽);与 arm1
+                                 # G2 实证档对齐 0.2
+    # ---- 投放目标:南排红/绿(一箱一色)----
+    bin_for_red: bin_red
+    bin_for_green: bin_green
+    bin_for_yellow: bin_yellow   # 误路由件:blue/yellow 不在本臂 bin_names
+    bin_for_blue: bin_blue       # ⇒ _bin_for() 以 unknown_category 判 FAILED
+    bin_names: [bin_red, bin_green]
+    bin_grid_offsets.x: [-0.03, 0.0, -0.03]
+    bin_grid_offsets.y: [-0.05, 0.0, 0.05]
+    bin_red.x: 0.30
+    bin_red.y: -0.28
+    bin_red.z: 0.745
+    bin_green.x: 0.90
+    bin_green.y: -0.28
+    bin_green.z: 0.745
+    place_joints_bin_red: [.nan, .nan, .nan, .nan, .nan, .nan]
+    place_joints_bin_green: [.nan, .nan, .nan, .nan, .nan, .nan]
+    # ---- 放置锚定 A 档(终版数据源 = docs/evidence/G0_anchors_v3.json,
+    #      Lead 2026-10-05 03:3x G1 收口重灌;值由脚本从 JSON 落盘,零手抄)。
+    #    闸(一字未放宽):fk<=40um、带载 tau_lift<30N·m、净距惩罚后>=8mm
+    #    belt_stop(沿 v2 定案口径)= [0.6, 0.0];v3 meta.pole_final = -0.1(相机柱终档,G1 已按此接 SDF/yaml)。
+    #    v3 = v2 的 R4 修订:w3 归一到离 OLD standby 最短行程分支    #    (±2π 同位姿);发布残差最大 37.3um,arm1 最大 PTP 2.81 rad。
+    #    64 锚 0 NOSOL;A 档带载 tau 最大 13.26(箱格),两臂逐值对称。
+    #    槽位映射(Lead 硬约束):carry_anchor{1..6} 六槽一一对应六格,
+    #    arm1 1..3=蓝格/4..6=黄格,arm2 1..3=红格/4..6=绿格;
+    #    carry_anchorN_xy = 名义格心(箱心 + bin_grid_offsets,与 JSON
+    #    target 的 xy 逐值一致)⇒ _settle_pairs 键互异;六槽全非 NaN。
+    #    B 档(carryB 1.22 / relB 1.046)全套见文件末尾注释区,G3 备选。
+    carry_anchor1_xy: [0.27, -0.33]
+    carry_anchor1_joints: [0.78856, -1.81486, 1.27173, -1.02767, -1.5708, 0.78856]  # red1.carryA tau=8.279 tau_c=9.357 fk=3.07us pan=+0.7886 r=0.358
+    carry_anchor2_xy: [0.30, -0.28]
+    carry_anchor2_joints: [0.6214, -1.8225, 1.277, -1.0253, -1.5708, 0.6214]  # red2.carryA tau=7.944 tau_c=9.01 fk=7.19us pan=+0.6214 r=0.355
+    carry_anchor3_xy: [0.27, -0.23]
+    carry_anchor3_joints: [0.6092, -1.7008, 1.1843, -1.0543, -1.5708, 0.6092]  # red3.carryA tau=13.26 tau_c=14.509 fk=13.29us pan=+0.6092 r=0.408
+    carry_anchor4_xy: [0.87, -0.33]
+    carry_anchor4_joints: [-1.5461, -1.937, 1.3468, -0.9806, -1.5708, -1.5461]  # green1.carryA tau=2.887 tau_c=3.772 fk=14.54us pan=-1.5461 r=0.304
+    carry_anchor5_xy: [0.90, -0.28]
+    carry_anchor5_joints: [-1.391, -1.8225, 1.277, -1.0253, -1.5708, -1.391]  # green2.carryA tau=7.944 tau_c=9.01 fk=15.05us pan=-1.3910 r=0.355
+    carry_anchor6_xy: [0.87, -0.23]
+    carry_anchor6_joints: [-1.2221, -1.8085, 1.2673, -1.0296, -1.5708, -1.2221]  # green3.carryA tau=8.557 tau_c=9.644 fk=24.2us pan=-1.2221 r=0.361
+    carry_settle_top1_joints: [0.7886, -1.9044, 1.584, -1.2504, -1.5708, 0.7886]  # red1.setTopA tau=6.448 tau_c=7.526 fk=17.66us pan=+0.7886 r=0.358
+    carry_settle_bottom1_joints: [0.7886, -1.9276, 1.6938, -1.337, -1.5708, 0.7886]  # red1.setBotA tau=5.982 tau_c=7.059 fk=22.21us pan=+0.7886 r=0.358
+    carry_settle_top2_joints: [0.6214, -1.9125, 1.589, -1.2473, -1.5708, 0.6214]  # red2.setTopA tau=6.108 tau_c=7.174 fk=10.92us pan=+0.6214 r=0.355
+    carry_settle_bottom2_joints: [0.6214, -1.936, 1.6989, -1.3337, -1.5708, 0.6214]  # red2.setBotA tau=5.638 tau_c=6.703 fk=12.84us pan=+0.6214 r=0.355
+    carry_settle_top3_joints: [0.6092, -1.7855, 1.5016, -1.2869, -1.5708, 0.6092]  # red3.setTopA tau=11.481 tau_c=12.729 fk=6.48us pan=+0.6092 r=0.408
+    carry_settle_bottom3_joints: [0.6092, -1.8056, 1.6112, -1.3764, -1.5708, 0.6092]  # red3.setBotA tau=11.063 tau_c=12.312 fk=20.31us pan=+0.6092 r=0.408
+    carry_settle_top4_joints: [-1.5461, -2.036, 1.6566, -1.1914, -1.5708, -1.5461]  # green1.setTopA tau=0.956 tau_c=1.841 fk=25.28us pan=-1.5461 r=0.304
+    carry_settle_bottom4_joints: [-1.54614, -2.06435, 1.76723, -1.27368, -1.5708, -1.54614]  # green1.setBotA tau=0.418 tau_c=1.303 fk=2.77us pan=-1.5461 r=0.304
+    carry_settle_top5_joints: [-1.391, -1.9125, 1.589, -1.2473, -1.5708, -1.391]  # green2.setTopA tau=6.108 tau_c=7.174 fk=11.98us pan=-1.3910 r=0.355
+    carry_settle_bottom5_joints: [-1.391, -1.936, 1.6989, -1.3337, -1.5708, -1.391]  # green2.setBotA tau=5.638 tau_c=6.703 fk=12.9us pan=-1.3910 r=0.355
+    carry_settle_top6_joints: [-1.2221, -1.8977, 1.5798, -1.2528, -1.5708, -1.2221]  # green3.setTopA tau=6.73 tau_c=7.817 fk=29.93us pan=-1.2221 r=0.361
+    carry_settle_bottom6_joints: [-1.2221, -1.9208, 1.6896, -1.3396, -1.5708, -1.2221]  # green3.setBotA tau=6.267 tau_c=7.354 fk=21.94us pan=-1.2221 r=0.361
+    # ---- 失败处理 ----
+    attempts: 4
+    inject_failure_parts: ['']
+    plan_timeout: 5.0
+    grasp_yaw_deg: 0.0
+    # ---- 旧接力遗留键:置空/NaN(v2 并联不经 bin_out,模型已删)----
+    place_anchor_joints: [.nan, .nan, .nan, .nan, .nan, .nan]
+    world_name: sorting_cell
+    gripper_attach_link: arm2_gripper_base
+
+/result_recorder:
+  ros__parameters:
+    # 无限/多件演示下"本轮结束"判定放开:空表 => 永不报本轮结束
+    # (legacy 一轮 3 件的基线行为由默认 expected_parts 保持)
+    expected_parts: []
+    # 入箱件回收:PLACED/MISPLACED 后 12s 经 remove 服务删除实体,
+    # 腾出 3 格循环位(无限 demo_parts 演示防堆叠弹飞;0=关闭)
+    recycle_delay: 12.0
+    # ---- 四箱五键全给(x/y/half_x/half_y/inner_half_*)----
+    # 64cd236 教训:漏 x/y ⇒ recorder 用默认 0.0 把料区判到世界原点 =
+    # 假 MISPLACED。箱心 = 世界模型 sorting_cell.sdf <pose>;inner_half =
+    # 内口半宽(PLACED 判定用内口,§9);half 与内口同值(0.06/0.085)——
+    # 若 half 用外廓 0.07/0.095 会让邻箱判定区重叠(旧 0.12/0.10 定罪)。
+    # bin_names 由 launch 传入(单臂北排两箱 / 双臂四箱),基表
+    # sorting_params.yaml 已给同值四箱键,此处重复以保证"只加载 pipeline
+    # 覆盖文件"的实验流程也自洽。
+    bins.bin_blue.x: 0.30
+    bins.bin_blue.y: 0.28
+    bins.bin_blue.half_x: 0.06
+    bins.bin_blue.half_y: 0.085
+    bins.bin_blue.inner_half_x: 0.06
+    bins.bin_blue.inner_half_y: 0.085
+    bins.bin_yellow.x: 0.90
+    bins.bin_yellow.y: 0.28
+    bins.bin_yellow.half_x: 0.06
+    bins.bin_yellow.half_y: 0.085
+    bins.bin_yellow.inner_half_x: 0.06
+    bins.bin_yellow.inner_half_y: 0.085
+    bins.bin_red.x: 0.30
+    bins.bin_red.y: -0.28
+    bins.bin_red.half_x: 0.06
+    bins.bin_red.half_y: 0.085
+    bins.bin_red.inner_half_x: 0.06
+    bins.bin_red.inner_half_y: 0.085
+    bins.bin_green.x: 0.90
+    bins.bin_green.y: -0.28
+    bins.bin_green.half_x: 0.06
+    bins.bin_green.half_y: 0.085
+    bins.bin_green.inner_half_x: 0.06
+    bins.bin_green.inner_half_y: 0.085
+
+# ============================== G3 楔死备选档(B 档,默认不启用)==============================
+# 来源 = docs/evidence/G0_anchors_v3.json 的 carryB(z=1.22)/ relB(z=1.046)。
+# 用途:若 G3 双臂并联复现 settle 梯级楔死(JTC goal 永不完成 → 执行槽
+# CONTROL_FAILED(-4) 级联,2026-10-04 forensics 签名),整组切到"高 carry +
+# 低释"形态:carry_anchorN_joints 换 carryB 值,settle top/bottom 同设 relB 值
+# (梯级退化为单级悬停释放,落差 9.3cm 在 10cm 弹射阈值内),carry_safe_z 提到
+# 1.22。**默认不启用** —— 旧 E122 用 B 档是为压高肩 arm2 的 36~44 N·m 墙;
+# v2 低肩镜像后该墙不存在(终版 A 档箱格带载 tau 最大 13.26、取件 19.61,
+# 余量过半),A 档 τ 严格更优。判据阈值一字未动。
+# ---- arm1 /pick_place_executor(arm1 北排) ----
+# carry_anchor1_joints: [-1.2748, -1.3574, 0.3098, -0.5232, -1.5708, -4.41639]  # blue1.carryB tau=20.544 tau_c=21.793 fk=16.74us pan=-1.2748 r=0.408
+# carry_anchor2_joints: [-1.391, -1.5278, 0.5256, -0.5686, -1.5708, -4.53259]  # blue2.carryB tau=14.174 tau_c=15.24 fk=13.13us pan=-1.3910 r=0.355
+# carry_anchor3_joints: [-1.5506, -1.5186, 0.5155, -0.5677, -1.5708, -4.69219]  # blue3.carryB tau=14.549 tau_c=15.626 fk=8.57us pan=-1.5506 r=0.358
+# carry_anchor4_joints: [0.4662, -1.5109, 0.5069, -0.5668, -1.5708, -2.6754]  # yellow1.carryB tau=14.86 tau_c=15.947 fk=28.08us pan=+0.4662 r=0.361
+# carry_anchor5_joints: [0.6214, -1.5278, 0.5256, -0.5686, -1.5708, -2.5202]  # yellow2.carryB tau=14.174 tau_c=15.24 fk=15.4us pan=+0.6214 r=0.355
+# carry_anchor6_joints: [0.6388, -1.655, 0.6475, -0.5633, -1.5708, -2.5028]  # yellow3.carryB tau=8.732 tau_c=9.617 fk=13.96us pan=+0.6388 r=0.304
+# settle top/bottom 同设 relB(单级悬停):
+#   1: [-1.2748, -1.7391, 1.313, -1.1447, -1.5708, -4.41639]  # blue1.relB tau=12.453 tau_c=13.701 fk=16.13us pan=-1.2748 r=0.408
+#   2: [-1.391, -1.8621, 1.4024, -1.1111, -1.5708, -4.53259]  # blue2.relB tau=7.13 tau_c=8.196 fk=21.86us pan=-1.3910 r=0.355
+#   3: [-1.5506, -1.8543, 1.3973, -1.1138, -1.5708, -4.69219]  # blue3.relB tau=7.467 tau_c=8.544 fk=14.16us pan=-1.5506 r=0.358
+#   4: [0.4662, -1.8479, 1.393, -1.1159, -1.5708, -2.6754]  # yellow1.relB tau=7.745 tau_c=8.832 fk=12.72us pan=+0.4662 r=0.361
+#   5: [0.6214, -1.8621, 1.4024, -1.1111, -1.5708, -2.5202]  # yellow2.relB tau=7.13 tau_c=8.196 fk=13.91us pan=+0.6214 r=0.355
+#   6: [0.6388, -1.9793, 1.4705, -1.0619, -1.5708, -2.5028]  # yellow3.relB tau=2.05 tau_c=2.935 fk=31.95us pan=+0.6388 r=0.304
+# 带尾:rise/pick 与 A 档同锚(仅巡航高度差)。
+# ---- arm2 /pick_place_relay(arm2 南排) ----
+# carry_anchor1_joints: [0.7886, -1.5186, 0.5155, -0.5677, -1.5708, 0.7886]  # red1.carryB tau=14.549 tau_c=15.626 fk=18.92us pan=+0.7886 r=0.358
+# carry_anchor2_joints: [0.6214, -1.5278, 0.5256, -0.5686, -1.5708, 0.6214]  # red2.carryB tau=14.174 tau_c=15.24 fk=15.4us pan=+0.6214 r=0.355
+# carry_anchor3_joints: [0.6092, -1.3574, 0.3098, -0.5232, -1.5708, 0.6092]  # red3.carryB tau=20.544 tau_c=21.793 fk=16.76us pan=+0.6092 r=0.408
+# carry_anchor4_joints: [-1.5461, -1.655, 0.6475, -0.5633, -1.5708, -1.5461]  # green1.carryB tau=8.732 tau_c=9.617 fk=11.77us pan=-1.5461 r=0.304
+# carry_anchor5_joints: [-1.391, -1.5278, 0.5256, -0.5686, -1.5708, -1.391]  # green2.carryB tau=14.174 tau_c=15.24 fk=13.13us pan=-1.3910 r=0.355
+# carry_anchor6_joints: [-1.2221, -1.5109, 0.5069, -0.5668, -1.5708, -1.2221]  # green3.carryB tau=14.86 tau_c=15.947 fk=28.44us pan=-1.2221 r=0.361
+# settle top/bottom 同设 relB(单级悬停):
+#   1: [0.7886, -1.8543, 1.3973, -1.1138, -1.5708, 0.7886]  # red1.relB tau=7.467 tau_c=8.544 fk=14.87us pan=+0.7886 r=0.358
+#   2: [0.6214, -1.8621, 1.4024, -1.1111, -1.5708, 0.6214]  # red2.relB tau=7.13 tau_c=8.196 fk=13.91us pan=+0.6214 r=0.355
+#   3: [0.6092, -1.7391, 1.313, -1.1447, -1.5708, 0.6092]  # red3.relB tau=12.453 tau_c=13.701 fk=16.13us pan=+0.6092 r=0.408
+#   4: [-1.5461, -1.9793, 1.4705, -1.0619, -1.5708, -1.5461]  # green1.relB tau=2.05 tau_c=2.935 fk=31.22us pan=-1.5461 r=0.304
+#   5: [-1.391, -1.8621, 1.4024, -1.1111, -1.5708, -1.391]  # green2.relB tau=7.13 tau_c=8.196 fk=21.86us pan=-1.3910 r=0.355
+#   6: [-1.2221, -1.8479, 1.393, -1.1159, -1.5708, -1.2221]  # green3.relB tau=7.745 tau_c=8.832 fk=11.64us pan=-1.2221 r=0.361
+# 带尾:rise/pick 与 A 档同锚(仅巡航高度差)。

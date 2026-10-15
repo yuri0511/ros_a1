@@ -1,0 +1,43 @@
+# A1 双臂工作站的 MoveIt 控制器管理配置。
+# 在单臂版基础上登记 arm2_joint_trajectory_controller(a1_cell_sim 的
+# ur5e_cell_controllers.yaml 定义,双臂模式由 cell_bringup 的 spawner 激活)。
+# moveit_simple_controller_manager 按轨迹关节集合自动匹配控制器。
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+trajectory_execution:
+  allowed_execution_duration_scaling: 1.2
+  allowed_goal_duration_margin: 0.5
+  # 0.01->0.15(2026-10-03):P 控制失速构型(家族屏障)下,前一目标
+  # 完成时物理位姿与命令位姿差 0.05-0.08 rad,0.01 起点校验会确定性
+  # 拒掉后续所有目标(CONTROL_FAILED)卡死梯子;0.15 容住稳态偏差
+  allowed_start_tolerance: 0.15
+  execution_duration_monitoring: false
+
+moveit_simple_controller_manager:
+  controller_names:
+    - joint_trajectory_controller
+    - arm2_joint_trajectory_controller
+
+  joint_trajectory_controller:
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: true
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_1_joint
+      - wrist_2_joint
+      - wrist_3_joint
+
+  arm2_joint_trajectory_controller:
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: false
+    joints:
+      - arm2_shoulder_pan_joint
+      - arm2_shoulder_lift_joint
+      - arm2_elbow_joint
+      - arm2_wrist_1_joint
+      - arm2_wrist_2_joint
+      - arm2_wrist_3_joint

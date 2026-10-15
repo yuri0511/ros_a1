@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<!-- 简易双指平行夹爪:挂在 UR 的 tool0 法兰上。
+     两指为沿 Y 向滑动的 prismatic 关节,由 ros2_control 的
+     JointGroupPositionController(gripper_controller)同时驱动。
+     属于课程允许的简化实现(README 中已注明)。
+
+     prefix 参数:链接/关节名前缀(双臂第二臂传 'arm2_' 生成
+     arm2_gripper_base / arm2_gripper_finger_left_joint 等;
+     传空串时与单臂既有命名完全一致,保证零回归)。
+
+     几何方向(契约 §7 翻正定稿):全部几何在 tool0 +z 侧(法兰前方)。
+     抓取姿态四元数 Rx180° 把 tool0 +z 转到世界下方,几何装在 +z 侧
+     才能使夹爪指向工件;旧 -z 版本在该姿态下夹爪朝天,指尖永不接触
+     工件(详见 docs/pipeline_redesign.md §1)。
+     - stem 视觉杆填充 tool0 到基座的 0.15m 空隙(仅 visual);
+     - 闭合(p=0)指面间隙 0.052m,适配 0.05m 工件(两侧各 1mm 余量);
+     - 张开(p=0.022)间隙 0.096m(2026-10-03 从 0.04/0.132 收窄:工件
+       仅 0.05m,132mm 行程视觉过张,且手指滑出基座轮廓显得"断开";
+       96mm 单侧进件余量 23mm 充足);
+     - 指尖位于 tool0 +z 方向 0.231(抓取姿态 Rx180° 下即世界系
+       tool0 下方 0.231);tcp_z_offset 合法域 [0.201(指段中点,
+       穿带 5mm), 0.231(指尖=工件中心,零穿带)]。 -->
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="simple_gripper" params="parent prefix *origin">
+    <joint name="${prefix}gripper_base_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${prefix}gripper_base"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+
+    <link name="${prefix}gripper_base">
+      <!-- stem:纯视觉的安装杆,填满 tool0 到夹爪基座的 0.15m 空隙,
+           不加杆时夹爪看起来像"悬空脱落"。仅 visual,无 collision,
+           不影响物理与规划。翻正后半径/长度不变,仅整体迁到 +z 侧。
+           2026-10-03 造型改造(仅 visual;collision/关节/指尖 0.231
+           不动,契约 §7 标定零影响):法兰盘 + 方截面杆,替代细圆杆,
+           长颈夹爪观感更接近真实 RG2/RG3 结构。 -->
+      <visual name="flange_plate">
+        <geometry><cylinder radius="0.024" length="0.008"/></geometry>
+        <origin xyz="0 0 0.004"/>
+        <material name="mid_grey"><color rgba="0.42 0.44 0.47 1"/></material>
+      </visual>
+      <visual name="stem">
+        <geometry><box size="0.018 0.018 0.142"/></geometry>
+        <origin xyz="0 0 0.079"/>
+        <material name="mid_grey"><color rgba="0.42 0.44 0.47 1"/></material>
+      </visual>
+      <!-- y 60mm(2026-10-03 从 80 缩):80 时盒底(tool0-0.170)到壁顶
+           0.815 恰在 tool0=0.985,偏置格(箱中心 ±0.045)上盒边缘
+           (±0.040)压箱壁内沿(±0.085)致触底下探停滞高 3cm;60 后
+           偏置格余量 10mm,全部 6 格可探到触底位 0.954 -->
+      <!-- 基座:collision 保持 0.030×0.060×0.020(规划/箱壁余量标定值,
+           不得改);visual 缩为 0.024×0.052×0.016 + 顶盖过渡板,
+           消"平板桨"感(视觉比碰撞体小一圈,穿障裕量方向是安全的) -->
+      <visual name="body_cap">
+        <geometry><box size="0.030 0.058 0.006"/></geometry>
+        <origin xyz="0 0 0.151"/>
+        <material name="dark_grey"><color rgba="0.25 0.25 0.28 1"/></material>
+      </visual>
+      <visual>
+        <geometry><box size="0.024 0.052 0.016"/></geometry>
+        <origin xyz="0 0 0.162"/>
+        <material name="dark_grey"><color rgba="0.25 0.25 0.28 1"/></material>
+      </visual>
+      <!-- 滑轨:纯 visual,沿 y 贯通两指关节行程(全张时指外缘 ±60mm),
+           手指始终"骑"在轨上,消除张开后手指与基座脱开的断裂感。
+           高度 z=0.171 与指关节原点齐平;不加 collision(轨在基座碰撞
+           盒外延,入箱口余量标定基于基座 60mm 宽,轨 124mm 若参与碰撞
+           会压箱壁) -->
+      <visual name="rail">
+        <!-- 滑轨 124mm 原长**定档**(用户拍板 2026-10-09 上午):凌晨
+             曾收窄到 68mm 消"下探瞬间与盒壁 ~27mm 视觉重叠",但横杠
+             短于指距,观感变成悬空小断条,更难看——回退原长。瞬时重叠
+             仅 settle 触底一两秒、纯 visual 无碰撞,可接受;长横杠让
+             全张手指始终"骑"在轨上,消除断裂感。不加 collision(轨在
+             基座碰撞盒外延,入箱口余量标定基于基座 60mm 宽,轨 124mm
+             若参与碰撞会压箱壁) -->
+        <geometry><box size="0.016 0.124 0.010"/></geometry>
+        <origin xyz="0 0 0.171"/>
+        <material name="dark_grey"><color rgba="0.25 0.25 0.28 1"/></material>
+      </visual>
+      <collision name="${prefix}gripper_base_collision">
+        <geometry><box size="0.030 0.060 0.020"/></geometry>
+        <origin xyz="0 0 0.160"/>
+      </collision>
+      <inertial>
+        <mass value="0.25"/>
+        <inertia ixx="0.00013" iyy="0.00013" izz="0.00008" ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+    <xacro:macro name="finger" params="prefix name sign">
+      <joint name="${prefix}${name}_joint" type="prismatic">
+        <parent link="${prefix}gripper_base"/>
+        <child link="${prefix}${name}_link"/>
+        <origin xyz="0 ${sign * 0.032} 0.171" rpy="0 0 0"/>
+        <!-- 对开夹爪:左指(sign=+1)axis=+y、右指(sign=-1)axis=-y,
+             q 增大 = 两侧对称张开(q=0 间隙 52mm,q=0.022 间隙 96mm);
+             effort 正值 = 张开方向推力(闭爪命令为负) -->
+        <axis xyz="0 ${sign} 0"/>
+        <!-- lower=-0.003:允许越过名义闭合位 3mm —— 闭合内缘名义间隙 52mm
+             大于工件 50mm,不放宽则指面永远碰不到工件侧面(无夹持力);
+             effort 闭爪(-N)推指压向工件,由工件侧面自然止位,持续夹持 -->
+        <!-- upper=0.04(全张间隙 132mm)。2026-10-03 曾收窄至 0.022(96mm)
+             做观感优化,当晚单变量复测定罪回退:收窄后指腹落入加宽(0.16)
+             带面上方,带载下探净空仅 2mm+下垂即犁带面推偏工件(legacy
+             part_2 pick_settle 闸连败指纹);纯 visual 件(法兰/方杆/指垫/
+             滑轨)全保留。执行器开爪为 effort 推力,限位只作止位。 -->
+        <limit lower="-0.003" upper="0.04" effort="50" velocity="0.2"/>
+        <!-- 阻尼限制指的闭合约末速(10N/15 ≈ 0.67 m/s):无阻尼时 effort
+             闭爪会把 0.04kg 指加速到 ~6 m/s,接触瞬间把工件撞飞 -->
+        <dynamics damping="15.0" friction="0.0"/>
+      </joint>
+      <link name="${prefix}${name}_link">
+        <visual>
+          <geometry><box size="0.012 0.012 0.060"/></geometry>
+          <origin xyz="0 0 0.030"/>
+          <material name="steel"><color rgba="0.55 0.57 0.6 1"/></material>
+        </visual>
+        <!-- 内侧橡胶指垫:纯 visual,厚 2mm 贴指内面,不加入 collision
+             (闭爪止位/夹持面仍是原指面,契约 §7 物理零影响;1mm 级
+             压入工件侧面属软垫受压观感) -->
+        <visual name="pad">
+          <geometry><box size="0.010 0.002 0.052"/></geometry>
+          <origin xyz="0 ${-sign * 0.007} 0.029"/>
+          <material name="rubber"><color rgba="0.12 0.12 0.13 1"/></material>
+        </visual>
+        <collision name="${prefix}${name}_collision">
+          <geometry><box size="0.012 0.012 0.060"/></geometry>
+          <origin xyz="0 0 0.030"/>
+        </collision>
+        <inertial>
+          <mass value="0.04"/>
+          <inertia ixx="1.3e-05" iyy="1.3e-05" izz="5e-07" ixy="0" ixz="0" iyz="0"/>
+        </inertial>
+      </link>
+      <!-- 指面高摩擦(物理包夹的必要条件,契约 §7);URDF->gz 转换时
+           reference 解析到该指 link,mu1/mu2 为两切向摩擦系数 -->
+      <gazebo reference="${prefix}${name}_link">
+        <mu1>2.0</mu1>
+        <mu2>2.0</mu2>
+        <sensor name="${prefix}${name}_contact" type="contact">
+          <always_on>1</always_on>
+          <update_rate>50</update_rate>
+          <contact>
+            <collision>${prefix}${name}_link_fixed_joint_lump__${prefix}${name}_collision_collision</collision>
+            <topic>/a1_contact/${prefix}${name}_link</topic>
+          </contact>
+        </sensor>
+      </gazebo>
+    </xacro:macro>
+
+    <xacro:finger prefix="${prefix}" name="gripper_finger_left" sign="1"/>
+    <xacro:finger prefix="${prefix}" name="gripper_finger_right" sign="-1"/>
+  </xacro:macro>
+</robot>
