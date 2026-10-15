@@ -1,0 +1,42 @@
+{
+  "evaluation_seed": 3,
+  "batch_size": 8,
+  "config": "config/timing.placeholder.json",
+  "table": "artifacts/q_table.json",
+  "table_sha256": "27f50229d10bae9c93871390b6ea492edda3e15aab145e62881865398739b06f",
+  "training": {
+    "episodes": 50000,
+    "seed": 42,
+    "batch_size": 8,
+    "fixed_batch": null,
+    "alpha": 0.2,
+    "epsilon_schedule": "linear",
+    "epsilon_start": 0.5,
+    "epsilon_end": 0.05,
+    "gamma": 1.0
+  },
+  "is_placeholder": true,
+  "results": {
+    "serial": {
+      "batches": 30,
+      "mean_makespan_seconds": 158.06666666666666,
+      "q_decision_steps": 0,
+      "unknown_state_fallback_steps": 0,
+      "unknown_state_fallback_rate": null
+    },
+    "rule": {
+      "batches": 30,
+      "mean_makespan_seconds": 99.66666666666667,
+      "q_decision_steps": 0,
+      "unknown_state_fallback_steps": 0,
+      "unknown_state_fallback_rate": null
+    },
+    "q_learning": {
+      "batches": 30,
+      "mean_makespan_seconds": 98.0,
+      "q_decision_steps": 257,
+      "unknown_state_fallback_steps": 0,
+      "unknown_state_fallback_rate": 0.0
+    }
+  }
+}
