@@ -1,0 +1,200 @@
+{
+  "source": "/home/yu/yuri_gazebo_performance/yuri_review/diagnostic/runs/20261016T171634-diag-rule/instance-1/contacts.csv",
+  "window": [],
+  "rows": 55064,
+  "missing_depth_rows": 0,
+  "bad_rows": 0,
+  "first_contact_sim": 18.874,
+  "last_contact_sim": 36.969,
+  "categories": {
+    "finger_conveyor": {
+      "points": 715,
+      "max_depth_m": 5.5e-05,
+      "pairs": 3,
+      "max_segment_span_s": 0.2640000000000029
+    },
+    "finger_part": {
+      "points": 52017,
+      "max_depth_m": 0.011448,
+      "pairs": 2,
+      "max_segment_span_s": 9.799
+    },
+    "finger_bin": {
+      "points": 2332,
+      "max_depth_m": 0.000299,
+      "pairs": 1,
+      "max_segment_span_s": 2.3100000000000023
+    }
+  },
+  "pairs": [
+    {
+      "category": "finger_conveyor",
+      "points": 26,
+      "max_depth_m": 5e-05,
+      "deepest": {
+        "sim_sec": "18.874",
+        "x": "0.58874",
+        "y": "-0.02753",
+        "z": "0.77995",
+        "depth": "0.000050"
+      },
+      "collisions": [
+        "belt::belt_link::belt_collision",
+        "ur::gripper_finger_left_link::gripper_finger_left_link_fixed_joint_lump__gripper_finger_left_collision_collision"
+      ],
+      "first_sim": 18.874,
+      "last_sim": 18.881,
+      "unique_sensor_ticks": 8,
+      "segments": [
+        [
+          18.874,
+          18.881
+        ]
+      ],
+      "max_segment_span_s": 0.0070000000000014495,
+      "observed_segment_span_sum_s": 0.0070000000000014495,
+      "timestamp_median_gap_s": 0.0010000000000012221
+    },
+    {
+      "category": "finger_conveyor",
+      "points": 400,
+      "max_depth_m": 5.5e-05,
+      "deepest": {
+        "sim_sec": "18.874",
+        "x": "0.57673",
+        "y": "0.06628",
+        "z": "0.77995",
+        "depth": "0.000055"
+      },
+      "collisions": [
+        "belt::belt_link::belt_collision",
+        "ur::gripper_finger_right_link::gripper_finger_right_link_fixed_joint_lump__gripper_finger_right_collision_collision"
+      ],
+      "first_sim": 18.874,
+      "last_sim": 19.111,
+      "unique_sensor_ticks": 235,
+      "segments": [
+        [
+          18.874,
+          19.111
+        ]
+      ],
+      "max_segment_span_s": 0.23700000000000188,
+      "observed_segment_span_sum_s": 0.23700000000000188,
+      "timestamp_median_gap_s": 0.0010000000000012221
+    },
+    {
+      "category": "finger_part",
+      "points": 29951,
+      "max_depth_m": 0.011448,
+      "deepest": {
+        "sim_sec": "26.589",
+        "x": "0.30530",
+        "y": "0.15232",
+        "z": "0.87804",
+        "depth": "0.011448"
+      },
+      "collisions": [
+        "part_1::link::collision",
+        "ur::gripper_finger_left_link::gripper_finger_left_link_fixed_joint_lump__gripper_finger_left_collision_collision"
+      ],
+      "first_sim": 19.438,
+      "last_sim": 29.237,
+      "unique_sensor_ticks": 9397,
+      "segments": [
+        [
+          19.438,
+          29.237
+        ]
+      ],
+      "max_segment_span_s": 9.799,
+      "observed_segment_span_sum_s": 9.799,
+      "timestamp_median_gap_s": 0.0010000000000012221
+    },
+    {
+      "category": "finger_part",
+      "points": 22066,
+      "max_depth_m": 0.004427,
+      "deepest": {
+        "sim_sec": "24.653",
+        "x": "0.57616",
+        "y": "0.02226",
+        "z": "0.96850",
+        "depth": "0.004427"
+      },
+      "collisions": [
+        "part_1::link::collision",
+        "ur::gripper_finger_right_link::gripper_finger_right_link_fixed_joint_lump__gripper_finger_right_collision_collision"
+      ],
+      "first_sim": 19.677,
+      "last_sim": 29.21,
+      "unique_sensor_ticks": 8231,
+      "segments": [
+        [
+          19.677,
+          29.21
+        ]
+      ],
+      "max_segment_span_s": 9.533000000000001,
+      "observed_segment_span_sum_s": 9.533000000000001,
+      "timestamp_median_gap_s": 0.0010000000000012221
+    },
+    {
+      "category": "finger_bin",
+      "points": 2332,
+      "max_depth_m": 0.000299,
+      "deepest": {
+        "sim_sec": "27.766",
+        "x": "0.26182",
+        "y": "0.19500",
+        "z": "0.81470",
+        "depth": "0.000299"
+      },
+      "collisions": [
+        "bin_blue::link::wall_y_neg_collision",
+        "ur::gripper_finger_left_link::gripper_finger_left_link_fixed_joint_lump__gripper_finger_left_collision_collision"
+      ],
+      "first_sim": 27.766,
+      "last_sim": 30.076,
+      "unique_sensor_ticks": 2308,
+      "segments": [
+        [
+          27.766,
+          30.076
+        ]
+      ],
+      "max_segment_span_s": 2.3100000000000023,
+      "observed_segment_span_sum_s": 2.3100000000000023,
+      "timestamp_median_gap_s": 0.0010000000000012221
+    },
+    {
+      "category": "finger_conveyor",
+      "points": 289,
+      "max_depth_m": 6e-06,
+      "deepest": {
+        "sim_sec": "36.705",
+        "x": "0.58110",
+        "y": "-0.06644",
+        "z": "0.77999",
+        "depth": "0.000006"
+      },
+      "collisions": [
+        "belt::belt_link::belt_collision",
+        "ur::arm2_gripper_finger_left_link::arm2_gripper_finger_left_link_fixed_joint_lump__arm2_gripper_finger_left_collision_collision"
+      ],
+      "first_sim": 36.705,
+      "last_sim": 36.969,
+      "unique_sensor_ticks": 265,
+      "segments": [
+        [
+          36.705,
+          36.969
+        ]
+      ],
+      "max_segment_span_s": 0.2640000000000029,
+      "observed_segment_span_sum_s": 0.2640000000000029,
+      "timestamp_median_gap_s": 0.0009999999999976694
+    }
+  ],
+  "duration_note": "Contact CSV stamps are rounded to 1ms; segment heuristic joins gaps <=40ms. Report observed spans only, not tick_count/assumed_frequency. Effective contact stamps can be 1ms apart despite nominal sensor update settings. Point counts are not independent collisions; spans may bridge unsampled gaps."
+}

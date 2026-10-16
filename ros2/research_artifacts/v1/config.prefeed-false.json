@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "timing_model_version": "gazebo-v1-prefeed-false-unrecalibrated-72ab6f2",
+  "is_placeholder": false,
+  "overlap_validated": false,
+  "allow_arm_overlap": true,
+  "allow_prefeed_busy_arm": false,
+  "color_order": [
+    "blue",
+    "yellow",
+    "red",
+    "green"
+  ],
+  "color_to_arm": [
+    0,
+    0,
+    1,
+    1
+  ],
+  "feed_seconds": {
+    "blue": 4.3,
+    "yellow": 4.36,
+    "red": 4.44,
+    "green": 4.2
+  },
+  "pick_seconds": {
+    "blue": 8.35,
+    "yellow": 8.09,
+    "red": 9.73,
+    "green": 10.36
+  },
+  "post_pick_seconds": {
+    "blue": 10.85,
+    "yellow": 7.66,
+    "red": 8.0,
+    "green": 11.83
+  },
+  "eta_bin_edges_seconds": [
+    5.0,
+    10.0,
+    20.0
+  ],
+  "idle_weight": 0.05,
+  "seed": 42,
+  "request_delay_seconds": 1.0,
+  "measurement_metadata": {
+    "source": "HANDOFF.md: 2026-10-16 \u4fee\u597d\u7248\u672c\u7684\u4e09\u6bb5\u5e73\u5747\u65f6\u95f4",
+    "unit": "simulation_seconds",
+    "successful_samples": {
+      "blue": 6,
+      "yellow": 5,
+      "red": 9,
+      "green": 3
+    },
+    "failed_attempts_and_retries_included": false,
+    "measured_with_arm_overlap": false,
+    "feed_boundary": "spawn success to stop-advance; excludes pusher retraction/settling; first item simulation duration estimated from subsequent real-time factor",
+    "pick_boundary": "last successful PICKING to carry_clear complete; gripper remains above pick point, NOT validated safe zone release",
+    "post_pick_boundary": "carry_clear complete to COMPLETED, including return to standby",
+    "limitations": [
+      "Failure and retry durations excluded; 23 successful parts from three 8-part runs.",
+      "Pusher retraction/settling time absent from supplied three durations and not added in this requested v1 experiment.",
+      "request_delay_seconds=1.0 is inherited model assumption, not a newly measured simulation-time retraction delay.",
+      "ETA bins, overlap and prefeed permissions remain model assumptions.",
+      "is_placeholder=false applies to supplied means; does not imply complete measured cycle or deployment readiness.",
+      "Original duration means retained; NOT recalibrated to local v3 event waits or parallel runs.",
+      "Only legal prefeed permission corrected. Pusher return, retries, standby failure and safe zone exit remain incomplete."
+    ]
+  }
+}

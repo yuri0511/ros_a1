@@ -1,0 +1,366 @@
+{
+  "diagnostic_only": true,
+  "pair_completed": false,
+  "rule_run": "20261016T171634-diag-rule",
+  "rule_start": 1792142194.5560827,
+  "fault": {
+    "kind": "return_standby_not_physically_verified",
+    "wall": 1792142237.332762,
+    "arm": "arm1",
+    "task": "task_0001",
+    "at_standby_flag": true,
+    "joint_names": [
+      "shoulder_pan_joint",
+      "shoulder_lift_joint",
+      "elbow_joint",
+      "wrist_1_joint",
+      "wrist_2_joint",
+      "wrist_3_joint"
+    ],
+    "positions": [
+      1.259341002141052,
+      -1.6370612410925895,
+      1.1283106206729236,
+      -1.0621281086444991,
+      -1.5708000113867642,
+      -1.8793143276707547
+    ],
+    "velocities": [
+      0.04100214111927059,
+      0.038758907396619635,
+      -0.08937932741410438,
+      -0.02810864524237159,
+      -1.138628049683274e-05,
+      2.885672332634383
+    ],
+    "standby_target": [
+      1.2593,
+      -1.6371,
+      1.1284,
+      -1.0621,
+      -1.5708,
+      -1.8822
+    ],
+    "error_rad": [
+      4.1002141051960095e-05,
+      3.875890741045218e-05,
+      -8.937932707642204e-05,
+      -2.8108644499091895e-05,
+      -1.1386764198206833e-08,
+      0.0028856723292454145
+    ],
+    "joint_age_wall": 0.0010726451873779297,
+    "original_settled_criterion": false
+  },
+  "fault_ros_sim": 36.921,
+  "wall_launch_to_fault_s": 42.776679277420044,
+  "wall_launch_to_pause_ack_s": 43.16647410392761,
+  "pause_ack_delay_s": 0.38979482650756836,
+  "wall_full_lifecycle_s": 56.66003441810608,
+  "rule_csv_rows": 0,
+  "rule_valid_completed_batches": 0,
+  "logical_terminal_deferred": true,
+  "published_completed": 0,
+  "retries": 0,
+  "controller_aborts_before_teardown": 0,
+  "controller_return_success_logged": true,
+  "q_run": "NOT_RUN_due_to_rule_safety_stop",
+  "q_gazebo_decisions": 0,
+  "q_preflight_only": {
+    "schema": 2,
+    "package": "/home/yu/yuri_gazebo_performance/yuri_review/diagnostic/worktree/ros2/codex_rl_v2/dual_arm_rl/model.py",
+    "config_sha256": "ce65cec200920de7f3116ddedffcee900aba21b8d07af405bc84359017c1ca0b",
+    "table_file_sha256": "18c4b343b0c359b2c740d9d6eeabef273be3d93e4e573ee28a32b53216977e2c",
+    "prefeed": false,
+    "all_165_batches_legal_and_complete": 165,
+    "unknown_general_coverage": 4,
+    "first_choice_unforced": [
+      "arm2",
+      "red"
+    ],
+    "first_stats": {
+      "decision_steps": 1
+    },
+    "prior_semantic_tests": [
+      "future_bank_hidden_at_start",
+      "sampled_post_time_not_leaked_in_eta",
+      "WAIT_skips_placement_and_wakes_on_real_ARM_READY",
+      "DP_matches_independent_exhaustive_small_batches_including_WAIT"
+    ],
+    "no_training": true
+  },
+  "feed_requests": [
+    {
+      "wall": 1792142207.8658319,
+      "number": 1,
+      "color": "blue"
+    },
+    {
+      "wall": 1792142225.2672122,
+      "number": 2,
+      "color": "red"
+    }
+  ],
+  "new_requests_after_fault": 0,
+  "joint_samples_around_fault": [
+    {
+      "wall": 1792142236.4337623,
+      "stamp": 35.947,
+      "position": -2.29413497107552,
+      "velocity": -1.3741048333095305
+    },
+    {
+      "wall": 1792142236.6342063,
+      "stamp": 36.186,
+      "position": -2.1431035882293332,
+      "velocity": 0.7457862353832315
+    },
+    {
+      "wall": 1792142236.836459,
+      "stamp": 36.402,
+      "position": -2.0119347025710335,
+      "velocity": 2.151192333602839
+    },
+    {
+      "wall": 1792142237.0400374,
+      "stamp": 36.6,
+      "position": -1.9318857900159756,
+      "velocity": -0.51733079237867
+    },
+    {
+      "wall": 1792142237.2403307,
+      "stamp": 36.819,
+      "position": -1.883768820071531,
+      "velocity": 2.9996342681002797
+    },
+    {
+      "wall": 1792142237.440805,
+      "stamp": 37.052,
+      "position": -1.8793143280467126,
+      "velocity": 2.8856719566764526
+    }
+  ],
+  "contacts": {
+    "source": "/home/yu/yuri_gazebo_performance/yuri_review/diagnostic/runs/20261016T171634-diag-rule/instance-1/contacts.csv",
+    "window": [],
+    "rows": 55064,
+    "missing_depth_rows": 0,
+    "bad_rows": 0,
+    "first_contact_sim": 18.874,
+    "last_contact_sim": 36.969,
+    "categories": {
+      "finger_conveyor": {
+        "points": 715,
+        "max_depth_m": 5.5e-05,
+        "pairs": 3,
+        "max_segment_span_s": 0.2640000000000029
+      },
+      "finger_part": {
+        "points": 52017,
+        "max_depth_m": 0.011448,
+        "pairs": 2,
+        "max_segment_span_s": 9.799
+      },
+      "finger_bin": {
+        "points": 2332,
+        "max_depth_m": 0.000299,
+        "pairs": 1,
+        "max_segment_span_s": 2.3100000000000023
+      }
+    },
+    "duration_note": "Contact CSV stamps are rounded to 1ms; segment heuristic joins gaps <=40ms. Report observed spans only, not tick_count/assumed_frequency. Effective contact stamps can be 1ms apart despite nominal sensor update settings. Point counts are not independent collisions; spans may bridge unsampled gaps."
+  },
+  "last_native_part_1": {
+    "wall": 1792142237.5819776,
+    "ros_sim": 37.201,
+    "kind": "native_pose",
+    "gz_sim": 37.201,
+    "name": "part_1",
+    "xyz": [
+      0.27786914112665206,
+      0.23679524715304104,
+      0.7449999901993455
+    ],
+    "finite_difference_velocity": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "dt": 0.054999999999999716,
+    "velocity_is_engine_joint_measurement": false
+  },
+  "last_1_sim_s_part_1_position_ranges": {
+    "x": 0.0,
+    "y": 0.0,
+    "z": 0.0
+  },
+  "pusher_home_observations": [
+    {
+      "log_wall": 1792142213.5915282,
+      "log_world_x": 0.122,
+      "nearest_native_link_samples": [
+        {
+          "wall": 1792142213.5817878,
+          "ros_sim": 13.084,
+          "kind": "native_pose",
+          "gz_sim": 13.085,
+          "name": "pusher_link",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_difference_velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dt": 0.0600000000000005,
+          "velocity_is_engine_joint_measurement": false
+        },
+        {
+          "wall": 1792142213.5469837,
+          "ros_sim": 13.024,
+          "kind": "native_pose",
+          "gz_sim": 13.025,
+          "name": "pusher_link",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_difference_velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dt": 0.05600000000000094,
+          "velocity_is_engine_joint_measurement": false
+        },
+        {
+          "wall": 1792142213.6716263,
+          "ros_sim": 13.156,
+          "kind": "native_pose",
+          "gz_sim": 13.156,
+          "name": "pusher_link",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_difference_velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dt": 0.07099999999999973,
+          "velocity_is_engine_joint_measurement": false
+        },
+        {
+          "wall": 1792142213.4778795,
+          "ros_sim": 12.97,
+          "kind": "native_pose",
+          "gz_sim": 12.969,
+          "name": "pusher_link",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_difference_velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dt": 0.06799999999999962,
+          "velocity_is_engine_joint_measurement": false
+        }
+      ]
+    },
+    {
+      "log_wall": 1792142231.570872,
+      "log_world_x": 0.127,
+      "nearest_native_link_samples": [
+        {
+          "wall": 1792142231.5979924,
+          "ros_sim": 31.0,
+          "kind": "native_pose",
+          "gz_sim": 31.001,
+          "name": "pusher_link",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_difference_velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dt": 0.06700000000000017,
+          "velocity_is_engine_joint_measurement": false
+        },
+        {
+          "wall": 1792142231.520478,
+          "ros_sim": 30.934,
+          "kind": "native_pose",
+          "gz_sim": 30.934,
+          "name": "pusher_link",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_difference_velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dt": 0.05700000000000216,
+          "velocity_is_engine_joint_measurement": false
+        },
+        {
+          "wall": 1792142231.6501267,
+          "ros_sim": 31.063,
+          "kind": "native_pose",
+          "gz_sim": 31.063,
+          "name": "pusher_link",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_difference_velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dt": 0.06199999999999761,
+          "velocity_is_engine_joint_measurement": false
+        },
+        {
+          "wall": 1792142231.4506226,
+          "ros_sim": 30.877,
+          "kind": "native_pose",
+          "gz_sim": 30.877,
+          "name": "pusher_link",
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "finite_difference_velocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "dt": 0.05799999999999983,
+          "velocity_is_engine_joint_measurement": false
+        }
+      ]
+    }
+  ],
+  "formal_16_pairs_recommended": false,
+  "future_action": "Yuri review controller-success vs physical-settled boundary; failure terminal handling and bounded settling/fault path design before further pair",
+  "no_new_training": true
+}

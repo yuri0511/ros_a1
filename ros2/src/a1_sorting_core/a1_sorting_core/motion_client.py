@@ -10,6 +10,7 @@
 工作线程轮询 future 完成状态(避免跨线程 spin)。
 """
 import time
+import threading
 
 import rclpy
 from action_msgs.msg import GoalStatus
@@ -31,8 +32,12 @@ class MotionClient:
                  wedge_detect: bool = False,
                  tool_settle_fix: bool = False,
                  split_plan_execute: bool = False,
-                 controller_action: str = ''):
+                 controller_action: str = '', fast_sim_waits: bool = False):
         self._node = node
+        self._fast_waits = bool(fast_sim_waits)
+        self._wait_future = None
+        self._wait_event = None
+        self._slot_event = threading.Event()
         self._group = group_name
         self._tool = tool_frame
         self._frame = planning_frame
@@ -87,6 +92,8 @@ class MotionClient:
             # (CANCELED=4/SUCCEEDED=5/ABORTED=6/REJECTED=7 均为终态)
             self._active[0] = sum(
                 1 for g in m.status_list if g.status in (1, 2, 3))
+            if self._active[0] == 0:self._slot_event.set()
+            else:self._slot_event.clear()
         self._status_sub = None
         if hasattr(node, 'create_subscription'):
             try:
@@ -101,6 +108,17 @@ class MotionClient:
             except Exception:  # noqa: BLE001 降级:无 status 订阅
                 pass
 
+    def _future_pause(self, future, seconds):
+        if not getattr(self, '_fast_waits', False):
+            time.sleep(seconds)
+            return
+        if self._wait_future is not future:
+            self._wait_future = future
+            self._wait_event = threading.Event()
+            event = self._wait_event
+            future.add_done_callback(lambda unused: event.set())
+        self._wait_event.wait(seconds)
+
     # ---------------------------------------------------------------- 楔死
     def _wait_slot_free(self, wait_s: float = 45.0, label: str = '') -> None:
         """发送新目标前等 move_group 执行槽自然释放(见 __init__ 注释)。
@@ -114,7 +132,8 @@ class MotionClient:
         缓存值,无锁亦安全。"""
         t_end = time.monotonic() + wait_s
         while self._active[0] and time.monotonic() < t_end:
-            time.sleep(0.1)
+            if getattr(self, '_fast_waits', False):self._slot_event.wait(.1)
+            else:time.sleep(.1)
         if self._active[0]:
             self._node.get_logger().warn(
                 f'{label}: 执行槽 {wait_s:.0f}s 未释放'
@@ -134,7 +153,7 @@ class MotionClient:
         与 no-cancel 纪律兼容——不发 cancel。"""
         t_end = time.monotonic() + wait_s
         while not result_future.done() and time.monotonic() < t_end:
-            time.sleep(0.05)
+            self._future_pause(result_future, 0.05)
 
     def _note_outcome(self, ok: bool, code: int = 0,
                       dangling: bool = False) -> None:
@@ -371,7 +390,7 @@ class MotionClient:
             if time.monotonic() > deadline:
                 log.error(f'{label}: 目标受理超时')
                 return False
-            time.sleep(0.05)
+            self._future_pause(future, 0.05)
         handle = future.result()
         if not handle.accepted:
             log.error(f'{label}: 目标被 move_group 拒绝')
@@ -407,7 +426,7 @@ class MotionClient:
                 return True
             if time.monotonic() >= next_settle_check:
                 next_settle_check += 1.0
-            time.sleep(0.05)
+            self._future_pause(result_future, 0.05)
         result_wrap = result_future.result()
         if result_wrap.status != GoalStatus.STATUS_SUCCEEDED:
             code = result_wrap.result.error_code.val
@@ -453,7 +472,7 @@ class MotionClient:
             if time.monotonic() > deadline:
                 log.error(f'{label}: 控制器目标受理超时')
                 return False
-            time.sleep(0.05)
+            self._future_pause(send_future, 0.05)
         handle = send_future.result()
         if handle is None or not handle.accepted:
             log.error(f'{label}: 控制器拒绝轨迹')
@@ -467,7 +486,7 @@ class MotionClient:
                 log.error(f'{label}: 控制器执行超时')
                 handle.cancel_goal_async()
                 return False
-            time.sleep(0.05)
+            self._future_pause(result_future, 0.05)
         status = result_future.result().status
         if status == GoalStatus.STATUS_SUCCEEDED:
             log.info(f'{label}: 控制器完成')
@@ -526,7 +545,7 @@ class MotionClient:
             if time.monotonic() > deadline:
                 log.error(f'{label}: 目标受理超时')
                 return False, 0
-            time.sleep(0.05)
+            self._future_pause(future, 0.05)
         handle = future.result()
         if not handle.accepted:
             log.error(f'{label}: 目标被 move_group 拒绝')
@@ -554,7 +573,7 @@ class MotionClient:
                 return True, 1
             if time.monotonic() >= next_settle_check:
                 next_settle_check += 1.0
-            time.sleep(0.05)
+            self._future_pause(result_future, 0.05)
 
         result_wrap = result_future.result()
         status = result_wrap.status

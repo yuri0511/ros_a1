@@ -1,0 +1,33 @@
+[
+  {
+    "label": "general-8",
+    "episodes": 50000,
+    "seed": 42,
+    "fixed_batch": null,
+    "states": 1806,
+    "training_wall_s": 10.407562413998676,
+    "config_sha256": "0a2a549827d9f23b8791fd66b48caaeab824095091f432f8b0e22b082ca38223",
+    "config_file_sha256": "72c0fa53e8ed9b4956d5c9536d3275a62e7c3dddd8c748be27053a27bc4ece12",
+    "table_sha256": "66917abe31145a8c6e5513c7ac11ace5546a526c5783132eebc859036921478c",
+    "table_path": "/home/yu/yuri_gazebo_performance/integration_72ab6f2/training/artifacts/q-general-8.json",
+    "model_only": true
+  },
+  {
+    "label": "demo-2222",
+    "episodes": 50000,
+    "seed": 42,
+    "fixed_batch": [
+      2,
+      2,
+      2,
+      2
+    ],
+    "states": 292,
+    "training_wall_s": 9.223248959999182,
+    "config_sha256": "0a2a549827d9f23b8791fd66b48caaeab824095091f432f8b0e22b082ca38223",
+    "config_file_sha256": "72c0fa53e8ed9b4956d5c9536d3275a62e7c3dddd8c748be27053a27bc4ece12",
+    "table_sha256": "f330039d79cb9518c89bc34013041f13206421f187f4474a4a673b4a4e571de9",
+    "table_path": "/home/yu/yuri_gazebo_performance/integration_72ab6f2/training/artifacts/q-demo-2222.json",
+    "model_only": true
+  }
+]

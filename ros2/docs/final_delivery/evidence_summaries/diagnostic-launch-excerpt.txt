@@ -1,0 +1,39 @@
+Source: /home/yu/yuri_gazebo_performance/yuri_review/diagnostic/runs/20261016T171634-diag-rule/instance-1/launch.log
+Source SHA256: 38f62678633a7be264641e603b93b11b80f406a6b692d192faaaf59f82e230e0
+Selection: listed event substrings; original source is retained unchanged.
+
+39: [task_dispatcher_node-10] [INFO] [1792142195.891474817] [task_dispatcher]: 退回谁闲推谁: 没有填写 Q 表路径
+628: [task_dispatcher_node-10] [INFO] [1792142207.865831769] [task_dispatcher]: 按需来料: 已请求 1/8(/parts/request_spawn <- blue, 闲臂 arm1)
+640: [task_dispatcher_node-10] [INFO] [1792142213.591528238] [task_dispatcher]: 推板已回到起点附近(world_x=0.122),停板并允许派发
+666: [gazebo-5] [INFO] [1792142213.732888454] [joint_trajectory_controller]: Goal reached, success!
+668: [pick_place_executor_node-11] [INFO] [1792142213.739472156] [pick_place_executor]: task_0001 part_1: PICKING 
+690: [gazebo-5] [INFO] [1792142216.721007503] [joint_trajectory_controller]: Goal reached, success!
+713: [gazebo-5] [INFO] [1792142217.348388034] [joint_trajectory_controller]: Goal reached, success!
+735: [gazebo-5] [INFO] [1792142218.016150477] [joint_trajectory_controller]: Goal reached, success!
+757: [gazebo-5] [INFO] [1792142218.677956308] [joint_trajectory_controller]: Goal reached, success!
+779: [gazebo-5] [INFO] [1792142219.307606709] [joint_trajectory_controller]: Goal reached, success!
+801: [gazebo-5] [INFO] [1792142219.711616928] [joint_trajectory_controller]: Goal reached, success!
+829: [gazebo-5] [INFO] [1792142222.611472304] [joint_trajectory_controller]: Goal reached, success!
+850: [gazebo-5] [INFO] [1792142223.249965062] [joint_trajectory_controller]: Goal reached, success!
+871: [gazebo-5] [INFO] [1792142223.836857085] [joint_trajectory_controller]: Goal reached, success!
+899: [gazebo-5] [INFO] [1792142224.306003329] [joint_trajectory_controller]: Goal reached, success!
+920: [gazebo-5] [INFO] [1792142225.240018251] [joint_trajectory_controller]: Goal reached, success!
+922: [pick_place_executor_node-11] [INFO] [1792142225.265073578] [pick_place_executor]: task_0001 part_1: ZONE_CLEAR carry_clear
+925: [task_dispatcher_node-10] [INFO] [1792142225.267212220] [task_dispatcher]: 按需来料: 已请求 2/8(/parts/request_spawn <- red, 闲臂 arm2)
+954: [gazebo-5] [INFO] [1792142227.498954174] [joint_trajectory_controller]: Goal reached, success!
+978: [gazebo-5] [INFO] [1792142228.867447267] [joint_trajectory_controller]: Goal reached, success!
+1002: [gazebo-5] [INFO] [1792142229.554893728] [joint_trajectory_controller]: Goal reached, success!
+1034: [task_dispatcher_node-10] [INFO] [1792142231.570871968] [task_dispatcher]: 推板已回到起点附近(world_x=0.127),停板并允许派发
+1060: [gazebo-5] [INFO] [1792142231.728077484] [arm2_joint_trajectory_controller]: Goal reached, success!
+1062: [pick_place_executor_node-12] [INFO] [1792142231.752420390] [pick_place_relay]: task_0001 part_2: PICKING 
+1084: [gazebo-5] [INFO] [1792142231.860963843] [joint_trajectory_controller]: Goal reached, success!
+1088: [pick_place_executor_node-11] [INFO] [1792142232.880018086] [pick_place_executor]: task_0001 part_1: COMPLETED bin_blue(待收尾后上报)
+1107: [pick_place_executor_node-11] [INFO] [1792142232.888493693] [pick_place_executor]: return_standby: 规划完成,改由本臂控制器执行 (48 点)
+1110: [gazebo-5] [INFO] [1792142234.700765981] [arm2_joint_trajectory_controller]: Goal reached, success!
+1133: [gazebo-5] [INFO] [1792142235.320837883] [arm2_joint_trajectory_controller]: Goal reached, success!
+1155: [gazebo-5] [INFO] [1792142235.945871578] [arm2_joint_trajectory_controller]: Goal reached, success!
+1177: [gazebo-5] [INFO] [1792142236.641791256] [arm2_joint_trajectory_controller]: Goal reached, success!
+1199: [gazebo-5] [INFO] [1792142237.240836367] [arm2_joint_trajectory_controller]: Goal reached, success!
+1201: [gazebo-5] [INFO] [1792142237.326441590] [joint_trajectory_controller]: Goal reached, success!
+1202: [pick_place_executor_node-11] [INFO] [1792142237.332421423] [pick_place_executor]: return_standby: 控制器完成
+1203: [pick_place_executor_node-11] [ERROR] [1792142237.334474597] [pick_place_executor]: DIAGNOSTIC_SAFETY_ABORT return_standby_not_physically_verified; no terminal flush/next-task continuation

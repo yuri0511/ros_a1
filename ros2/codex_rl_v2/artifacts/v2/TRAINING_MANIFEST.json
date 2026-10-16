@@ -1,0 +1,55 @@
+[
+  {
+    "name": "demo",
+    "episodes": 50000,
+    "seed": 42,
+    "states": 292,
+    "wall_s": 11.98727301100007,
+    "model_only": true,
+    "config_sha256": "ce65cec200920de7f3116ddedffcee900aba21b8d07af405bc84359017c1ca0b",
+    "config_file_sha256": "574a24115d663c8a73c30f897f6b824bd32a6357803147e4a35e76b6339f6b01",
+    "table_sha256": "10f320eba3c8e0c1118910ae9c99a49e3b06acd7470d18a71dd5bba08eca9fe4",
+    "hyperparameters": {
+      "episodes": 50000,
+      "seed": 42,
+      "batch_size": 8,
+      "fixed_batch": [
+        2,
+        2,
+        2,
+        2
+      ],
+      "alpha": 0.2,
+      "epsilon_schedule": "linear",
+      "epsilon_start": 0.5,
+      "epsilon_end": 0.05,
+      "gamma": 1.0
+    },
+    "model_source_sha256": "6c1d2413a86568bd19830a15f3521b49554c335350a7b934e5cbc83ed5487d7d",
+    "trainer_source_sha256": "a1448c5e5fbdf6e4fb6b70add39327f2097b73c0c5245c5b251fd6b688262e76"
+  },
+  {
+    "name": "general",
+    "episodes": 50000,
+    "seed": 42,
+    "states": 1806,
+    "wall_s": 13.057995685001515,
+    "model_only": true,
+    "config_sha256": "ce65cec200920de7f3116ddedffcee900aba21b8d07af405bc84359017c1ca0b",
+    "config_file_sha256": "574a24115d663c8a73c30f897f6b824bd32a6357803147e4a35e76b6339f6b01",
+    "table_sha256": "18c4b343b0c359b2c740d9d6eeabef273be3d93e4e573ee28a32b53216977e2c",
+    "hyperparameters": {
+      "episodes": 50000,
+      "seed": 42,
+      "batch_size": 8,
+      "fixed_batch": null,
+      "alpha": 0.2,
+      "epsilon_schedule": "linear",
+      "epsilon_start": 0.5,
+      "epsilon_end": 0.05,
+      "gamma": 1.0
+    },
+    "model_source_sha256": "6c1d2413a86568bd19830a15f3521b49554c335350a7b934e5cbc83ed5487d7d",
+    "trainer_source_sha256": "a1448c5e5fbdf6e4fb6b70add39327f2097b73c0c5245c5b251fd6b688262e76"
+  }
+]

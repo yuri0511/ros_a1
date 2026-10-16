@@ -1,0 +1,760 @@
+{
+  "schema_version": 2,
+  "timing_model_version": "local72ab-1ms-v3-empirical-timing-v2",
+  "is_placeholder": false,
+  "overlap_validated": false,
+  "allow_arm_overlap": true,
+  "allow_prefeed_busy_arm": false,
+  "color_order": [
+    "blue",
+    "yellow",
+    "red",
+    "green"
+  ],
+  "color_to_arm": [
+    0,
+    0,
+    1,
+    1
+  ],
+  "feed_seconds": {
+    "blue": 6.044800487093987,
+    "yellow": 5.974092088532931,
+    "red": 6.033223120883701,
+    "green": 5.9555376236116615
+  },
+  "pick_seconds": {
+    "blue": 11.730858036014734,
+    "yellow": 11.462953422015847,
+    "red": 15.019324032257387,
+    "green": 15.241789693916957
+  },
+  "post_pick_seconds": {
+    "blue": 12.387655816231254,
+    "yellow": 9.089971672843216,
+    "red": 9.182576830659128,
+    "green": 13.562399527858412
+  },
+  "eta_bin_edges_seconds": [
+    5.0,
+    10.0,
+    20.0
+  ],
+  "idle_weight": 0.05,
+  "seed": 42,
+  "request_delay_seconds": 0.0,
+  "measurement_metadata": {
+    "source": "data/SOURCE_MANIFEST.json and CALIBRATION_DATA.csv",
+    "clock": "native stats interpolated at source log wall times; exact ROS observed stamps separate",
+    "training_rounds": [
+      "20261016T152337-pair1-rule",
+      "20261016T152643-pair1-q",
+      "20261016T152947-pair2-q",
+      "20261016T153312-pair2-rule"
+    ],
+    "holdout_rounds": "pair3 rule/q; never used in parameter fitting",
+    "limitations": [
+      "Gate-home is position/stop-command evidence, not measured zero velocity.",
+      "READY means dispatcher task slot available after return attempt, not independently verified physical standby.",
+      "Zero retries in a color sample is not proof of zero probability.",
+      "Uniform resampling of observed whole-part profiles is an empirical sensitivity model, not calibrated physical failure probabilities.",
+      "Placement occurrence >2, alternate policy correlations and faults are uncalibrated.",
+      "Sim seconds only; wall seconds require measured load/RTF and startup/recorder costs."
+    ]
+  },
+  "sampling_mode": "empirical_profiles",
+  "calibration_scope": "aggregate observed dispatch gates; incomplete safety/failure-probability calibration",
+  "profiles": {
+    "blue": [
+      {
+        "source_case": "20261016T152337-pair1-rule",
+        "source_part": "part_1",
+        "color": "blue",
+        "feed": 6.170842111618986,
+        "advance_stop": 4.333158197170908,
+        "home": 6.014207755325204,
+        "pick_nominal": 11.720667052281021,
+        "retry_prefix": 0.0,
+        "place": 6.9553858882117865,
+        "return_tail": 4.659051473295868,
+        "post": 11.614437361507655,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152337-pair1-rule",
+        "source_part": "part_5",
+        "color": "blue",
+        "feed": 5.974996495447343,
+        "advance_stop": 4.283289062807171,
+        "home": 5.973276041834794,
+        "pick_nominal": 11.604246052844744,
+        "retry_prefix": 0.0,
+        "place": 7.988296194057156,
+        "return_tail": 4.881893191806569,
+        "post": 12.870189385863725,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152643-pair1-q",
+        "source_part": "part_2",
+        "color": "blue",
+        "feed": 6.114500717085011,
+        "advance_stop": 4.2471472618691095,
+        "home": 5.93972512700369,
+        "pick_nominal": 11.707432194150996,
+        "retry_prefix": 0.0,
+        "place": 7.195335668817627,
+        "return_tail": 4.729710494349888,
+        "post": 11.925046163167515,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152643-pair1-q",
+        "source_part": "part_6",
+        "color": "blue",
+        "feed": 6.0065350028303754,
+        "advance_stop": 4.308584529408435,
+        "home": 6.004168860559929,
+        "pick_nominal": 11.772679795740785,
+        "retry_prefix": 0.0,
+        "place": 8.032399223278873,
+        "return_tail": 4.887401454439669,
+        "post": 12.919800677718541,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152947-pair2-q",
+        "source_part": "part_2",
+        "color": "blue",
+        "feed": 6.047411544903305,
+        "advance_stop": 4.216822029522817,
+        "home": 5.89341029121946,
+        "pick_nominal": 11.655340644600493,
+        "retry_prefix": 0.0,
+        "place": 7.164074336091488,
+        "return_tail": 4.7225284637770315,
+        "post": 11.88660279986852,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152947-pair2-q",
+        "source_part": "part_6",
+        "color": "blue",
+        "feed": 5.965247198720263,
+        "advance_stop": 4.256943203910595,
+        "home": 5.962353460503536,
+        "pick_nominal": 11.81001744618878,
+        "retry_prefix": 0.0,
+        "place": 8.132492699618126,
+        "return_tail": 4.898669732543823,
+        "post": 13.031162432161949,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T153312-pair2-rule",
+        "source_part": "part_1",
+        "color": "blue",
+        "feed": 6.211974003280956,
+        "advance_stop": 4.321474430638808,
+        "home": 6.043064425079512,
+        "pick_nominal": 11.897772760798443,
+        "retry_prefix": 0.0,
+        "place": 7.215304154676918,
+        "return_tail": 4.720758116187099,
+        "post": 11.936062270864017,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T153312-pair2-rule",
+        "source_part": "part_5",
+        "color": "blue",
+        "feed": 5.866896822865655,
+        "advance_stop": 4.18069994385236,
+        "home": 5.86476860020548,
+        "pick_nominal": 11.678708341512603,
+        "retry_prefix": 0.0,
+        "place": 8.055498533104654,
+        "return_tail": 4.862446905593458,
+        "post": 12.917945438698112,
+        "retries": 0,
+        "retry_reasons": ""
+      }
+    ],
+    "yellow": [
+      {
+        "source_case": "20261016T152337-pair1-rule",
+        "source_part": "part_3",
+        "color": "yellow",
+        "feed": 6.025658569213007,
+        "advance_stop": 4.327639988244364,
+        "home": 6.024225982421839,
+        "pick_nominal": 11.680523576595107,
+        "retry_prefix": 0.0,
+        "place": 6.926342709636863,
+        "return_tail": 1.908337540336646,
+        "post": 8.834680249973509,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152337-pair1-rule",
+        "source_part": "part_7",
+        "color": "yellow",
+        "feed": 5.986332410363971,
+        "advance_stop": 4.3167599091180335,
+        "home": 5.984263861609065,
+        "pick_nominal": 11.265349982835119,
+        "retry_prefix": 0.0,
+        "place": 7.715205558855047,
+        "return_tail": 1.6982608530369987,
+        "post": 9.413466411892045,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152643-pair1-q",
+        "source_part": "part_4",
+        "color": "yellow",
+        "feed": 5.960225677224216,
+        "advance_stop": 4.264186728765637,
+        "home": 5.958235842570744,
+        "pick_nominal": 11.671502332397523,
+        "retry_prefix": 0.0,
+        "place": 6.996429650648338,
+        "return_tail": 1.9253449810111505,
+        "post": 8.921774631659488,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152643-pair1-q",
+        "source_part": "part_8",
+        "color": "yellow",
+        "feed": 5.963325597076562,
+        "advance_stop": 4.29359848054915,
+        "home": 5.961627599854552,
+        "pick_nominal": 11.61949030135176,
+        "retry_prefix": 0.0,
+        "place": 8.030327139429943,
+        "return_tail": 1.648364045371494,
+        "post": 9.678691184801437,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152947-pair2-q",
+        "source_part": "part_4",
+        "color": "yellow",
+        "feed": 5.9286681807382,
+        "advance_stop": 4.234505807748619,
+        "home": 5.92674572825355,
+        "pick_nominal": 11.193449463322992,
+        "retry_prefix": 0.0,
+        "place": 6.490874440550854,
+        "return_tail": 1.8970804868132944,
+        "post": 8.387954927364149,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152947-pair2-q",
+        "source_part": "part_8",
+        "color": "yellow",
+        "feed": 5.983448502659087,
+        "advance_stop": 4.294231047016751,
+        "home": 5.981894509501359,
+        "pick_nominal": 11.641688871161762,
+        "retry_prefix": 0.0,
+        "place": 7.933775446867287,
+        "return_tail": 1.6957468280231467,
+        "post": 9.629522274890434,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T153312-pair2-rule",
+        "source_part": "part_3",
+        "color": "yellow",
+        "feed": 5.971692787024807,
+        "advance_stop": 4.2772795972574755,
+        "home": 5.969922940042636,
+        "pick_nominal": 10.998179449154662,
+        "retry_prefix": 0.0,
+        "place": 6.427486619167993,
+        "return_tail": 1.88299384092754,
+        "post": 8.310480460095533,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T153312-pair2-rule",
+        "source_part": "part_7",
+        "color": "yellow",
+        "feed": 5.973384983963598,
+        "advance_stop": 4.274808508441339,
+        "home": 5.971824836971734,
+        "pick_nominal": 11.63344339930785,
+        "retry_prefix": 0.0,
+        "place": 7.886025000120242,
+        "return_tail": 1.657178241948884,
+        "post": 9.543203242069126,
+        "retries": 0,
+        "retry_reasons": ""
+      }
+    ],
+    "red": [
+      {
+        "source_case": "20261016T152337-pair1-rule",
+        "source_part": "part_2",
+        "color": "red",
+        "feed": 6.1102445356815664,
+        "advance_stop": 4.232766189241541,
+        "home": 5.925832067718517,
+        "pick_nominal": 12.196624513789594,
+        "retry_prefix": 0.0,
+        "place": 8.394010428675465,
+        "return_tail": 1.1970765039135927,
+        "post": 9.591086932589057,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152337-pair1-rule",
+        "source_part": "part_6",
+        "color": "red",
+        "feed": 5.890296877388224,
+        "advance_stop": 4.204955602404567,
+        "home": 5.888146031709724,
+        "pick_nominal": 12.404276403667737,
+        "retry_prefix": 0.0,
+        "place": 7.290568094689377,
+        "return_tail": 1.4528172921373539,
+        "post": 8.74338538682673,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152643-pair1-q",
+        "source_part": "part_1",
+        "color": "red",
+        "feed": 6.1683022793130124,
+        "advance_stop": 4.286145953277858,
+        "home": 5.986079727117124,
+        "pick_nominal": 12.173385233802739,
+        "retry_prefix": 0.0,
+        "place": 8.371327252450602,
+        "return_tail": 1.1476151780577268,
+        "post": 9.518942430508329,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152643-pair1-q",
+        "source_part": "part_7",
+        "color": "red",
+        "feed": 5.933266378263028,
+        "advance_stop": 4.239465598481189,
+        "home": 5.931318238512858,
+        "pick_nominal": 12.024375230797432,
+        "retry_prefix": 0.0,
+        "place": 7.6852185487623785,
+        "return_tail": 1.4258060577046479,
+        "post": 9.111024606467026,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152947-pair2-q",
+        "source_part": "part_1",
+        "color": "red",
+        "feed": 6.199788826997746,
+        "advance_stop": 4.345951896711733,
+        "home": 6.04036329326794,
+        "pick_nominal": 10.004754410201762,
+        "retry_prefix": 13.650404262077197,
+        "place": 8.407217539043828,
+        "return_tail": 1.1487897731747623,
+        "post": 9.55600731221859,
+        "retries": 1,
+        "retry_reasons": "grasp_not_verified"
+      },
+      {
+        "source_case": "20261016T152947-pair2-q",
+        "source_part": "part_7",
+        "color": "red",
+        "feed": 5.867861028040721,
+        "advance_stop": 4.173723956262052,
+        "home": 5.865768587584597,
+        "pick_nominal": 12.209622185066792,
+        "retry_prefix": 0.0,
+        "place": 7.70190096971794,
+        "return_tail": 1.4373722434748402,
+        "post": 9.13927321319278,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T153312-pair2-rule",
+        "source_part": "part_2",
+        "color": "red",
+        "feed": 6.0827964056763975,
+        "advance_stop": 4.219587461368278,
+        "home": 5.918046800008888,
+        "pick_nominal": 10.025531628740225,
+        "retry_prefix": 13.236673737254158,
+        "place": 7.499275904210641,
+        "return_tail": 1.1376122544911738,
+        "post": 8.636888158701815,
+        "retries": 2,
+        "retry_reasons": "pre_grasp_failed|part_not_under_gripper"
+      },
+      {
+        "source_case": "20261016T153312-pair2-rule",
+        "source_part": "part_6",
+        "color": "red",
+        "feed": 6.013228635708913,
+        "advance_stop": 4.306237322059559,
+        "home": 6.011193014091731,
+        "pick_nominal": 12.228944652661468,
+        "retry_prefix": 0.0,
+        "place": 7.730058985492747,
+        "return_tail": 1.4339476192759548,
+        "post": 9.164006604768701,
+        "retries": 0,
+        "retry_reasons": ""
+      }
+    ],
+    "green": [
+      {
+        "source_case": "20261016T152337-pair1-rule",
+        "source_part": "part_4",
+        "color": "green",
+        "feed": 5.907506446185394,
+        "advance_stop": 4.226287172655475,
+        "home": 5.905632580876542,
+        "pick_nominal": 12.23500281334266,
+        "retry_prefix": 0.0,
+        "place": 7.965445707726829,
+        "return_tail": 4.873492385276506,
+        "post": 12.838938093003335,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152337-pair1-rule",
+        "source_part": "part_8",
+        "color": "green",
+        "feed": 5.950389664725975,
+        "advance_stop": 4.26589556524533,
+        "home": 5.948240765899385,
+        "pick_nominal": 12.2295911767404,
+        "retry_prefix": 0.0,
+        "place": 8.464683047461108,
+        "return_tail": 4.6540652470793304,
+        "post": 13.118748294540438,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152643-pair1-q",
+        "source_part": "part_3",
+        "color": "green",
+        "feed": 6.004639747428946,
+        "advance_stop": 4.32380923306301,
+        "home": 6.001441761496515,
+        "pick_nominal": 9.671841048717653,
+        "retry_prefix": 14.787829766516971,
+        "place": 8.757562187565597,
+        "return_tail": 4.884317426915203,
+        "post": 13.6418796144808,
+        "retries": 2,
+        "retry_reasons": "pre_grasp_failed|grasp_not_verified"
+      },
+      {
+        "source_case": "20261016T152643-pair1-q",
+        "source_part": "part_5",
+        "color": "green",
+        "feed": 5.909662580040916,
+        "advance_stop": 4.204270147641978,
+        "home": 5.907029079291789,
+        "pick_nominal": 12.192642906389565,
+        "retry_prefix": 0.0,
+        "place": 8.580241222768493,
+        "return_tail": 6.794076329866243,
+        "post": 15.374317552634736,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T152947-pair2-q",
+        "source_part": "part_3",
+        "color": "green",
+        "feed": 5.995238524727704,
+        "advance_stop": 4.29933790645098,
+        "home": 5.99350145751017,
+        "pick_nominal": 9.73235384233594,
+        "retry_prefix": 14.645013403154913,
+        "place": 7.309360460357624,
+        "return_tail": 4.880186398809812,
+        "post": 12.189546859167436,
+        "retries": 2,
+        "retry_reasons": "pre_grasp_failed|grasp_not_verified"
+      },
+      {
+        "source_case": "20261016T152947-pair2-q",
+        "source_part": "part_5",
+        "color": "green",
+        "feed": 5.995018432453463,
+        "advance_stop": 4.293048259371744,
+        "home": 5.99299799589582,
+        "pick_nominal": 12.055740712384392,
+        "retry_prefix": 0.0,
+        "place": 8.514308869420631,
+        "return_tail": 6.882255852727042,
+        "post": 15.396564722147673,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T153312-pair2-rule",
+        "source_part": "part_4",
+        "color": "green",
+        "feed": 6.030485215888376,
+        "advance_stop": 4.316091914142831,
+        "home": 6.028749416805937,
+        "pick_nominal": 12.217392365719931,
+        "retry_prefix": 0.0,
+        "place": 7.970076096174708,
+        "return_tail": 4.881411517532172,
+        "post": 12.85148761370688,
+        "retries": 0,
+        "retry_reasons": ""
+      },
+      {
+        "source_case": "20261016T153312-pair2-rule",
+        "source_part": "part_8",
+        "color": "green",
+        "feed": 5.851360377442518,
+        "advance_stop": 4.169180582741973,
+        "home": 5.849598542150829,
+        "pick_nominal": 12.166909516033229,
+        "retry_prefix": 0.0,
+        "place": 8.44144632694102,
+        "return_tail": 4.6462671462449805,
+        "post": 13.087713473186,
+        "retries": 0,
+        "retry_reasons": ""
+      }
+    ]
+  },
+  "stage_summary": {
+    "blue": {
+      "feed": {
+        "n": 8,
+        "mean": 6.044800487093987,
+        "min": 5.866896822865655,
+        "max": 6.211974003280956
+      },
+      "advance_stop": {
+        "n": 8,
+        "mean": 4.268514832397526,
+        "min": 4.18069994385236,
+        "max": 4.333158197170908
+      },
+      "home": {
+        "n": 8,
+        "mean": 5.961871820216451,
+        "min": 5.86476860020548,
+        "max": 6.043064425079512
+      },
+      "pick_nominal": {
+        "n": 8,
+        "mean": 11.730858036014734,
+        "min": 11.604246052844744,
+        "max": 11.897772760798443
+      },
+      "retry_prefix": {
+        "n": 8,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "place": {
+        "n": 8,
+        "mean": 7.592348337232078,
+        "min": 6.9553858882117865,
+        "max": 8.132492699618126
+      },
+      "return_tail": {
+        "n": 8,
+        "mean": 4.795307478999176,
+        "min": 4.659051473295868,
+        "max": 4.898669732543823
+      },
+      "post": {
+        "n": 8,
+        "mean": 12.387655816231254,
+        "min": 11.614437361507655,
+        "max": 13.031162432161949
+      }
+    },
+    "yellow": {
+      "feed": {
+        "n": 8,
+        "mean": 5.974092088532931,
+        "min": 5.9286681807382,
+        "max": 6.025658569213007
+      },
+      "advance_stop": {
+        "n": 8,
+        "mean": 4.285376258392671,
+        "min": 4.234505807748619,
+        "max": 4.327639988244364
+      },
+      "home": {
+        "n": 8,
+        "mean": 5.972342662653185,
+        "min": 5.92674572825355,
+        "max": 6.024225982421839
+      },
+      "pick_nominal": {
+        "n": 8,
+        "mean": 11.462953422015847,
+        "min": 10.998179449154662,
+        "max": 11.680523576595107
+      },
+      "retry_prefix": {
+        "n": 8,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "place": {
+        "n": 8,
+        "mean": 7.300808320659571,
+        "min": 6.427486619167993,
+        "max": 8.030327139429943
+      },
+      "return_tail": {
+        "n": 8,
+        "mean": 1.7891633521836443,
+        "min": 1.648364045371494,
+        "max": 1.9253449810111505
+      },
+      "post": {
+        "n": 8,
+        "mean": 9.089971672843216,
+        "min": 8.310480460095533,
+        "max": 9.678691184801437
+      }
+    },
+    "red": {
+      "feed": {
+        "n": 8,
+        "mean": 6.033223120883701,
+        "min": 5.867861028040721,
+        "max": 6.199788826997746
+      },
+      "advance_stop": {
+        "n": 8,
+        "mean": 4.251104247475847,
+        "min": 4.173723956262052,
+        "max": 4.345951896711733
+      },
+      "home": {
+        "n": 8,
+        "mean": 5.945843470001423,
+        "min": 5.865768587584597,
+        "max": 6.04036329326794
+      },
+      "pick_nominal": {
+        "n": 8,
+        "mean": 11.658439282340968,
+        "min": 10.004754410201762,
+        "max": 12.404276403667737
+      },
+      "retry_prefix": {
+        "n": 8,
+        "mean": 3.360884749916419,
+        "min": 0.0,
+        "max": 13.650404262077197
+      },
+      "place": {
+        "n": 8,
+        "mean": 7.884947215380372,
+        "min": 7.290568094689377,
+        "max": 8.407217539043828
+      },
+      "return_tail": {
+        "n": 8,
+        "mean": 1.2976296152787565,
+        "min": 1.1376122544911738,
+        "max": 1.4528172921373539
+      },
+      "post": {
+        "n": 8,
+        "mean": 9.182576830659128,
+        "min": 8.636888158701815,
+        "max": 9.591086932589057
+      }
+    },
+    "green": {
+      "feed": {
+        "n": 8,
+        "mean": 5.9555376236116615,
+        "min": 5.851360377442518,
+        "max": 6.030485215888376
+      },
+      "advance_stop": {
+        "n": 8,
+        "mean": 4.262240097664165,
+        "min": 4.169180582741973,
+        "max": 4.32380923306301
+      },
+      "home": {
+        "n": 8,
+        "mean": 5.9533989499908735,
+        "min": 5.849598542150829,
+        "max": 6.028749416805937
+      },
+      "pick_nominal": {
+        "n": 8,
+        "mean": 11.562684297707971,
+        "min": 9.671841048717653,
+        "max": 12.23500281334266
+      },
+      "retry_prefix": {
+        "n": 8,
+        "mean": 3.6791053962089855,
+        "min": 0.0,
+        "max": 14.787829766516971
+      },
+      "place": {
+        "n": 8,
+        "mean": 8.250390489802001,
+        "min": 7.309360460357624,
+        "max": 8.757562187565597
+      },
+      "return_tail": {
+        "n": 8,
+        "mean": 5.312009038056411,
+        "min": 4.6462671462449805,
+        "max": 6.882255852727042
+      },
+      "post": {
+        "n": 8,
+        "mean": 13.562399527858412,
+        "min": 12.189546859167436,
+        "max": 15.396564722147673
+      }
+    }
+  },
+  "data_manifest_sha256": "3e8f7bcd2dc567860aa29a07fee343d75a063f1ebb0251304087e6290db09ab8"
+}

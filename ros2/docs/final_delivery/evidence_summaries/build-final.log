@@ -1,0 +1,35 @@
+Starting >>> a1_interfaces
+Starting >>> a1_cell_sim
+--- stderr: a1_cell_sim
+CMake Warning (deprecated) at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+---
+Finished <<< a1_cell_sim [0.75s]
+--- stderr: a1_interfaces
+CMake Warning (deprecated) at CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.10 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+  to tell CMake that the project requires at least <min> but has been updated
+  to work with policies introduced by <max> or earlier.
+This warning is for project developers.  Use -Wno-author or -Wno-deprecated
+to suppress it.
+
+---
+Finished <<< a1_interfaces [5.17s]
+Starting >>> a1_sorting_core
+Starting >>> a1_vision
+Finished <<< a1_sorting_core [0.86s]
+Finished <<< a1_vision [0.86s]
+
+Summary: 4 packages finished [6.10s]
+  2 packages had stderr output: a1_cell_sim a1_interfaces

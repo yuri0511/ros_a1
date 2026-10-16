@@ -1,0 +1,20 @@
+{
+  "wall": {
+    "feed": -0.8560168743133545,
+    "pick_nominal": -5.531044244766235,
+    "retry_prefix": 13.417229493459065,
+    "request_gaps": 0.0028683344523111973,
+    "terminal_tail": -2.8176015218098964,
+    "total": 4.21543518702191,
+    "total_without_recorded_retry_prefix": -9.201794306437165
+  },
+  "sim": {
+    "feed": 0.03646420376082915,
+    "pick_nominal": -1.9719748310588727,
+    "retry_prefix": 13.878729788906309,
+    "request_gaps": 0.0021557177768348383,
+    "terminal_tail": -3.477075872476547,
+    "total": 8.46829900690858,
+    "total_without_recorded_retry_prefix": -5.410430781997775
+  }
+}
