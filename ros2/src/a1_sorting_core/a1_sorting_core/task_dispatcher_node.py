@@ -277,6 +277,7 @@ class TaskDispatcherNode(Node):
             relay_mode=relay_mode and not parallel_active,
             relay_delay=float(self.get_parameter('relay_delay').value),
             dispatch_delay=float(self.get_parameter('dispatch_delay').value),
+            require_arm_ready=True,
             per_arm_slots=self._per_arm_slots)
         self._next_timer = None   # dispatch_delay 定时器
         self._relay_timer = None  # relay_delay 定时器
@@ -337,6 +338,7 @@ class TaskDispatcherNode(Node):
         self._pub_relay = self.create_publisher(PartInfo, relay_topic, 10)
         self.create_subscription(PartInfo, '/parts/arrival', self._on_arrival, 10)
         self.create_subscription(TaskStatus, '/task/status', self._on_status, 10)
+        self.create_subscription(TaskStatus,'/task/placement_result',self._on_status,10)
         self.create_service(SortTask, '/sort_task', self._on_sort_task)
         if parallel_active:
             mode = (f'双臂并联分色(arm2 专收: {sorted(self._arm2_colors)}'
@@ -409,6 +411,9 @@ class TaskDispatcherNode(Node):
 
     # ---------------------------------------------------------------- 服务
     def _on_sort_task(self, request, response):
+        if self._halted:
+            response.accepted=False;response.message="ARM_FAULT: controlled full restart required"
+            return response
         with self._lock:
             known = set(self._catalog)
             # 既有按色路由结果作为 default_arm(并联激活且队列为空时
@@ -457,7 +462,29 @@ class TaskDispatcherNode(Node):
         if msg.state == 'ZONE_CLEAR':
             self._on_zone_clear(msg)
             return
-        if msg.state not in TERMINAL_STATES:
+        arm = msg.arm or 'arm1'
+        outcome_event=msg.state in ('PART_PLACED','PART_REJECTED','FAILED')
+        if outcome_event:
+            with self._lock:
+                accepted=self._seq.note_outcome(msg.part_id,arm,'FAILED' if msg.state=='PART_REJECTED' else msg.state)
+                seen_ready=self._seq.has_ready(msg.part_id,arm)
+                if self._seq.is_faulted(arm):self._halted=True
+            if self._halted:
+                self._destroy_spawn_timer();self._destroy_next_timer();self._destroy_relay_timer()
+                stop=Float64();stop.data=0.;self._pub_belt.publish(stop)
+                self.get_logger().error('ARM_OUTCOME_FAULT '+msg.part_id+' '+arm)
+                return
+            if not accepted or not seen_ready:return
+        if msg.state == 'ARM_FAULT':
+            with self._lock:
+                accepted=self._seq.arm_fault(msg.part_id,arm)
+                if accepted:self._halted=True
+            if accepted:
+                self._destroy_spawn_timer(); self._destroy_next_timer(); self._destroy_relay_timer()
+                stop=Float64();stop.data=0.;self._pub_belt.publish(stop)
+                self.get_logger().error('ARM_FAULT_HALT '+msg.part_id+' '+arm+' '+msg.detail)
+            return
+        if msg.state != 'ARM_READY' and not outcome_event:
             return
         # R1-P1 停轮:执行器报告 move_group 会话楔死判死 ⇒ 停派发+停来料
         # (中毒会话内任何后续件都只会产出 -4 假 FAILED,读数失真)
@@ -477,14 +504,15 @@ class TaskDispatcherNode(Node):
         actions = None
         full_terminal = False
         with self._lock:
-            accepted, actions = self._seq.on_terminal(
-                msg.part_id, msg.arm, msg.state)
+            accepted, actions, terminal_state = self._seq.arm_ready(
+                msg.part_id, arm)
             if accepted:
                 arm = msg.arm or 'arm1'   # 空串视为 arm1(兼容旧消息)
                 self._arm_post[arm] = None
+                self.get_logger().info('ARM_SLOT_RELEASE '+json.dumps({'part':msg.part_id,'arm':arm,'slot_arm1':self._seq.slot('arm1'),'slot_arm2':self._seq.slot('arm2'),'zone_arm':self._seq.zone_arm,'trigger':msg.state}))
                 stage = 'arm2 接力' if arm == 'arm2' else 'arm1 分拣'
                 summary = (f'{msg.part_id} {stage}完成'
-                           if msg.state == 'COMPLETED'
+                           if terminal_state == 'COMPLETED'
                            else f'{msg.part_id} {stage}失败({msg.detail})')
                 self.get_logger().info(f'任务终态: {summary},'
                                        f'队列剩余 {self._seq.queue_size} 件')
@@ -802,22 +830,24 @@ class TaskDispatcherNode(Node):
             if self._belt_control:
                 self._destroy_settle_timer()
                 self._belt.start()   # 复位本轮回位/settle,门控关闭
-        request = String()
-        request.data = color
-        if not self._first_feed_logged:
-            self._first_feed_logged = True
-            self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'first_feed','wall':time.monotonic()-self._first_feed_t0,'fast':self._fast_waits,'sim':self.get_clock().now().nanoseconds/1e9}))
-        self._pub_spawn.publish(request)
-        self.get_logger().info(
-            f'按需来料: 已请求 {spawned}'
-            + ('' if self._demand_unlimited
-               else f'/{self._demand_parts}')
-            + f'({self._spawn_topic} <- {color}{feed_note})')
-        if self._belt_control:
-            cmd = Float64()
-            cmd.data = self._belt_speed
-            self._pub_belt.publish(cmd)
-            self.get_logger().info(f'推板前进: {self._belt_speed} m/s')
+        with self._lock:
+            if self._halted:return
+            request = String()
+            request.data = color
+            if not self._first_feed_logged:
+                self._first_feed_logged = True
+                self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'first_feed','wall':time.monotonic()-self._first_feed_t0,'fast':self._fast_waits,'sim':self.get_clock().now().nanoseconds/1e9}))
+            self._pub_spawn.publish(request)
+            self.get_logger().info(
+                f'按需来料: 已请求 {spawned}'
+                + ('' if self._demand_unlimited
+                   else f'/{self._demand_parts}')
+                + f'({self._spawn_topic} <- {color}{feed_note})')
+            if self._belt_control:
+                cmd = Float64()
+                cmd.data = self._belt_speed
+                self._pub_belt.publish(cmd)
+                self.get_logger().info(f'推板前进: {self._belt_speed} m/s')
 
     # ---------------------------------------------------------------- 推板控制
     def _prime_maybe_start(self, force=False):
@@ -1000,6 +1030,7 @@ class TaskDispatcherNode(Node):
             self._try_dispatch()
 
     def _schedule(self, actions):
+        if self._halted:return
         """按 RelaySequencer 给出的延迟动作起墙钟 timer(见模块注释)。"""
         for kind, delay in actions:
             if kind == RELAY:
@@ -1023,6 +1054,7 @@ class TaskDispatcherNode(Node):
         if self._halted:      # R1-P1 停轮闸(见 halt_on_wedge)
             return
         with self._lock:
+            if self._halted:return
             # L1 方案 a(仅 legacy prime 链激活):串推未完成前挂起派发
             if self._priming:
                 self.get_logger().info('派发挂起: L1 串推链进行中')
@@ -1089,22 +1121,24 @@ class TaskDispatcherNode(Node):
                     # 派发副本注入覆盖(不污染缓存:缓存即命令本身时
                     # 已在服务回调写入,这里仅兜底同步)
                     command.target_bin_override = ovr
-        if command is not None:
-            ovr_note = (f' [指定箱 {command.target_bin_override}]'
-                        if getattr(command, 'target_bin_override', '')
-                        else '')
-            if to_arm2:
-                self._pub_relay.publish(command)
-                self.get_logger().info(
-                    f'并联派发: {part_id} (类别 {command.category})'
-                    f' -> arm2{ovr_note}'
-                    + ('，取件区上锁' if self._per_arm_slots else ''))
-            else:
-                self._pub_command.publish(command)
-                self.get_logger().info(
-                    f'派发任务: {part_id} (类别 {command.category})'
-                    f'{ovr_note}'
-                    + ('，取件区上锁' if self._per_arm_slots else ''))
+        with self._lock:
+            if self._halted:return
+            if command is not None:
+                ovr_note = (f' [指定箱 {command.target_bin_override}]'
+                            if getattr(command, 'target_bin_override', '')
+                            else '')
+                if to_arm2:
+                    self._pub_relay.publish(command)
+                    self.get_logger().info(
+                        f'并联派发: {part_id} (类别 {command.category})'
+                        f' -> arm2{ovr_note}'
+                        + ('，取件区上锁' if self._per_arm_slots else ''))
+                else:
+                    self._pub_command.publish(command)
+                    self.get_logger().info(
+                        f'派发任务: {part_id} (类别 {command.category})'
+                        f'{ovr_note}'
+                        + ('，取件区上锁' if self._per_arm_slots else ''))
 
     def _window_recheck(self):
         """停位窗越窗后的复检触发(2s 墙钟;窗口自愈=件被碰回带内,
@@ -1115,12 +1149,15 @@ class TaskDispatcherNode(Node):
     def _send_relay(self):
         self._destroy_relay_timer()
         with self._lock:
+            if self._halted:return
             part_id = self._seq.on_relay_ready()
             command = self._catalog[part_id] if part_id is not None else None
-        if command is not None:
-            self._pub_relay.publish(command)
-            self.get_logger().info(
-                f'派发接力任务: {part_id} -> arm2 (类别 {command.category})')
+        with self._lock:
+            if self._halted:return
+            if command is not None:
+                self._pub_relay.publish(command)
+                self.get_logger().info(
+                    f'派发接力任务: {part_id} -> arm2 (类别 {command.category})')
 
     def _destroy_next_timer(self):
         if self._next_timer is not None:

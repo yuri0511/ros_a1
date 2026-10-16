@@ -22,6 +22,7 @@ sort);expect_relay=true 时本轮结束条件改为"每件都有 arm2 终态行�
 任意 FAILED 行"。料区列表由 bin_names 参数化(双臂含 bin_out)。
 """
 import math
+import json
 
 import numpy as np
 import rclpy
@@ -123,6 +124,7 @@ class ResultRecorderNode(Node):
             LogicalCameraImage, str(gp('logical_camera_topic')),
             self._on_logical, 10)
         self.create_subscription(PartInfo, '/parts/arrival', self._on_arrival, 10)
+        self._pub_placement_result=self.create_publisher(TaskStatus,'/task/placement_result',10)
         self.create_subscription(TaskStatus, '/task/status', self._on_status, 10)
 
         self.get_logger().info(
@@ -150,7 +152,7 @@ class ResultRecorderNode(Node):
 
     # ------------------------------------------------------------- 状态判定
     def _on_status(self, msg: TaskStatus):
-        if msg.state not in ('COMPLETED', 'FAILED'):
+        if msg.state not in ('PLACEMENT_FINISHED', 'COMPLETED', 'FAILED'):
             return
         arm = msg.arm or 'arm1'          # 空串视为 arm1(兼容旧消息)
         key = (msg.part_id, arm)         # 去重键 (part_id, arm)
@@ -162,7 +164,7 @@ class ResultRecorderNode(Node):
         # arm1 行:目标=detail(bin_A/bin_B);arm2 行:目标=detail(bin_out),
         # 工件若仍在原料区则 final_bin != target_bin 判 MISPLACED
         # (judge_position 语义不变,天然支持)
-        target_bin = msg.detail if msg.state == 'COMPLETED' else None
+        target_bin = msg.detail if msg.state in ('PLACEMENT_FINISHED','COMPLETED') else None
         xy = self._poses.get(msg.part_id)
         if msg.state == 'FAILED':
             result, final_bin = RESULT_FAILED, None
@@ -200,6 +202,11 @@ class ResultRecorderNode(Node):
             self.get_logger().info(
                 f'{msg.part_id}[{arm}] -> {result} (无观测位姿)')
 
+        ack=TaskStatus();ack.header.stamp=self.get_clock().now().to_msg()
+        ack.part_id=msg.part_id;ack.arm=arm;ack.task_id=msg.task_id
+        ack.state='PART_PLACED' if result==RESULT_PLACED else 'PART_REJECTED'
+        ack.detail=json.dumps({'result':result,'target_bin':target_bin,'final_bin':final_bin})
+        self._pub_placement_result.publish(ack)
         self._publish_counts()
         self._publish_bin_markers()
         if self._batch_finished():

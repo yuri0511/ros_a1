@@ -1,0 +1,209 @@
+# A1 工作站控制器:复制 ur_simulation_gz/config/ur_controllers.yaml
+# 并追加 gripper_controller(自制双指夹爪),供 ur_sim_control 的 controllers_file 使用。
+# position_proportional_gain:gz_ros2_control 的 position 命令是 P 控制
+# (effort/velocity = gain x 误差)。gain 沿革:
+# - 0.1(默认):负载下 0.6 rad 跟随滞后(2026-10-01 实证 carry"卡死"真相);
+# - 1.0:取件链 57+ 轮稳定(闭夹/验证/抬升全绿);
+# - 10.0(2026-10-02 试,已弃):满伸展下垂 ~0.02 rad 很准,但闭夹把工件
+#   弹出(夹取验证 3 连败,台账"过刚扫帚"顾虑被证实,静止闸救不了)。
+# 终案 = 1.0 + 下垂前置补偿进 carry anchor 关节目标(稳定位姿=格子,
+# 见 sorting_params_pipeline.yaml)+ motion_client 关节到位闸容差 0.55。
+# 经 /** 通配节注入 gz_ros_control 插件节点与 controller_manager。
+# 2026-10-04 复验记录(Phase1 E2/E2b,两向皆负,gain 保持 2.0):
+# - gain 2.0:arm2 对 bin_C settle 梯级(τ_lift 37.5+ N·m,notes_arm2C §5)
+#   goal 永不完成→自完成路径 cancel 挂起目标触发 rcl_action 竞态→执行
+#   槽楔死→CONTROL_FAILED(-4) 级联(/tmp/e2_dual_yellow.log);
+# - gain 10.0:取件链破——两段闭爪后 -1.5N 轻触级微振把工件震脱/甩离
+#   停位(夹取验证 part_move_below_threshold,117 采样),后续 attempt
+#   追已位移工件规划失败耗尽(/tmp/e2b_dual_yellow_g10.log,6/6 FAILED)。
+# 两臂需求在 gain 维度互斥(2026-10-03 定论在并联链上复现),出路=
+# 浅折族重解 arm2 锚(降 τ 到 gain2 可保持域)或降级/回滚。
+/**:
+  ros__parameters:
+    position_proportional_gain: 1.0
+
+controller_manager:
+  ros__parameters:
+    update_rate: 500  # Hz
+    use_sim_time: true
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    io_and_status_controller:
+      type: ur_controllers/GPIOController
+
+    speed_scaling_state_broadcaster:
+      type: ur_controllers/SpeedScalingStateBroadcaster
+
+    joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    scaled_joint_trajectory_controller:
+      type: ur_controllers/ScaledJointTrajectoryController
+
+    forward_velocity_controller:
+      type: velocity_controllers/JointGroupVelocityController
+
+    forward_position_controller:
+      type: position_controllers/JointGroupPositionController
+
+    gripper_controller:
+      type: effort_controllers/JointGroupEffortController
+
+    # 双臂第二臂(arm2)控制器声明,关节名带 arm2_ tf_prefix
+    arm2_joint_trajectory_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    arm2_gripper_controller:
+      type: effort_controllers/JointGroupEffortController
+
+
+speed_scaling_state_broadcaster:
+  ros__parameters:
+    state_publish_rate: 100.0
+
+joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_1_joint
+      - wrist_2_joint
+      - wrist_3_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 100.0
+    action_monitor_rate: 50.0
+    allow_partial_joints_goal: false
+    # open_loop:JTC 命令按时钟推进不看反馈。effort 夹爪上线后仿真负载
+    # 抖动会让闭环 JTC 误报 state/path tolerance violation(13 次/轮,实证),
+    # 连环引发 carry/lift/probe 段 CONTROL_FAILED;命令与 gz 物理在
+    # 500Hz update 下同步,提前成功窗口 ~1 个控制周期,attach 的逻辑相机
+    # 真值校正可吸收。
+    open_loop: true
+    constraints:
+      stopped_velocity_tolerance: 0.2
+      # 2.0 秒是轨迹计划结束之后的仿真时间上限。0.0 会在容差没达到时
+      # 永远不结束,占死 move_group 执行槽(2026-10-15 part_6 下探第 2 级)。
+      # 走到容差内的轨迹仍按原样成功。
+      goal_time: 2.0
+      # shoulder_lift goal 0.05(其余关节 0.5 不动):满伸展构型该关节
+      # 静态下垂 0.2306 rad(P 控制重力矩/增益,2026-10-02 实测),若
+      # goal 容差 > 下垂量,JTC 会在大摆动段的动态滞后中提前判成功并
+      # 把命令冻结在当前位姿——臂永远到不了命令构型(57 轮 carry 卡点
+      # 与当轮 anchor 冻结的共同根因)。收紧后 goal 保持 pending,JTC
+      # 持续命令末点,臂收敛到 末点-下垂=格子;代价是含 lift 误差的
+      # 目标永不"成功",由 motion_client 的到位闸(关节/位姿双路)早退
+      # 兜底(见 motion_client.py 注释)。
+      # goal 全组 1.0(lift 0.12):失速构型(浅折/家族屏障)下稳态误差
+      # lift 0.05-0.08、肘腕 0.4-0.7 rad,原容差使 action 永不完成、占死
+      # move_group 执行槽卡死整个序列(2026-10-03 两次实证,arm1/arm2
+      # 同病);timeline 走完即完成,物理判据由 executor 到位闸承担
+      shoulder_pan_joint: { trajectory: 3.0, goal: 1.0 }
+      shoulder_lift_joint: { trajectory: 3.0, goal: 0.12 }
+      elbow_joint: { trajectory: 3.0, goal: 1.0 }
+      wrist_1_joint: { trajectory: 3.0, goal: 1.0 }
+      wrist_2_joint: { trajectory: 3.0, goal: 1.0 }
+      wrist_3_joint: { trajectory: 3.0, goal: 1.0 }
+
+
+scaled_joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_1_joint
+      - wrist_2_joint
+      - wrist_3_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    speed_scaling_interface_name: ""
+    state_publish_rate: 100.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    constraints:
+      stopped_velocity_tolerance: 0.2
+      goal_time: 0.0
+      shoulder_pan_joint: { trajectory: 0.2, goal: 0.1 }
+      shoulder_lift_joint: { trajectory: 0.2, goal: 0.1 }
+      elbow_joint: { trajectory: 0.2, goal: 0.1 }
+      wrist_1_joint: { trajectory: 0.2, goal: 0.1 }
+      wrist_2_joint: { trajectory: 0.2, goal: 0.1 }
+      wrist_3_joint: { trajectory: 0.2, goal: 0.1 }
+
+forward_velocity_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_1_joint
+      - wrist_2_joint
+      - wrist_3_joint
+    interface_name: velocity
+
+forward_position_controller:
+  ros__parameters:
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_1_joint
+      - wrist_2_joint
+      - wrist_3_joint
+
+gripper_controller:
+  ros__parameters:
+    joints:
+      - gripper_finger_left_joint
+      - gripper_finger_right_joint
+    allow_partial_joints_goal: false
+
+# 第二臂(arm2)JTC:与 joint_trajectory_controller 同构(闭环+宽公差,
+# 保证 attach 运动学跟随依赖的 TF 精确),仅关节名换 arm2_ 前缀。
+arm2_joint_trajectory_controller:
+  ros__parameters:
+    joints:
+      - arm2_shoulder_pan_joint
+      - arm2_shoulder_lift_joint
+      - arm2_elbow_joint
+      - arm2_wrist_1_joint
+      - arm2_wrist_2_joint
+      - arm2_wrist_3_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 100.0
+    action_monitor_rate: 50.0
+    allow_partial_joints_goal: false
+    # open_loop 同 arm1(见上,负载抖动下闭环 JTC 误报 tolerance)
+    open_loop: true
+    constraints:
+      stopped_velocity_tolerance: 0.2
+      # 与 arm1 相同:计划结束后再等 2 秒仿真时间,仍没进容差就结束。
+      goal_time: 2.0
+      # 同 arm1 注释:浅折失速误差下防 action 占死执行槽
+      arm2_shoulder_pan_joint: { trajectory: 3.0, goal: 1.0 }
+      arm2_shoulder_lift_joint: { trajectory: 3.0, goal: 0.12 }
+      arm2_elbow_joint: { trajectory: 3.0, goal: 1.0 }
+      arm2_wrist_1_joint: { trajectory: 3.0, goal: 1.0 }
+      arm2_wrist_2_joint: { trajectory: 3.0, goal: 1.0 }
+      arm2_wrist_3_joint: { trajectory: 3.0, goal: 1.0 }
+
+arm2_gripper_controller:
+  ros__parameters:
+    joints:
+      - arm2_gripper_finger_left_joint
+      - arm2_gripper_finger_right_joint
+    allow_partial_joints_goal: false

@@ -65,6 +65,9 @@ class MotionClient:
         # 不把那次等待删掉:两份规划仍要排队,悬置的规划目标也还能被看见。
         self._split = bool(split_plan_execute)
         self._traj_client = None
+        self._own_goal_inflight=False
+        self._own_controller_active=0
+        self.last_controller_result=None
         if self._split:
             from control_msgs.action import FollowJointTrajectory
             action_name = controller_action or (
@@ -78,6 +81,14 @@ class MotionClient:
             node.get_logger().info(
                 f'运动拆开: {group_name} 规划走 /move_action,'
                 f'执行走 {action_name}')
+        if self._split:
+            from action_msgs.msg import GoalStatusArray
+            from rclpy.qos import qos_profile_action_status_default
+            def own_status(msg):
+                self._own_controller_active=sum(x.status in (1,2,3) for x in msg.status_list)
+            self._own_status_sub=node.create_subscription(GoalStatusArray,
+                action_name+'/_action/status',own_status,qos_profile_action_status_default)
+
         # 执行槽观测(问题修复 2026-10-06):move_group 全局单执行槽,
         # 悬置 goal(τ 平台失速/物理到位早退)未自然收尾时发新目标必
         # Cannot push(-4),快速重试可触发 move_group 2.12 段错误,
@@ -89,7 +100,7 @@ class MotionClient:
 
         def _st_cb(m):
             # GoalStatus: UNKNOWN=0 ACCEPTED=1 EXECUTING=2 CANCELING=3
-            # (CANCELED=4/SUCCEEDED=5/ABORTED=6/REJECTED=7 均为终态)
+            # (SUCCEEDED=4/CANCELED=5/ABORTED=6 均为终态)
             self._active[0] = sum(
                 1 for g in m.status_list if g.status in (1, 2, 3))
             if self._active[0] == 0:self._slot_event.set()
@@ -322,7 +333,7 @@ class MotionClient:
         log = self._node.get_logger()
         if self._refuse_if_dead(label):
             return False
-        for busy in range(4):
+        for busy in range(1 if label == "return_standby" else 4):
             ok = self._move_to_joints_once(joint_names, values, label,
                                            timeout, log,
                                            settle_check=settle_check)
@@ -434,6 +445,8 @@ class MotionClient:
                       f'code={code}')
             self._note_outcome(False, code=code)              # R1-P1
             return False
+        if label in ('standby','return_standby') and result_wrap.result.error_code.val != 1:
+            log.error(f'{label}: MoveIt did not report SUCCESS');return False
         if self._split:
             ok = self._execute_split(
                 result_wrap.result, label, timeout,
@@ -466,6 +479,8 @@ class MotionClient:
         goal.trajectory = traj
         log.info(f'{label}: 规划完成,改由本臂控制器执行 '
                  f'({len(traj.points)} 点)')
+        self._own_goal_inflight=True
+        self.last_controller_result=None
         send_future = self._traj_client.send_goal_async(goal)
         deadline = time.monotonic() + timeout
         while not send_future.done():
@@ -487,11 +502,17 @@ class MotionClient:
                 handle.cancel_goal_async()
                 return False
             self._future_pause(result_future, 0.05)
-        status = result_future.result().status
-        if status == GoalStatus.STATUS_SUCCEEDED:
+        wrapped = result_future.result()
+        status = wrapped.status
+        error_code = getattr(wrapped.result, 'error_code', None)
+        self._own_goal_inflight=False
+        strict=label in ('standby','return_standby')
+        self.last_controller_result={'label':label,'status':status,'error_code':error_code,'success':status==GoalStatus.STATUS_SUCCEEDED and error_code==0}
+        log.info('CONTROLLER_RESULT '+__import__('json').dumps(self.last_controller_result))
+        if status == GoalStatus.STATUS_SUCCEEDED and (not strict or error_code==0):
             log.info(f'{label}: 控制器完成')
             return True
-        if saw_settled or settled_fn():
+        if not strict and (saw_settled or settled_fn()):
             log.warn(f'{label}: 控制器状态 {status} 但已到位,按成功继续')
             return True
         log.error(f'{label}: 控制器未成功 status={status}')
@@ -557,7 +578,7 @@ class MotionClient:
         # 可触发 move_group rcl_action 取消竞态崩溃)
         while not result_future.done():
             if time.monotonic() > deadline:
-                if not self._split and self._tool_settled(pose):
+                if not self._split and label not in ('standby','return_standby') and self._tool_settled(pose):
                     self._drain_result(result_future)
                     log.warn(f'{label}: 结果超时但工具已物理到位,按成功继续')
                     self._note_outcome(True, dangling=True)   # R1-P1
@@ -565,7 +586,7 @@ class MotionClient:
                 log.error(f'{label}: 执行超时(放弃等待,不取消)')
                 self._note_outcome(False, dangling=True)      # R1-P1(G-A)
                 return False, 0
-            if (not self._split and time.monotonic() >= next_settle_check
+            if (not self._split and label not in ('standby','return_standby') and time.monotonic() >= next_settle_check
                     and self._tool_settled(pose)):
                 self._drain_result(result_future)
                 log.warn(f'{label}: 动作结果未回传但工具已物理到位,按成功继续')
@@ -583,6 +604,8 @@ class MotionClient:
             log.error(f'{label}: 动作未成功 status={status} code={code}')
             self._note_outcome(False, code=code)              # R1-P1
             return False, code
+        if label in ('standby','return_standby') and code != 1:
+            log.error(f'{label}: MoveIt did not report SUCCESS');return False,code
         if self._split:
             ok = self._execute_split(
                 result, label, timeout, lambda: self._tool_settled(pose))
