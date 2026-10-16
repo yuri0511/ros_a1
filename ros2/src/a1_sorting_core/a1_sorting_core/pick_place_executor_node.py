@@ -826,6 +826,8 @@ class PickPlaceExecutorNode(Node):
                     self._down_pose(self._standby, self._standby[2]), 'standby')
             except GraspError as e:
                 self.get_logger().warn(f'待机位运动失败({e}),继续任务')
+                from .diagnostic_observer import halt
+                halt(self, 'initial_standby_failed', error=str(e))
             self._at_standby = True
         for attempt in range(1, self._attempts + 1):
             attached_joint = None
@@ -1996,6 +1998,8 @@ class PickPlaceExecutorNode(Node):
 
 
 def main(args=None):
+    from .diagnostic_observer import install
+    install(PickPlaceExecutorNode)
     rclpy.init(args=args)
     node = PickPlaceExecutorNode()
     try:

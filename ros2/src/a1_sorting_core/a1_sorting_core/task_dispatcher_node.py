@@ -687,6 +687,8 @@ class TaskDispatcherNode(Node):
         import hashlib
         self.get_logger().info('Q_AUDIT_LOAD '+json.dumps({
             'config_path': config_path, 'table_path': table_path,
+            'package_dir': package_dir, 'schema_version': self._q_table.get('schema_version'),
+            'model_module': __import__('dual_arm_rl.model',fromlist=['Model']).__file__,
             'config_sha256': self._q_table['config_sha256'],
             'config_file_sha256': hashlib.sha256(Path(config_path).read_bytes()).hexdigest(),
             'table_file_sha256': hashlib.sha256(Path(table_path).read_bytes()).hexdigest(),
