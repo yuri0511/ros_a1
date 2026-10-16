@@ -1,0 +1,22 @@
+--- ur5e_cell_controllers.yaml
++++ ur5e_cell_controllers_stability_gain1.yaml
+@@ -20,7 +20,7 @@
+ # 浅折族重解 arm2 锚(降 τ 到 gain2 可保持域)或降级/回滚。
+ /**:
+   ros__parameters:
+-    position_proportional_gain: 2.0
++    position_proportional_gain: 1.0
+ 
+ controller_manager:
+   ros__parameters:
+--- ur5e_cell_controllers.yaml
++++ ur5e_cell_controllers_stability_gain0p5.yaml
+@@ -20,7 +20,7 @@
+ # 浅折族重解 arm2 锚(降 τ 到 gain2 可保持域)或降级/回滚。
+ /**:
+   ros__parameters:
+-    position_proportional_gain: 2.0
++    position_proportional_gain: 0.5
+ 
+ controller_manager:
+   ros__parameters:
