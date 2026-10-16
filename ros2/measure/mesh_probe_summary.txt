@@ -1,0 +1,23 @@
+Mesh sensor positive control, 2026-10-16. Headless cell_bringup, not the 8-part demo.
+Recorder first_sim=0.002. Log: contacts_mesh_probe.csv
+
+shoulder_link_collision vs shoulder_probe_box
+  sim 73.598  xyz 0.59907 0.41041 0.58200  depth 0.019593 m
+
+upper_arm_link_collision vs bin_yellow::link::wall_x_neg_collision
+  sim 74.723  xyz 0.83000 0.37500 0.81500  depth 0.000891 m
+
+forearm_link_collision vs forearm_probe_box
+  sim 223.510 xyz 0.82397 0.17263 1.33312  depth 0.023393 m
+
+wrist_1_link_collision vs forearm_probe_box
+  sim 225.680 xyz 0.83244 0.15487 1.32498  depth 0.023168 m
+
+wrist_2_link_collision vs wrist2_probe_box
+  sim 225.689 xyz 0.86401 0.13164 1.26436  depth 0.020293 m
+
+wrist_3_link_collision vs wrist3_probe_box
+  sim 235.073 xyz 0.97191 0.16187 1.28455  depth 0.020676 m
+
+The dip trajectory jammed the upper arm on the yellow bin, so forearm and wrist
+were checked with static boxes on the live meshes. The boxes are not in the world file.

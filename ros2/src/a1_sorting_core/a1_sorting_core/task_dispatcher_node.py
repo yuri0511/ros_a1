@@ -21,7 +21,8 @@
 arm1 FAILED 则跳过接力直接下一件。
 并联分色(arm2_colors 非空)改为每条臂一个执行槽,两件可以同时在途。
 取件区仍是一把全局锁:派发时占用,收到 ZONE_CLEAR 才放开。
-ZONE_CLEAR 不是 CARRYING。来料按「谁闲推谁」,一次仍只推一件。
+ZONE_CLEAR 不是 CARRYING。没接 Q 表时来料按「谁闲推谁」。
+接了 Q 表以后,下一件颜色问表;一次仍只推一件,不给正忙的臂预送。
 
 推进决策在纯逻辑类 RelaySequencer(便于单元测试),本节点只做
 ROS 桥接:终态喂给 on_terminal,按返回的延迟动作起墙钟 timer
@@ -90,6 +91,8 @@ from a1_sorting_core.dispatch_logic import parse_bin_arm_map, plan_sort_task
 from a1_sorting_core.pipeline_logic import (BeltController,
                                             DispatchWindowGate,
                                             choose_idle_feed)
+from a1_sorting_core.q_feed import (COLOR_INDEX, COLORS, decide_feed,
+                                    load_q_policy)
 from a1_sorting_core.relay_sequencer import DISPATCH, RELAY, RelaySequencer
 
 TERMINAL_STATES = ('COMPLETED', 'FAILED')
@@ -183,6 +186,11 @@ class TaskDispatcherNode(Node):
         self.declare_parameter('belt_dispatch_window_hi', 1.00)
         self.declare_parameter('belt_dispatch_recheck_s', 2.0)
         self.declare_parameter('belt_dispatch_wait_max', 3)
+        # Q 表路径空着就还是谁闲推谁。路径写上以后只读那两份 JSON，不改它们。
+        self.declare_parameter('q_package_dir', '')
+        self.declare_parameter('q_config_path', '')
+        self.declare_parameter('q_table_path', '')
+        self.declare_parameter('q_batch', [2, 2, 2, 2])
 
         self._auto_start = bool(self.get_parameter('auto_start').value)
         self._dispatch_delay = float(self.get_parameter('dispatch_delay').value)
@@ -248,6 +256,14 @@ class TaskDispatcherNode(Node):
         self._off_belt: set[str] = set()
         self._last_feed_arm = None
         self._feed_counts = {'blue': 0, 'yellow': 0, 'red': 0, 'green': 0}
+        # 臂上正在做的那件:颜色序号,以及离开取件区的仿真秒。终态后清掉。
+        self._arm_post = {'arm1': None, 'arm2': None}
+        self._last_sim_sec = 0.0
+        self._q_config = None
+        self._q_table = None
+        self._q_package_dir = str(self.get_parameter('q_package_dir').value)
+        self._q_batch = [int(n) for n in self.get_parameter('q_batch').value]
+        self._load_q_policy()
         self._seq = RelaySequencer(
             relay_mode=relay_mode and not parallel_active,
             relay_delay=float(self.get_parameter('relay_delay').value),
@@ -426,6 +442,7 @@ class TaskDispatcherNode(Node):
 
     # ---------------------------------------------------------------- 状态
     def _on_status(self, msg: TaskStatus):
+        self._note_sim(msg.header.stamp)
         if msg.state == 'ZONE_CLEAR':
             self._on_zone_clear(msg)
             return
@@ -453,6 +470,7 @@ class TaskDispatcherNode(Node):
                 msg.part_id, msg.arm, msg.state)
             if accepted:
                 arm = msg.arm or 'arm1'   # 空串视为 arm1(兼容旧消息)
+                self._arm_post[arm] = None
                 stage = 'arm2 接力' if arm == 'arm2' else 'arm1 分拣'
                 summary = (f'{msg.part_id} {stage}完成'
                            if msg.state == 'COMPLETED'
@@ -488,6 +506,9 @@ class TaskDispatcherNode(Node):
             released = self._seq.release_zone(msg.part_id, arm)
             if released:
                 self._off_belt.add(msg.part_id)
+                job = self._arm_post.get(arm)
+                if job is not None:
+                    job['since'] = self._last_sim_sec
                 if self._belt_part_id == msg.part_id:
                     self._belt_part_id = None
                     self._feed_inflight = False
@@ -514,11 +535,87 @@ class TaskDispatcherNode(Node):
         self._spawn_timer.daemon = True
         self._spawn_timer.start()
 
+    def _note_sim(self, stamp):
+        """记下状态消息上的仿真秒。没有戳时保持上一次的值。"""
+        sim = float(stamp.sec) + float(stamp.nanosec) * 1e-9
+        if sim > 0.0:
+            self._last_sim_sec = sim
+
+    def _load_q_policy(self):
+        """路径都写了才加载。失败就留空,来料仍走谁闲推谁。"""
+        config_path = str(self.get_parameter('q_config_path').value).strip()
+        table_path = str(self.get_parameter('q_table_path').value).strip()
+        if not config_path or not table_path:
+            return
+        try:
+            self._q_config, self._q_table = load_q_policy(
+                self._q_package_dir, config_path, table_path)
+        except Exception as exc:
+            self._q_config = None
+            self._q_table = None
+            self.get_logger().error(
+                f'Q 表没有接上,仍用谁闲推谁: {exc}')
+            return
+        self.get_logger().info(
+            f'Q 表已接上: {len(self._q_table["q_values"])} 个状态, '
+            f'批次 {list(self._q_batch)}。忙着的臂不预送。'
+            f'配置文件里的 overlap_validated 仍是 '
+            f'{self._q_config["overlap_validated"]}。')
+
+    def _choose_q_feed_locked(self):
+        """在已持有 _lock 时问 Q 表。返回 (选择或 None, 日志短句)。
+
+        选择是 (臂, 颜色)。None 且短句非空时,调用方把短句打出来并且不推件。
+        缺离区时刻、或表选了忙臂时,退回谁闲推谁。
+        """
+        idle = self._seq.idle_arms()
+        if not idle:
+            return None, ''
+        now = float(self._last_sim_sec)
+        arms = []
+        for name in ('arm1', 'arm2'):
+            if name in idle:
+                arms.append({'phase': 'READY', 'color': -1, 'phase_start': now})
+                continue
+            job = self._arm_post.get(name)
+            if not job or job.get('since') is None:
+                choice = choose_idle_feed(
+                    idle, self._last_feed_arm, self._feed_counts)
+                note = ''
+                if choice:
+                    note = f', 闲臂 {choice[0]}（Q表缺离区时刻,改用谁闲推谁）'
+                return choice, note
+            arms.append({
+                'phase': 'POST_PICK',
+                'color': int(job['color']),
+                'phase_start': float(job['since']),
+            })
+        remaining = [
+            int(self._q_batch[index]) - int(self._feed_counts.get(COLORS[index], 0))
+            for index in range(4)]
+        choice, stats = decide_feed(
+            self._q_config, self._q_table, remaining, arms, now,
+            self._q_package_dir)
+        if choice is None:
+            return None, 'Q 来料: 这步选择等待,先不推新的一件'
+        arm, _color = choice
+        if arm not in idle:
+            choice = choose_idle_feed(
+                idle, self._last_feed_arm, self._feed_counts)
+            note = ''
+            if choice:
+                note = f', 闲臂 {choice[0]}（Q表选了忙着的臂,不预送）'
+            return choice, note
+        note = f', Q表 {arm}'
+        if stats.get('unknown_state_fallback_steps'):
+            note += '（表里没有这个状态,改用规则）'
+        return choice, note
+
     def _request_spawn_and_start_belt(self):
         """发一条来料请求并令推板前进;计数进 _spawned。
 
-        并联时不发 random:谁闲推谁,一次只占一个送料槽。
-        取件区还被占、或已经有一件在送,这次直接返回。
+        并联时不发 random。接了 Q 表就问表,否则谁闲推谁。
+        一次只占一个送料槽。取件区还被占、或已经有一件在送,这次直接返回。
         """
         with self._lock:
             if self._halted:
@@ -531,16 +628,21 @@ class TaskDispatcherNode(Node):
             if self._per_arm_slots:
                 if self._feed_inflight or self._seq.zone_arm is not None:
                     return
-                choice = choose_idle_feed(
-                    self._seq.idle_arms(), self._last_feed_arm,
-                    self._feed_counts)
+                if self._q_config is not None:
+                    choice, feed_note = self._choose_q_feed_locked()
+                else:
+                    choice = choose_idle_feed(
+                        self._seq.idle_arms(), self._last_feed_arm,
+                        self._feed_counts)
+                    feed_note = f', 闲臂 {choice[0]}' if choice else ''
                 if choice is None:
+                    if feed_note:
+                        self.get_logger().info(feed_note)
                     return
                 arm, color = choice
                 self._last_feed_arm = arm
                 self._feed_counts[color] = self._feed_counts.get(color, 0) + 1
                 self._feed_inflight = True
-                feed_note = f', 闲臂 {arm}'
             self._spawned += 1
             spawned = self._spawned
             if self._belt_control:
@@ -815,6 +917,10 @@ class TaskDispatcherNode(Node):
                     f'arm2槽={self._seq.slot("arm2") or "空"}')
             if part_id is not None:
                 command = self._catalog[part_id]
+                color_index = COLOR_INDEX.get(command.category)
+                if color_index is not None:
+                    self._arm_post['arm2' if to_arm2 else 'arm1'] = {
+                        'color': color_index, 'since': None}
                 ovr = self._bin_overrides.get(part_id, '')
                 if ovr and command.target_bin_override != ovr:
                     # 派发副本注入覆盖(不污染缓存:缓存即命令本身时
