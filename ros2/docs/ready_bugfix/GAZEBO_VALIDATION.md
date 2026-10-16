@@ -1,24 +1,45 @@
-# 一次受控短时真实验证（未通过）
+# 续修真实Gazebo验证：返回速度超限，停止在一件
 
-日期2026-10-17。运行目录：/home/yu/yuri_gazebo_performance/ready_bugfix/runs/20261017T013726-ready-short-1ms。运行源码：a03bbdc（完整SHA见audit/run-source.json），基于81e55c2。最终代码在此之后继续修正，未重复物理测试。
+**初始待机的重复戳误停已消除；一件正确入箱，但返回后未达到物理READY，因此未进行8件Rule。** 所有失败和启动异常均保留，不筛选成功重跑。本轮不是正式吞吐量或Rule失败率样本。
 
-命令：
-```
-PERF_POLICY=rule PERF_CONTACT=1 PERF_PARTS=1 python3 /home/yu/yuri_gazebo_performance/ready_bugfix/tools/run_case.py ready-short-1ms 1 true 1 160
-```
+## 运行清单
 
-1ms、v3、无GUI/RViz、X11 llvmpipe、LP_NUM_THREADS=2、单实例、全新HOME/ROS_DOMAIN_ID/GZ_PARTITION/CSV。没有改变几何、控制、相机、Q表；只允许最多一件，不是八件吞吐样本。
+| 运行目录 | 源码 | 结果 |
+|---|---|---|
+| runs/20261017T013726-ready-short-1ms | a03bbdc（上一阶段） | 初始待机重复戳误停，历史原样保留 |
+| runs/20261017T022945-ready-dedup-one-1ms | e272471 | 来源MessageInfo读取错误，首条消息退出，未开始工件任务，空CSV；不能算分拣失败 |
+| runs/20261017T023230-ready-native-one-1ms | f8e484c | part_1 blue入bin_blue，返回持续超速，ARM_FAULT，0个ARM_READY/释放；唯一真正取放验证 |
 
-初始standby控制器结果SUCCEEDED(status4)、error_code0，初版物理监测器因重复关节header戳锁存异常，8墙钟秒到期拒绝READY。尚未开始抓取，也没有进入return_standby。观察器原样记录FAILED与ARM_FAULT，CSV一条FAILED；这不是正式Rule失败率或2.886重新复现。
+本次参数均1ms、v3事件等待、headless无RViz、X11/llvmpipe、LP_NUM_THREADS=2、单实例、feed_policy:=rule、最多1件。每轮独立HOME/ROS_DOMAIN_ID81/GZ_PARTITION/日志/CSV，重用Pixi依赖，不修改原工作区。准确命令与环境见各metadata.json及launch-environment.json。
 
-fault wall=1792172274.518041，ROS sim21.966/21.967s；pause服务data:true确认wall=1792172274.924434，延迟约0.406秒。完整生命周期42.023墙钟秒，包含清理，不是批次完成耗时。原生接触CSV0点，不能据此证明后续取放轨迹无碰撞。scene_publisher关闭超时由launch升级信号清理，不当作运动运行中崩溃。
+## 真实顺序（后一轮）
 
-高频证据：high-rate.jsonl.gz含11110个JointState、18443个控制器状态、2个Action状态、2个任务事件；单发布者，481对同戳，未发现倒退。完整原始名字、位置、速度、effort、header、wall、monotonic、观察到的ROS clock、controller reference/feedback和Goal UUID状态均存。低干扰probe另存native stats/传感器证据；无丢帧补造。
+| 事件 | ROS仿真秒 | 墙钟Unix秒 |
+|---|---:|---:|
+| 初始standby Action成功 | 约11.20（关节关联，不是Action原生stamp） | 1792175568.624468 |
+| 内部稳定窗口通过 | 最后关节stamp11.453，span.252/125戳 | 1792175568.884394 |
+| PICKING | 11.464 | 1792175568.886264 |
+| ZONE_CLEAR | 23.002 | 1792175581.257645 |
+| PLACEMENT_FINISHED | 30.171 | 1792175589.089142 |
+| PART_PLACED（原判据） | 30.173 | 1792175589.091244 |
+| return_standby Action SUCCEEDED/error0 | 约34.88（关联关节，不是Action原生stamp） | 1792175594.003578 |
+| ARM_FAULT | 42.263 | 1792175602.020672 |
+| world pause确认data:true | 不以响应墙钟冒充sim stamp | 1792175602.441607 |
 
-发现初版永久重复戳锁存策略过严后，最终改为重复戳中断稳定窗口、不刷新/不计数；倒退仍锁故障。**只做离线回放，没有补跑。** 回放仍未通过连续窗口，最后稳定片段约.105sim秒；controller_ok/no_active_goal在回放中作乐观假定，即便如此仍拒绝。此为保守性检查，不能替代真实控制状态验证。
+Action日志本身使用墙钟ROS日志前缀；表中Action sim只与邻近原始关节关联，未伪造原生时间戳。FAULT到pause确认约.421墙钟秒。完整生命周期55.275墙钟秒含启动/停止，不能作为成功批次耗时。
 
-最终版本还新增原recorder真值确认、双源消息乱序处理、命令原子切换和.01rad READY位置门槛，均未实测。**没有执行完整8件规则回归，没有Q轮，没有16组。** 因而不能声明原8件功能、性能或长期可靠性已保持。
+初始窗口最大发布速度.007014rad/s、差分.014028、位置误差.00003711rad。返回后最后2sim秒腕3约±.489333rad/s，位置差分最大.978667，100%超原.3门槛；位置虽只偏约.000489rad，不能据位置接近宣布静止。8墙钟秒观察到期触发FAULT。未精确复现历史2.886幅值，但同类Action成功/非静止已复现，详见ROOT_CAUSE_ANALYSIS。
 
-停止路径：ARM_FAULT/FAILED观察器写guard-fault→监督器20Hz检测→原分区/world pause→SIGINT该launch会话→有界TERM/KILL回收本轮残留；只操作本轮PID/session，最终无残留。恢复仅支持保存证据、完整停轮、人工复核后新世界/新进程，不支持清FAULT继续同一不明姿态。
+共20971条JointState、904对重复戳、单GID、0倒退。所有17次已记录轨迹结果均SUCCEEDED/error0；无已记录抓取重试/Action中止/超时。ARM_FAULT来自独立物理检查，不能篡写成控制器Action失败。结果CSV保留1条PLACED、bin_blue；没有COMPLETED/ARM_READY/ARM_SLOT_RELEASE，dispatcher记录ARM_FAULT_HALT，故障臂槽未错误释放。ZONE_CLEAR此前合法释放取件区，不是释放臂槽。
 
-下一步应先审查重复header戳与物理积分戳同步/有效连续样本定义，再在明确授权下重新验证最终版。不能放宽速度、位置或减少窗口以获得成功结果。
+## 接触与停止
+
+原生contact CSV55504个接触点行（不是55504次独立碰撞）。未记录双臂/机械臂主体-箱体接触；存在夹爪-箱壁2251行、最大深度.000180m，夹爪-工件52903行、最大.011448m，以及夹爪-传送带350行、最大.000092m。箱壁和抓取穿深原样报告，缺同条件对照，不能据此宣布无新增碰撞或安全认证。详见audit/continuation-native-contacts.json。
+
+监督器成功pause后SIGINT本轮会话；summary.residual_session_cleanup为空、最终无Gazebo/MoveIt/ROS仿真节点残留。多个节点SIGINT记录exit -2/KeyboardInterrupt，这是主动保护清理，不能谎称所有进程自然正常完成8件。
+
+## 验收结论
+
+通过的部分：重复戳可去重且仍核查所有载荷；初始稳定窗口真实通过；PART_PLACED在返回故障后保留；ARM_FAULT停止新派发并保持臂槽。
+
+未通过：返回物理静止、正向ARM_READY→释放的真实路径、两臂并发、完整8件四箱各2件、正常批次退出和物理故障恢复。未运行8件、Q、16组，也未追加重跑。建议先让Yuri审核底层位置控制振荡/position接口终态判据；不要放宽速度/位置/窗口，未证明生产可用。

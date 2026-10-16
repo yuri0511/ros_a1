@@ -1,39 +1,22 @@
-# 物理READY与结果协议
+# 物理READY协议与同戳稳定窗口（续修最终版）
 
-## 独立事件
+保持原PART_PLACED、ARM_READY、ARM_FAULT分离。PART_PLACED只由原result_recorder使用原坐标/箱界判据确认；PLACEMENT_FINISHED不是成功凭证；COMPLETED不释放实际dispatcher执行槽。槽释放需匹配part/arm的正确放置确认与物理ARM_READY同时成立。FAILED/ARM_FAULT锁存、停止新来料/派发并保留故障臂槽，迟到COMPLETED/READY不能清除。ZONE_CLEAR仅释放全局取件区，不表示臂可复用。
 
-| 事件/通道 | 生产者与判据 | 是否释放执行槽 |
-|---|---|---|
-| PLACEMENT_FINISHED /task/status | executor完成原放置阶段，仅请求结果判定 | 否 |
-| PART_PLACED /task/placement_result | 原result_recorder用原逻辑相机坐标和原箱体内口判为PLACED，已记录CSV | 单独不释放 |
-| PART_REJECTED /task/placement_result | 原判据为OUTSIDE/MISPLACED/NOT_FOUND/FAILED，真实类别保留 | 触发故障/保留槽 |
-| FAILED /task/status | 执行器任务失败，可先记录失败结果 | 触发故障/保留槽 |
-| ARM_READY /task/status | 同一臂控制器成功、物理窗口通过；放置任务还须收到结果确认 | 与匹配PART_PLACED同时具备才释放 |
-| ARM_FAULT /task/status | 返回失败、状态不明、时间倒退/超时、缺确认等 | 保留槽并全局停止新派发 |
-| ZONE_CLEAR /task/status | 保留原carry_clear物理离区逻辑；verified return也可作为兜底 | 仅放取件区，不释放臂槽 |
-| COMPLETED /task/status | 仅在成功回待机后保留旧遥测兼容 | 运行dispatcher忽略其槽释放含义 |
+## 来源、时间和稳定性
 
-TaskStatus字段布局不变，只补状态字符串契约。需要同时更新executor、dispatcher、recorder；禁止新旧版本节点混用。result_recorder仍以真实坐标判箱，CSV/去重/箱界不改；放置判定时点提前到放置完成阶段，避免return故障抹去真实结果。这一时点变化尚未完整8件物理回归。
+- 通过本机rclpy消息信息或唯一图端点确认DDS GID；本机回调不暴露GID，故每次采样要求图上唯一端点。多/无端点、来源变更拒绝，不合并多个发布者。
+- 唯一joint name匹配本臂六关节；另一臂正常运动不使本臂速度判据失败。
+- 同来源同header归一个桶：样本数不增加、时间跨度不增加、首次receipt monotonic不刷新。相同时间戳的多个载荷保留位置min/max和最大绝对速度；任一超限载荷都能打断稳定性，不能只取首帧或末帧隐藏异常。
+- 跨递增戳用两桶位置极值计算保守差分；同戳内不除零、不捏造dt。所有发布速度也必须满足门槛。header始终来自原消息，墙钟只管新鲜度和有界超时。
+- 保留位置.01rad、发布/差分速度.3rad/s、新鲜度.5秒、future容忍.01sim秒、间隙.05sim秒、最少50个递增戳及.25sim秒连续窗口，均未放宽/缩短。
+- 同戳正常去重；clock不推进超过原新鲜度预算判pause，阻止READY并要求恢复后新窗口；header倒退或clock倒退锁故障，归零重置单独标记reset，均不热清故障。
+- 仅在standby/return的MoveIt与本臂轨迹Action成功、error_code0、无未解决/活跃控制Goal后begin窗口。运动途中非零速度不直接触发READY故障，不用轨迹进行时样本充当最终稳定证据。
+- 物理观察最多8墙钟秒，结果ACK最多4墙钟秒，ACK后重验新鲜状态。控制Action/规划沿用有界等待。最多2000桶，线程锁保护。
 
-## READY条件
+ARM_READY详情现记录控制器结果、无活跃Goal标志、来源GID、窗口长度/样本数/最大速度和位置误差；dispatcher受理释放时记录ARM_SLOT_RELEASE及两臂槽、取件区状态。监督器核对这些字段，观察器退出或故障时暂停本轮世界并清理本轮会话。
 
-- 初始standby和return_standby不以settled兜底掩盖Action失败；要求MoveIt SUCCESS及本臂FollowJointTrajectory SUCCEEDED+error_code=0。
-- 本臂没有活跃/未解决的控制Goal；其他臂运动不作为本臂失败。控制超时/拒绝不会被当成功。
-- 按原始唯一name匹配六个关节，不用数组位置猜臂，不用别名混取。缺失、非有限值、重名拒绝。
-- 位置每关节<=.01rad，取自既有MoveIt JointConstraint目标容差，严于仅用于补偿构型的旧.55rad兜底。未改变规划目标或控制参数。
-- 发布速度及新戳位置差分速度均<=原.3rad/s；未提高阈值。本次初始standby有限样本可低于此阈值，但尚不足以认证所有返回姿态。
-- receipt monotonic age和header sim age<=原.5秒；未来header超过.01sim秒拒绝。
-- 至少50个新的递增戳，连续跨度>=.25sim秒；相邻间隔>.05sim秒中断窗口。重复戳清空窗口、不累计、不刷新；倒退永久锁故障。此窗口是保守候选，尚未通过本机物理验证，不是已充分校准的生产参数。
-- 完成Action之后才开始窗口，最多8墙钟秒；结果确认最多4墙钟秒；确认后立即重新核验新鲜物理证据，不能用等待前的旧READY快照。返回Action单次等待保持原60秒边界，不做4次返回重试链；已有共享规划槽等待仍有45秒界。
+## 真实故障时的状态
 
-## 槽与消息顺序
+本轮ZONE_CLEAR于sim23.002正常释放取件区；正确放置于sim30.173确认；return动作成功后仍超速，sim42.263发ARM_FAULT，dispatcher记录ARM_FAULT_HALT。没有ARM_READY、COMPLETED或ARM_SLOT_RELEASE，无后续新派发；故障臂槽仍绑定part_1，取件区此前已安全释放，不能混称“取件区与臂槽一起释放”。该槽结论由匹配FAULT受理代码和日志确认，没有声称采到进程私有内存快照。
 
-RelaySequencer默认保留旧纯逻辑兼容模式；实际dispatcher显式require_arm_ready=True。旧终态不能释放运行槽。匹配part/arm的正确放置结果和ARM_READY可跨发布者乱序到达，缓存两类证据后才完成；重复消息幂等。冲突结果锁故障；故障臂的迟到READY/ZONE_CLEAR无权释放槽/锁。保留每臂一槽、全局取件锁、queued/done/in-flight去重。
-
-executor增加命令锁，使_busy/待处理队列切换原子化，重复命令不启动第二任务。ARM_FAULT使dispatcher在同一锁下置_halted，取消来料/派发/接力定时器，停止推板新推进；发布命令前再次在同一锁检查，避免timer竞态。已在另一臂执行的任务不被粗暴杀死；本次诊断监督器另行pause世界并正常清理。
-
-## 故障与受控恢复
-
-永久任务FAILED、PART_REJECTED同样停止新派发并保留槽；未知状态不再自动尝试新的恢复运动，原有任务内部有限抓取重试保留。没有自动清除故障或“原地继续下一件”。支持路径：保存原始数据→停止新派发→诊断监督器暂停仿真→SIGINT本轮会话→有界TERM/KILL清理残留→确认无旧会话→人工复核后以新世界/新状态机启动。单元测试覆盖故障旧实例不能恢复、新实例才能重新排队；没有宣称已经验证物理故障后的重启恢复。
-
-不实现真实硬件急停；ROS普通Topic也不提供安全认证。消息来源和唯一运动命令所有权仍依赖受控ROS_DOMAIN_ID/网络环境，不对恶意伪造ARM_READY作安全保证。非split执行路径缺直接控制器成功证据时会fail closed，当前适用验证对象为原双臂pipeline split配置。
+故障不能被普通终态覆盖；只允许保存证据、暂停/正常终止本轮、确认无残留、复核后新世界/新状态机的受控恢复。未实现/验证不明姿态热恢复、硬件急停或自动改变控制目标。两臂槽/全局取件互斥的并发组合通过单测，本轮真实只执行arm1一件，不声称双臂回归通过。

@@ -146,3 +146,18 @@ def test_installed_jazzy_callback_uses_unique_graph_gid():
  from a1_sorting_core.physical_ready import publisher_identity
  gid=bytes(range(16))
  assert publisher_identity({'source_timestamp':1,'publication_sequence_number':3},[SimpleNamespace(endpoint_gid=gid)])==gid.hex()
+
+
+@pytest.mark.parametrize('phase,expected',[('standby',True),('return_standby',False)])
+def test_recorded_native_joints_accept_initial_stability_and_reject_return_oscillation(phase,expected):
+ import json
+ from pathlib import Path
+ fixture=json.loads((Path(__file__).parent/'fixtures/ready_native_20261017.json').read_text())
+ rows=fixture['phases'][phase]['samples'];m=PhysicalReadyMonitor();m.begin(rows[0]['monotonic']);ever_ready=False
+ for x in rows:
+  m.observe(fixture['names'],x['positions'],x['velocities'],x['stamp'],x['monotonic'],source=x['publisher_gid'])
+  r=m.evaluate(fixture['names'],fixture['targets'],x['observed_clock'],x['monotonic'],True,True)
+  ever_ready |= r['ready']
+ assert ever_ready is expected
+ if not expected:assert r['reason']=='joint_not_stationary_or_at_target' and r['max_reported_speed']>.3
+ assert m.duplicate_stamps>0

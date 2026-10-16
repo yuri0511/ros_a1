@@ -1,9 +1,30 @@
-# 本轮命令与保护
+# 续修复现命令（默认不启动新的物理实验）
 
-源码分支bugfix/physical-arm-ready，base81e55c2。四包构建/全测试见TEST_RESULTS.md，唯一物理命令见GAZEBO_VALIDATION.md。禁止把历史训练入口当复现前置执行。
+```bash
+source /home/yu/yuri_gazebo_performance/ready_bugfix/activate.sh
+cd /home/yu/yuri_gazebo_performance/ready_bugfix/worktree/ros2
+colcon build --symlink-install --base-paths src
+source install/setup.bash
+python -m pytest src/a1_sorting_core/test/test_physical_ready.py src/a1_sorting_core/test/test_arm_lifecycle.py -q
+python -m pytest src/a1_sorting_core/test src/a1_vision/test research_tools/test_voice_contract.py -q
+```
 
-原证据审计：python3 tools/audit_existing.py；高频分析：python3 tools/analyze_high_rate.py；只读回放：python3 tools/replay_gate.py。这些只读原数据并写ready_bugfix/audit，不改历史目录。
+相关69通过；全量244通过/4既有失败，不能当全绿。
 
-停止本轮：在latest-case.txt指定的CASE创建STOP；ARM_FAULT/FAILED自动写guard-fault触发世界pause及会话清理。不要全局pkill。world reset不重置ROS锁/计数，不用于热恢复。
+只读复核（输出均在当前ready_bugfix/audit）：
+```bash
+cd /home/yu/yuri_gazebo_performance/ready_bugfix
+python3 tools/continuation_replay.py
+python3 tools/analyze_continuation.py /home/yu/yuri_gazebo_performance/ready_bugfix/runs/20261017T023230-ready-native-one-1ms
+python3 tools/contact_summary.py runs/20261017T023230-ready-native-one-1ms/instance-1/contacts.csv audit/continuation-native-contacts.json
+```
 
-完整恢复要先保存CASE并确认/proc无本轮进程、无旧ROS域实例，由人工确认新实验后新进程/新世界。当前未授权新的物理重跑，不能自动启动8件或16组。
+实际已执行物理命令（仅为留档，不作为自动复现前置）：
+```bash
+PERF_POLICY=rule PERF_CONTACT=1 PERF_PARTS=1 python3 -u tools/run_case.py ready-dedup-one-1ms 1 true 1 160
+PERF_POLICY=rule PERF_CONTACT=1 PERF_PARTS=1 python3 -u tools/run_case.py ready-native-one-1ms 1 true 1 160
+```
+
+前者启动兼容性失败，后者返回速度超限安全停止。**不要启动8件/重复物理试验直到控制问题被审查。** 不执行previous_510ef89/tools中的历史编辑/终结脚本来重写现有状态。
+
+运行时停止：CASE/STOP文件触发仅本轮正常清理；ARM_FAULT/FAILED/证据观察器退出会先pause本轮GZ_PARTITION的/world/sorting_cell/control再SIGINT会话。禁止全局pkill；reset世界不会清理ROS槽与fault，不用于热恢复。恢复需保存证据、完整停止、检查无残留，复核后新世界/新节点。

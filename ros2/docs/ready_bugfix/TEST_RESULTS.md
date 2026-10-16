@@ -1,26 +1,17 @@
-# 无Gazebo测试与构建
+# 续修测试与构建
 
-最终测试命令：
-```
-source /home/yu/yuri_gazebo_performance/ready_bugfix/activate.sh
-cd /home/yu/yuri_gazebo_performance/ready_bugfix/worktree/ros2
-colcon build --symlink-install --base-paths src
-source install/setup.bash
-python -m pytest src/a1_sorting_core/test src/a1_vision/test research_tools/test_voice_contract.py -q
-```
+四个ROS包构建成功，日志audit/continuation-build-native.log。
 
-最终结果：**227通过，4失败**；本次新增70个用例全部通过，原157个可通过用例保持通过。源日志audit/tests-final.log及XML。不将4个既有失败排除后冒充全量通过。
+- READY与生命周期相关测试：**69通过**，audit/continuation-related-tests-final.log。
+- 全量既有core/vision及现有voice纯函数测试：**244通过，4项既有失败**，audit/continuation-tests-final.log/.xml。没有运行语音模型或RL训练。
+- 无Gazebo ROS消息来源接口预检通过，audit/rclpy-source-preflight-final.log。真实API只有source/received timestamp及sequence，不含GID；必须结合唯一发布图端点，不再猜测属性。
 
-既有失败：
-- src.a1_sorting_core.test.test_camera_pose::test_world_image_camera_h_fov_final_135
-- src.a1_sorting_core.test.test_legacy_anchors::test_relay_section_identical_between_both_tables
-- src.a1_sorting_core.test.test_legacy_anchors::test_wired_anchors_match_G0_anchors_v3_json
-- src.a1_sorting_core.test.test_legacy_anchors::test_anchor_table_gates_and_belt_stop_are_pinned
+4项原有失败保持原样：test_world_image_camera_h_fov_final_135、test_relay_section_identical_between_both_tables、test_wired_anchors_match_G0_anchors_v3_json、test_anchor_table_gates_and_belt_stop_are_pinned。三项依赖缺失G0_anchors_v3.json，一项relay键集合契约不符；未伪造锚表或跳过断言。
 
-三项依赖缺失G0_anchors_v3.json；一项旧relay键集合契约与原配置不符。未伪造证据、未改掉断言。各阶段first/contract/full/release测试日志原样保留。
+覆盖：Action成功但运动、拒绝/中止/超时、返回失败、消息缺失/陈旧/非有限、重复/倒退/归零/暂停、同戳异常载荷、来源变更/多源、另一臂运动、任务去重、ZONE_CLEAR/PART_PLACED/READY分离、乱序确认、故障槽/锁与迟到COMPLETED、新实例受控恢复。保留50戳/.25sim秒/.01rad/.3rad/s等全部门槛。
 
-覆盖：控制器SUCCEEDED+成功码、SUCCEEDED但非零码、ABORT/CANCEL、规划拒绝/错误码、目标受理拒绝、执行超时及cancel请求、物理未静止、位置越界、非有限/缺失/过期/未来/倒退/重复戳、连续窗口中断、另一臂运动、ZONE_CLEAR与READY分别发生、结果/READY乱序/重复/冲突、保留槽、迟到ZONE_CLEAR阻止释放、命令去重、缺放置确认有界故障、正确/OUTSIDE/未知位置原判据确认，以及仅新实例可恢复的受控停机契约。
+新增真实fixture测试接受本轮初始standby稳定片段，同时拒绝return后的持续腕3振荡；原始gzip SHA和source commit在fixture内。此测试验证保护能拒绝已知危险证据，不代表修复了底层振荡。
 
-语音模拟测试覆盖未知字段/枚举、缺真实件/多件歧义/忙件、不得伪造ID、显式左右映射、自动调度/故障拒绝插单、stop不映射杀进程或分拣请求、status只读提案。本次未测试真实ASR/LLM或ROS语音节点。
+完整保留开发中失败：continuation-unit-first.log中一个浮点测试时刻构造问题（测试receipt比now大约1e-15，后改测试now到实际receipt之后）；rclpy-messageinfo-preflight.log记录首次接口假设错误；第一次Gazebo启动错误原样留档。最终测试没有修改实际速度/位置门槛来通过。
 
-单测证明确定代码路径和约束，不证明所有物理运动安全。仅一次真实诊断未通过；最终代码没有八件物理回归证据，详见GAZEBO_VALIDATION.md。
+真实Gazebo一件未通过READY，8件未执行。单测69/全量244通过不能表述为物理验收通过。
