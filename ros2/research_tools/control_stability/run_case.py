@@ -1,7 +1,7 @@
 import os,sys,time,json,csv,signal,subprocess,datetime,statistics
 from pathlib import Path
 ROOT=Path('/home/yu/yuri_gazebo_performance/control_stability'); WS=ROOT/'worktree/ros2'
-expected=int(os.environ.get('PERF_PARTS','1'));assert expected in (1,8)
+expected=int(os.environ.get('PERF_PARTS','1'));assert expected in (1,2,8)
 label,step,fast,num,limit=sys.argv[1:6];rate='4';num=int(num);limit=float(limit)
 fixture=os.environ.get('PERF_FIXTURE','0')
 if step != '1' or fast not in ('true','false'):raise SystemExit('Only audited 1/2 ms and explicit wait policy accepted')
@@ -23,17 +23,17 @@ for key in ('LIBGL_ALWAYS_SOFTWARE','GALLIUM_DRIVER','MESA_LOADER_DRIVER_OVERRID
  baseenv.pop(key,None)
 for i in range(num):
  run=case/f'instance-{i+1}';run.mkdir();(run/'home').mkdir()
- env=baseenv.copy();env['DIAG_RUN']=str(run);env.update(HOME=str(run/'home'),ROS_DOMAIN_ID=str(81+i),GZ_PARTITION=case.name+f'-{i+1}',ROS_LOG_DIR=str(run/'ros'),ROS_AUTOMATIC_DISCOVERY_RANGE='LOCALHOST',LIBGL_ALWAYS_SOFTWARE='1',GALLIUM_DRIVER='llvmpipe',QT_QPA_PLATFORM='xcb',PYTHONUNBUFFERED='1')
+ env=baseenv.copy();env['DIAG_RUN']=str(run);env['CONTROL_NATIVE_CSV']=str(run/'native-joints.csv');env.update(HOME=str(run/'home'),ROS_DOMAIN_ID=str(81+i),GZ_PARTITION=case.name+f'-{i+1}',ROS_LOG_DIR=str(run/'ros'),ROS_AUTOMATIC_DISCOVERY_RANGE='LOCALHOST',LIBGL_ALWAYS_SOFTWARE='1',GALLIUM_DRIVER='llvmpipe',QT_QPA_PLATFORM='xcb',PYTHONUNBUFFERED='1')
  if threads!='default':env['LP_NUM_THREADS']=threads
  if os.environ.get('PERF_RMW'):env['RMW_IMPLEMENTATION']=os.environ['PERF_RMW']
  feed_policy=os.environ.get('PERF_POLICY','rule');policy_params=os.environ.get('PERF_POLICY_PARAMS','')
  if feed_policy=='rule' and policy_params:raise ValueError('Rule runs must not load a Q overlay')
  if feed_policy not in ('rule','q'):raise ValueError('Explicit rule/q required')
- inner=f'source {ROOT}/activate.sh; source {WS}/install/setup.bash; export PATH={ROOT}/tools/bin:$PATH; exec ros2 launch a1_sorting_core sorting_demo.launch.py gpu_offload:=false gazebo_gui:=false launch_rviz:=false world_file:=fast_sim_{step}ms.sdf fast_sim_waits:={fast} result_csv:={run}/results.csv feed_policy:={feed_policy} demo_parts:={expected}'
+ inner=f'source {ROOT}/activate.sh; source {WS}/install/setup.bash; export PATH={ROOT}/tools/bin:$PATH; exec ros2 launch a1_sorting_core sorting_demo.launch.py gpu_offload:=false gazebo_gui:=false launch_rviz:=false world_file:=control_stability_prepost_1ms.sdf controllers_file:=ur5e_cell_controllers_stability_gain{os.environ.get('CONTROL_GAIN_TAG','1')}.yaml fast_sim_waits:={fast} result_csv:={run}/results.csv feed_policy:={feed_policy} demo_parts:={expected}'
  if policy_params:inner+=' policy_params:='+policy_params
  if os.environ.get('PERF_ISOLATION_ONLY')=='1':inner+=' auto_start:=false'
  if fixture=='1':
-  inner=f'source {ROOT}/activate.sh; source {WS}/install/setup.bash; export PATH={ROOT}/tools/bin:$PATH; exec ros2 launch a1_cell_sim cell_bringup.launch.py dual:=true gpu_offload:=false gazebo_gui:=false spawn_mode:=service world_file:=fast_sim_{step}ms.sdf' 
+  inner=f'source {ROOT}/activate.sh; source {WS}/install/setup.bash; export PATH={ROOT}/tools/bin:$PATH; exec ros2 launch a1_cell_sim cell_bringup.launch.py dual:=true gpu_offload:=false gazebo_gui:=false spawn_mode:=service world_file:=control_stability_prepost_1ms.sdf controllers_file:=ur5e_cell_controllers_stability_gain{os.environ.get('CONTROL_GAIN_TAG','1')}.yaml' 
  cmd=['bash','-c',inner];f=(run/'launch.log').open('w');files.append(f)
  diag=subprocess.Popen(['bash','-c',f'source {ROOT}/activate.sh; source {WS}/install/setup.bash; exec python {ROOT}/tools/observe.py {run}'],cwd=WS,env=env,stdout=(run/'observer.log').open('w'),stderr=subprocess.STDOUT,start_new_session=True)
  observers.append(diag)
@@ -48,6 +48,8 @@ for i in range(num):
  probe=subprocess.Popen(['bash','-c',f'source {ROOT}/activate.sh; source {WS}/install/setup.bash; exec python {ROOT}/tools/probe.py {run} {i+1}'],cwd=WS,env=env,stdout=(run/'probe.log').open('w'),stderr=subprocess.STDOUT,start_new_session=True)
  info={'run':str(run),'pid':p.pid,'probe_pid':probe.pid,'diagnostic_pid':diag.pid,'contact_pid':contact.pid if contact else None,'env':{k:v for k,v in env.items() if k in ('HOME','ROS_DOMAIN_ID','GZ_PARTITION','ROS_LOG_DIR','ROS_AUTOMATIC_DISCOVERY_RANGE','LIBGL_ALWAYS_SOFTWARE','GALLIUM_DRIVER','QT_QPA_PLATFORM','LP_NUM_THREADS','RMW_IMPLEMENTATION','FASTDDS_BUILTIN_TRANSPORTS','PERF_EGL','DISPLAY','XAUTHORITY')},'command':cmd,'start':time.time()};meta['runs'].append(info);children.append((p,probe,run,env));(run/'launch-environment.json').write_text(json.dumps(info,indent=2))
  if i<num-1:time.sleep(3)
+meta['control_gain_tag']=os.environ.get('CONTROL_GAIN_TAG','1')
+meta['controller_config_sha256']=__import__('hashlib').sha256((WS/'src/a1_cell_sim/config'/('ur5e_cell_controllers_stability_gain'+os.environ.get('CONTROL_GAIN_TAG','1')+'.yaml')).read_bytes()).hexdigest()
 meta['fixture']=fixture
 meta['feed_policy']=os.environ.get('PERF_POLICY','rule')
 meta['policy_params']=os.environ.get('PERF_POLICY_PARAMS','')

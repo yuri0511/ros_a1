@@ -2,7 +2,7 @@
 import os,sys,time,json,subprocess,signal,datetime,hashlib
 from pathlib import Path
 R=Path('/home/yu/yuri_gazebo_performance/control_stability');W=R/'worktree/ros2';gain=sys.argv[1];tag={'2.0':'2','1.0':'1','0.5':'0p5'}[gain]
-C=R/'runs'/(datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+'-empty-gain'+tag);C.mkdir();I=C/'instance-1';I.mkdir();(I/'home').mkdir();(R/'latest-empty-case.txt').write_text(str(C));env=os.environ.copy()
+C=R/'runs'/(datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+('-commandprobe' if os.environ.get('CONTROL_COMMAND_PROBE')=='1' else '-empty')+'-gain'+tag);C.mkdir();I=C/'instance-1';I.mkdir();(I/'home').mkdir();(R/'latest-empty-case.txt').write_text(str(C));env=os.environ.copy()
 for k in ('WAYLAND_DISPLAY','__NV_PRIME_RENDER_OFFLOAD','__GLX_VENDOR_LIBRARY_NAME','ROS_DOMAIN_ID','GZ_PARTITION'):env.pop(k,None)
 env.update(HOME=str(I/'home'),ROS_DOMAIN_ID='91',GZ_PARTITION=C.name,ROS_LOG_DIR=str(I/'ros'),LIBGL_ALWAYS_SOFTWARE='1',GALLIUM_DRIVER='llvmpipe',QT_QPA_PLATFORM='xcb',LP_NUM_THREADS='2',ROS_AUTOMATIC_DISCOVERY_RANGE='LOCALHOST',CONTROL_NATIVE_CSV=str(I/'native-joints.csv'))
 children=[];handles=[];start=time.time();reason='exception';meta={'gain':float(gain),'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=W,text=True).strip(),'start':start,'env':{k:v for k,v in env.items() if k in ('HOME','ROS_DOMAIN_ID','GZ_PARTITION','ROS_LOG_DIR','CONTROL_NATIVE_CSV','LP_NUM_THREADS','DISPLAY','LIBGL_ALWAYS_SOFTWARE','GALLIUM_DRIVER')},'commands':[]}
@@ -35,7 +35,7 @@ try:
   if not proc.name.isdigit():continue
   try:
    content=(proc/'maps').read_text()
-   found=sorted({x.split()[-1] for x in content.splitlines() if 'libgz_ros2_control' in x or 'libjoint_trace.so' in x})
+   found=sorted({x.split()[-1] for x in content.splitlines() if 'libgz_ros2_control' in x or 'libgz_hardware_plugins' in x or 'libjoint_trace' in x})
    if found:maps[proc.name]=found
   except (OSError,IndexError):pass
  meta['loaded_libraries']=maps

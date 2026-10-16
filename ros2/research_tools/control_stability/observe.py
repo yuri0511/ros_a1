@@ -48,4 +48,4 @@ try:
    if time.monotonic()-start>600:fault('diagnostic_time_bound')
 except KeyboardInterrupt:pass
 finally:
- f.close();n.destroy_node();rclpy.shutdown()
+ f.close();n.destroy_node();rclpy.try_shutdown()
