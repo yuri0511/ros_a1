@@ -92,7 +92,8 @@ from a1_sorting_core.pipeline_logic import (BeltController,
                                             DispatchWindowGate,
                                             choose_idle_feed)
 from a1_sorting_core.q_feed import (COLOR_INDEX, COLORS, decide_feed,
-                                    load_q_policy)
+                                    describe_q_load, load_q_policy,
+                                    resolve_q_paths)
 from a1_sorting_core.relay_sequencer import DISPATCH, RELAY, RelaySequencer
 
 TERMINAL_STATES = ('COMPLETED', 'FAILED')
@@ -542,25 +543,32 @@ class TaskDispatcherNode(Node):
             self._last_sim_sec = sim
 
     def _load_q_policy(self):
-        """路径都写了才加载。失败就留空,来料仍走谁闲推谁。"""
+        """路径都写了才加载。失败或路径为空就留空,来料仍走谁闲推谁。"""
         config_path = str(self.get_parameter('q_config_path').value).strip()
         table_path = str(self.get_parameter('q_table_path').value).strip()
         if not config_path or not table_path:
+            self._q_config = None
+            self._q_table = None
+            self.get_logger().info(describe_q_load(False, '没有填写 Q 表路径'))
             return
         try:
-            self._q_config, self._q_table = load_q_policy(
+            package_dir, config_path, table_path = resolve_q_paths(
                 self._q_package_dir, config_path, table_path)
+            self._q_config, self._q_table = load_q_policy(
+                package_dir, config_path, table_path)
         except Exception as exc:
             self._q_config = None
             self._q_table = None
-            self.get_logger().error(
-                f'Q 表没有接上,仍用谁闲推谁: {exc}')
+            self.get_logger().error(describe_q_load(False, str(exc)))
             return
-        self.get_logger().info(
-            f'Q 表已接上: {len(self._q_table["q_values"])} 个状态, '
+        self._q_package_dir = package_dir
+        self.get_logger().info(describe_q_load(
+            True,
+            f'{len(self._q_table["q_values"])} 个状态, '
             f'批次 {list(self._q_batch)}。忙着的臂不预送。'
             f'配置文件里的 overlap_validated 仍是 '
-            f'{self._q_config["overlap_validated"]}。')
+            f'{self._q_config["overlap_validated"]}。'
+            f'表文件 {table_path}'))
 
     def _choose_q_feed_locked(self):
         """在已持有 _lock 时问 Q 表。返回 (选择或 None, 日志短句)。

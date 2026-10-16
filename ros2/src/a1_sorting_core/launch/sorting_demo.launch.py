@@ -21,6 +21,8 @@
 demo_parts 默认 8(0=无限持续)。pipeline:=true 时追加加载
 config/sorting_params_pipeline.yaml(后加载覆盖同名参数;legacy 默认值
 不动),并把 spawn 模式切为 service(按需单件来料)。
+feed_policy 默认 q:读仓库里的 ros2/codex_rl。feed_policy:=rule 清空
+Q 表路径,来料改回谁闲推谁,不用手改 yaml。
 """
 from launch import LaunchDescription
 from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
@@ -43,6 +45,7 @@ def launch_setup(context, *args, **kwargs):
     pipeline = LaunchConfiguration('pipeline')
     gpu_offload = LaunchConfiguration('gpu_offload')
     demo_parts = LaunchConfiguration('demo_parts')
+    feed_policy = LaunchConfiguration('feed_policy')
     world_file = LaunchConfiguration('world_file')
     controllers_file = LaunchConfiguration('controllers_file')
 
@@ -164,6 +167,20 @@ def launch_setup(context, *args, **kwargs):
     parallel_on = dual_on and bool(arm2_colors)
     if parallel_on:
         dispatcher_overrides['arm2_colors'] = arm2_colors
+    # q:用 yaml 里的相对路径,节点启动时解析到 ros2/codex_rl。
+    # rule:盖成空路径,调度器打印「退回谁闲推谁」。
+    feed_mode = perform_substitutions(context, [feed_policy]).strip().lower()
+    if feed_mode == 'q':
+        q_overrides = {}
+    elif feed_mode == 'rule':
+        q_overrides = {
+            'q_package_dir': '',
+            'q_config_path': '',
+            'q_table_path': '',
+        }
+    else:
+        raise RuntimeError(
+            'feed_policy 只能是 q 或 rule,收到: ' + feed_mode)
     # 布局 v2 料区名清单(台账用):arm1 北排 / arm2 南排 / 四箱全集
     north_bins = ['bin_blue', 'bin_yellow']
     south_bins = ['bin_red', 'bin_green']
@@ -205,7 +222,8 @@ def launch_setup(context, *args, **kwargs):
                      # 服务(语音节点)驱动
                      'auto_start': ParameterValue(auto_start,
                                                   value_type=bool),
-                     **dispatcher_overrides}])
+                     **dispatcher_overrides,
+                     **q_overrides}])
     executor_node = Node(
         package='a1_sorting_core', executable='pick_place_executor_node',
         name='pick_place_executor', output='screen',
@@ -284,6 +302,10 @@ def generate_launch_description():
             description='流水线模式:传送带逐件来料+真实包夹+触底放置。'
                         '2026-10-03 起为默认演示路径;pipeline:=false 回'
                         'legacy 一次性 batch 三件(验收回归基线用)'),
+        DeclareLaunchArgument(
+            'feed_policy', default_value='q',
+            description='来料算法。q(默认)=读 ros2/codex_rl 里的 Q 表;'
+                        'rule=谁闲推谁。不用改 sorting_params_pipeline.yaml'),
         DeclareLaunchArgument(
             'demo_parts', default_value='8',
             description='演示总来料数(透传 demand_parts;2026-10-08 起默认'

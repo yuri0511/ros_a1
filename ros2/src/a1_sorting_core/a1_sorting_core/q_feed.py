@@ -5,19 +5,85 @@
 表里没有这个状态时，沿用 Q 表代码里的规则（先给空闲的臂，同臂再按颜色序号）。
 """
 import copy
+from pathlib import Path
 
 
 COLOR_INDEX = {'blue': 0, 'yellow': 1, 'red': 2, 'green': 3}
 COLORS = ('blue', 'yellow', 'red', 'green')
 ARM_NAMES = ('arm1', 'arm2')
 WAIT = 4
-DEFAULT_PACKAGE_DIR = '/home/yuri/lead_ws/ai-collaboration/codex_rl'
+
+
+def describe_q_load(loaded, detail):
+    """启动日志用的两句固定说法。loaded 为真表示表已经读进来。"""
+    if loaded:
+        return f'已加载 Q 表: {detail}'
+    return f'退回谁闲推谁: {detail}'
+
+
+def resolve_q_paths(package_dir, config_path, table_path, anchors=None):
+    """把相对路径变成绝对路径。配置或表有一个空着，就三个都返回空字符串。
+
+    相对路径从 anchors、本文件和当前目录向上找，直到碰上仓库里的 codex_rl。
+    绝对路径原样使用，但仍要确认文件或包在那里。
+    """
+    config_text = str(config_path or '').strip()
+    table_text = str(table_path or '').strip()
+    package_text = str(package_dir or '').strip()
+    if not config_text or not table_text:
+        return '', '', ''
+    roots = _search_roots(anchors)
+    config_abs = _resolve_one(config_text, roots, 'file')
+    table_abs = _resolve_one(table_text, roots, 'file')
+    if package_text:
+        package_abs = _resolve_one(package_text, roots, 'package')
+    else:
+        package_abs = _package_from_config(config_abs)
+    return package_abs, config_abs, table_abs
+
+
+def _search_roots(anchors):
+    roots = []
+    seen = set()
+    raw = list(anchors or [])
+    raw.append(Path(__file__).resolve())
+    raw.append(Path.cwd().resolve())
+    for anchor in raw:
+        path = Path(anchor).resolve()
+        start = path if path.is_dir() else path.parent
+        for parent in (start, *start.parents):
+            if parent in seen:
+                continue
+            seen.add(parent)
+            roots.append(parent)
+    return roots
+
+
+def _resolve_one(text, roots, expect):
+    candidate = Path(text).expanduser()
+    options = ([candidate] if candidate.is_absolute()
+               else [root / candidate for root in roots])
+    for option in options:
+        if expect == 'file' and option.is_file():
+            return str(option.resolve())
+        if (expect == 'package'
+                and (option / 'dual_arm_rl' / '__init__.py').is_file()):
+            return str(option.resolve())
+    kind = '文件' if expect == 'file' else '目录'
+    raise FileNotFoundError(f'找不到 Q {kind}: {text}')
+
+
+def _package_from_config(config_abs):
+    for parent in Path(config_abs).resolve().parents:
+        if (parent / 'dual_arm_rl' / '__init__.py').is_file():
+            return str(parent)
+    raise FileNotFoundError(f'配置旁边没有 dual_arm_rl 包: {config_abs}')
 
 
 def _import_dual_arm(package_dir):
     import sys
-    root = package_dir or DEFAULT_PACKAGE_DIR
-    if root not in sys.path:
+    root = str(package_dir or '').strip()
+    if root and root not in sys.path:
         sys.path.insert(0, root)
     from dual_arm_rl.model import Model
     from dual_arm_rl.qtable import choose, load
