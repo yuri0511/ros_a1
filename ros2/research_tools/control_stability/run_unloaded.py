@@ -21,7 +21,13 @@ def wait(p):
 try:
  launch(f'exec python {R}/tools/observe.py {I}','observe');launch(f'exec python {R}/tools/record_contacts.py {I}/contacts.csv','contact');launch(f'exec python {R}/tools/probe.py {I} empty','probe')
  p=launch(f'exec ros2 launch {W}/research_tools/control_stability/unloaded.launch.py controllers_file:=ur5e_cell_controllers_stability_gain{tag}.yaml','launch')
- auditor=launch(f'exec python {R}/tools/runtime_audit.py {I}/runtime-parameters.json','audit');wait(auditor)
+ ready_deadline=time.monotonic()+45
+ while True:
+  guard();text=(I/'launch.log').read_text()
+  if all(x in text for x in ('Configured and activated arm2_joint_trajectory_controller','Configured and activated gripper_controller','Configured and activated joint_state_broadcaster')):break
+  if time.monotonic()>ready_deadline:raise TimeoutError('controller startup barrier')
+  time.sleep(.1)
+ auditor=launch(f'exec python -u {R}/tools/runtime_audit.py {I}/runtime-parameters.json','audit');wait(auditor)
  data=json.loads((I/'runtime-parameters.json').read_text());assert data['parameters']['/gz_ros_control']['position_proportional_gain']==float(gain);assert data['parameters']['/controller_manager']['update_rate']==500
  # Prove exact binaries loaded in the actual server, rather than just installed.
  maps={}
@@ -37,7 +43,11 @@ try:
   motion=launch(f'exec python {R}/tools/unloaded_motion.py {I} --ros-args -r __node:={node} --params-file {W}/src/a1_sorting_core/config/sorting_params.yaml --params-file {W}/src/a1_sorting_core/config/sorting_params_pipeline.yaml -p use_sim_time:=true -p fast_sim_waits:=true',arm)
   wait(motion);guard();result=json.loads((I/(arm+'-result.json')).read_text());assert result['passed'],result['fault']
  reason='both_empty_arms_passed'
-except Exception as e:meta['error']=repr(e);reason='safety_stop_or_failure';print(repr(e),flush=True)
+except Exception as e:
+ meta['error']=repr(e);reason='safety_stop_or_failure';print(repr(e),flush=True)
+ if 'pause' not in meta:
+  try:pause()
+  except Exception as stop_error:meta['pause_error']=repr(stop_error)
 finally:
  (I/'PROBE_STOP').touch();(I/'CONTACT_STOP').touch()
  for name,p in reversed(children):

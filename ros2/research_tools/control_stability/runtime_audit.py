@@ -8,14 +8,18 @@ from rclpy.parameter import parameter_value_to_python
 rclpy.init();n=rclpy.create_node('control_parameter_audit');dest=Path(sys.argv[1]);deadline=time.monotonic()+50
 
 def call(service,cls,request):
- c=n.create_client(cls,service)
- while not c.wait_for_service(timeout_sec=.2):
-  if time.monotonic()>deadline:raise TimeoutError(service)
- f=c.call_async(request)
- while not f.done():
-  rclpy.spin_once(n,timeout_sec=.05)
-  if time.monotonic()>deadline:raise TimeoutError(service)
- return f.result()
+ for attempt in range(3):
+  print('REQUEST',service,'attempt',attempt+1,flush=True)
+  c=n.create_client(cls,service)
+  while not c.wait_for_service(timeout_sec=.2):
+   if time.monotonic()>deadline:raise TimeoutError(service)
+  f=c.call_async(request);limit=min(deadline,time.monotonic()+5.)
+  while not f.done() and time.monotonic()<limit:rclpy.spin_once(n,timeout_sec=.05)
+  if f.done():
+   value=f.result();n.destroy_client(c);print('RECEIVED',service,flush=True);return value
+  n.destroy_client(c)
+ raise TimeoutError(service)
+
 try:
  while True:
   controllers=call('/controller_manager/list_controllers',ListControllers,ListControllers.Request())
