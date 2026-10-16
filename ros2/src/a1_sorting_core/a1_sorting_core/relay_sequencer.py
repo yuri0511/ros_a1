@@ -44,7 +44,10 @@ class RelaySequencer:
     """串行任务队列 + 双臂接力推进器(纯逻辑,线程外使用需自行加锁)。"""
 
     def __init__(self, relay_mode: bool = False, relay_delay: float = 1.0,
-                 dispatch_delay: float = 1.0, per_arm_slots: bool = False):
+                 dispatch_delay: float = 1.0, per_arm_slots: bool = False, require_arm_ready: bool = False):
+        self._require_arm_ready = require_arm_ready
+        self._outcomes = {}
+        self._faulted_arms = set()
         self._relay_mode = bool(relay_mode)
         self._relay_delay = float(relay_delay)
         self._dispatch_delay = float(dispatch_delay)
@@ -88,7 +91,7 @@ class RelaySequencer:
         if not self._per_arm_slots:
             return [] if self._current is not None else ['arm1']
         return [name for name in ('arm1', 'arm2')
-                if self._slots.get(name) is None]
+                if self._slots.get(name) is None and name not in self._faulted_arms]
 
     def busy_parts(self) -> set:
         """在途件集合(排队中 + 执行中;2026-10-06 语音防撞车闸)。
@@ -138,6 +141,7 @@ class RelaySequencer:
         取件区已被占用,或这条臂已有件,则不出队。
         """
         arm = 'arm2' if arm == 'arm2' else 'arm1'
+        if arm in self._faulted_arms:return None
         if self._per_arm_slots:
             if self._slots.get(arm) is not None or not self._queue:
                 return None
@@ -193,6 +197,11 @@ class RelaySequencer:
           (True, [(DISPATCH, dispatch_delay)])否则 (True, []);
         - arm2 终态 -> 该件结束,同上安排下一件。
         """
+        if self._require_arm_ready:
+            return False, []  # Legacy terminal messages never free runtime slots.
+        return self._accept_terminal(part_id, arm, state)
+
+    def _accept_terminal(self, part_id, arm, state):
         if state not in TERMINAL_STATES:
             return False, []
         if self._per_arm_slots:
@@ -210,6 +219,31 @@ class RelaySequencer:
             self._finish()
             return True, self._after_finish()
         return False, []          # 阶段不匹配(重复/迟到/异臂消息),忽略
+
+    def _matches_slot(self, part_id, arm):
+        if arm not in ('arm1','arm2'):return False
+        return (self._slots.get(arm)==part_id if self._per_arm_slots else
+                self._current==part_id and self._phase==arm)
+
+    def note_outcome(self, part_id, arm, state):
+        if state not in ('PART_PLACED','FAILED') or not self._matches_slot(part_id,arm):return False
+        key=(part_id,arm)
+        outcome='COMPLETED' if state=='PART_PLACED' else 'FAILED'
+        if key in self._outcomes:return self._outcomes[key]==outcome
+        self._outcomes[key]=outcome
+        return True
+
+    def arm_fault(self, part_id, arm):
+        if not self._matches_slot(part_id,arm):return False
+        self._faulted_arms.add(arm)
+        return True  # Keep slot, queue/dedup and zone ownership unchanged.
+
+    def arm_ready(self, part_id, arm):
+        key=(part_id,arm)
+        if arm in self._faulted_arms or key not in self._outcomes or not self._matches_slot(part_id,arm):return False, [], None
+        state=self._outcomes.pop(key)
+        accepted,actions=self._accept_terminal(part_id,arm,state)
+        return accepted,actions,state
 
     def _on_terminal_per_arm(self, part_id: str, arm: str, state: str):
         """只结束这一条臂的槽。取件区锁不动。"""

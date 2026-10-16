@@ -7,7 +7,10 @@ string task_id
 # 对应工件编号
 string part_id
 
-# 状态机状态:IDLE / PICKING / CARRYING / PLACING / COMPLETED / FAILED
+# 状态: PART_PLACED=placement outcome only; ARM_READY=verified reusable arm;
+# ARM_FAULT=latched, no reuse; ZONE_CLEAR=pick-zone release only.
+# COMPLETED is legacy telemetry, never a runtime slot-release signal.
+# IDLE / PICKING / CARRYING / PLACING / COMPLETED / FAILED
 string state
 
 # 附加说明:正常时为空,失败时写原因(如 grasp_timeout / attach_failed)

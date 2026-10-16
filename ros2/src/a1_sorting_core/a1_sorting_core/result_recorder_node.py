@@ -150,7 +150,7 @@ class ResultRecorderNode(Node):
 
     # ------------------------------------------------------------- 状态判定
     def _on_status(self, msg: TaskStatus):
-        if msg.state not in ('COMPLETED', 'FAILED'):
+        if msg.state not in ('PART_PLACED', 'COMPLETED', 'FAILED'):
             return
         arm = msg.arm or 'arm1'          # 空串视为 arm1(兼容旧消息)
         key = (msg.part_id, arm)         # 去重键 (part_id, arm)
@@ -162,7 +162,7 @@ class ResultRecorderNode(Node):
         # arm1 行:目标=detail(bin_A/bin_B);arm2 行:目标=detail(bin_out),
         # 工件若仍在原料区则 final_bin != target_bin 判 MISPLACED
         # (judge_position 语义不变,天然支持)
-        target_bin = msg.detail if msg.state == 'COMPLETED' else None
+        target_bin = msg.detail if msg.state in ('PART_PLACED','COMPLETED') else None
         xy = self._poses.get(msg.part_id)
         if msg.state == 'FAILED':
             result, final_bin = RESULT_FAILED, None

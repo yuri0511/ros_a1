@@ -28,6 +28,7 @@ import json
 import math
 import threading
 import time
+from a1_sorting_core.physical_ready import PhysicalReadyMonitor
 
 import rclpy
 from geometry_msgs.msg import PoseStamped
@@ -524,6 +525,9 @@ class PickPlaceExecutorNode(Node):
                               else _place_anchor)
         self._joint_names = [str(v) for v in gp('joint_names')]
         self._at_standby = False
+        self._arm_fault = None
+        self._command_ids = set()
+        self._ready_monitor = PhysicalReadyMonitor()
         self._steps = max(1, int(gp('descend_steps')))
         self._vel_scale = float(gp('vel_scale'))
         self._acc_scale = float(gp('acc_scale'))
@@ -630,6 +634,8 @@ class PickPlaceExecutorNode(Node):
 
     # ================================================================ 命令入口
     def _on_joint_state(self, msg: JointState):
+        self._ready_monitor.observe(list(msg.name),list(msg.position),list(msg.velocity),
+            msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic())
         self._js_wall = time.time()
         self._store_joint_states(msg)
         if not self._grip_key_checked:
@@ -729,6 +735,13 @@ class PickPlaceExecutorNode(Node):
         self.get_logger().info(f'[标定] {bin_name} 放置关节角: {vals}')
 
     def _on_command(self, msg: PartInfo):
+        if self._arm_fault:
+            self.get_logger().error('COMMAND_REJECTED_ARM_FAULT '+msg.part_id)
+            return
+        if msg.part_id in self._command_ids:
+            self.get_logger().warn('DUPLICATE_COMMAND_IGNORED '+msg.part_id)
+            return
+        self._command_ids.add(msg.part_id)
         if self._busy:
             self._pending.append(msg)
             self.get_logger().info(
@@ -738,70 +751,66 @@ class PickPlaceExecutorNode(Node):
         threading.Thread(target=self._run_task, args=(msg,), daemon=True).start()
 
     # ================================================================ 任务主流程
+    def _emit_arm_event(self, part, state, detail):
+        msg=TaskStatus();msg.header.stamp=self.get_clock().now().to_msg()
+        msg.task_id=getattr(self,'_active_task_id','') or f'task_{self._seq:04d}'
+        msg.part_id=part.part_id;msg.arm=self._arm_name
+        msg.state=state;msg.detail=detail;self._pub_status.publish(msg)
+        self.get_logger().info('ARM_EVENT '+json.dumps({'part':part.part_id,'arm':self._arm_name,'state':state,'detail':detail}))
+
+    def _wait_physical_ready(self, timeout=8.):
+        self._ready_monitor.begin(time.monotonic());deadline=time.monotonic()+timeout;last={};next_log=0
+        while time.monotonic()<deadline:
+            result=getattr(self._motion,'last_controller_result',None) or {}
+            last=self._ready_monitor.evaluate(self._joint_names,self._standby_joints,
+                self.get_clock().now().nanoseconds*1e-9,time.monotonic(),
+                controller_ok=bool(result.get('success')),
+                no_active_goal=not getattr(self._motion,'_own_goal_inflight',True) and getattr(self._motion,'_own_controller_active',1)==0)
+            if time.monotonic()>=next_log or last['ready']:
+                self.get_logger().info('READY_CHECK '+json.dumps(last));next_log=time.monotonic()+.2
+            if last['ready']:return True
+            time.sleep(.02)
+        self._arm_fault='physical_ready_timeout:'+last.get('reason','unknown')
+        return False
+
     def _run_task(self, part: PartInfo):
-        self._zone_published = False
+        self._zone_published=False
         try:
             self._run_task_impl(part)
-        except Exception as e:   # noqa: BLE001 R1-P2(2026-10-04)
-            # 终态发布保证:任务线程任何未捕获异常(含 _init_motion 的
-            # RuntimeError 等)都必须落 FAILED 终态,否则调度器永等、
-            # _busy 恒 True,整条流水线黑洞(forensics H1 定位:
-            # 原 finally 里 return_standby 先于 flush,且 impl 异常时
-            # _terminal_status 从未置位)。此处兜底,不掩盖 GraspError
-            # (那已在 impl 内部落 FAILED)
+        except Exception as e:
             self.get_logger().error(f'{part.part_id} 执行器异常: {e!r}')
             if self._terminal_status is None:
-                self._terminal_status = (
-                    f'task_{self._seq:04d}', part, TaskState.FAILED,
-                    f'executor_error({e})')
+                self._terminal_status=(getattr(self,'_active_task_id',''),part,TaskState.FAILED,f'executor_error({e})')
+                self._emit_arm_event(part,'FAILED',f'executor_error({e})')
         finally:
-            # 收尾:尽力回到待机位(失败不影响本件结果,只为下一件任务
-            # 提供固定起点,使所有大转移都走 standby<->工作区的确定路径)
-            self._try_return_standby()
-            # 失败路径:没有走过 carry_clear。回到待命成功才算离开取件区。
-            # FAILED 本身不放锁。已经在 carry_clear 放过的不再发。
-            if self._at_standby:
-                self._publish_zone_clear(part, 'return_standby')
-            # 终态在回待机运动结束之后才发布:双臂共用一个 move_group 的
-            # 轨迹执行器,"另一轨迹执行中"时新轨迹会被整体拒绝
-            # (CONTROL_FAILED);提前报 COMPLETED 会让调度器在收尾轨迹
-            # 还在跑时就派发下一棒,两臂请求重叠会卡死轨迹执行管理器
+            ready=False
             try:
-                self._flush_terminal_status()
-            except Exception as e:   # noqa: BLE001 R1-P2:flush 自身异常
-                self.get_logger().error(f'终态发布异常: {e!r}')
-                self._terminal_status = None
+                if not self._arm_fault:ready=self._try_return_standby()
+            except Exception as e:
+                self._arm_fault=f'return_exception:{e!r}'
+            if not ready:
+                self._at_standby=False
+                self._arm_fault=self._arm_fault or 'return_standby_failed'
+                self._emit_arm_event(part,'ARM_FAULT',self._arm_fault)
+                # No terminal flush, new motion, pending command or slot release.
+                return
+            self._publish_zone_clear(part,'verified_return_standby')
+            self._flush_terminal_status()  # Legacy result compatibility only.
+            self._emit_arm_event(part,'ARM_READY','controller_success+fresh_named_joints+stable_window')
             if self._pending:
-                nxt = self._pending.pop(0)
-                self.get_logger().info(f'继续排队任务: {nxt.part_id}')
-                threading.Thread(target=self._run_task, args=(nxt,),
-                                 daemon=True).start()
-            else:
-                self._busy = False   # 无排队任务,允许接收新命令
+                nxt=self._pending.pop(0)
+                threading.Thread(target=self._run_task,args=(nxt,),daemon=True).start()
+            else:self._busy=False
 
     def _try_return_standby(self):
-        # 关节空间目标:直接命令回标定构型,不依赖 IK(位姿目标在个别
-        # 分支上会无解)。motion 未初始化(_init_motion 失败/未执行)时
-        # 无可回归,只告警——不能让 None 异常炸掉 finally 的终态发布
-        if self._motion is None:
-            self.get_logger().warn('motion 未初始化,跳过返回待机位')
-            self._at_standby = False
-            return
-        # R1-P1:会话判死后收尾也不发目标(每个都 -4,纯拖时间)
-        if (self._wedge_detect
-                and getattr(self._motion, 'session_dead', False)):
-            self.get_logger().warn('会话已判死,跳过返回待机位')
-            self._at_standby = False
-            return
-        try:
-            if not self._motion.move_to_joints(
-                    self._joint_names, self._standby_joints,
-                    'return_standby'):
-                raise GraspError('return_standby_failed')
-            self._at_standby = True
-        except GraspError as e:
-            self.get_logger().warn(f'返回待机位失败({e}),下一件任务将原地出发')
-            self._at_standby = False
+        self._at_standby=False
+        if self._motion is None or getattr(self._motion,'session_dead',False):
+            self._arm_fault='motion_unavailable_or_session_dead';return False
+        if not self._motion.move_to_joints(self._joint_names,self._standby_joints,
+                'return_standby',settle_check=False):
+            self._arm_fault='return_standby_action_failed';return False
+        self._at_standby=self._wait_physical_ready()
+        return self._at_standby
 
     def _run_task_impl(self, part: PartInfo):
         self._seq += 1
@@ -825,8 +834,12 @@ class PickPlaceExecutorNode(Node):
                 self._plan_execute(
                     self._down_pose(self._standby, self._standby[2]), 'standby')
             except GraspError as e:
-                self.get_logger().warn(f'待机位运动失败({e}),继续任务')
-            self._at_standby = True
+                self._arm_fault=f'initial_standby_failed:{e}'
+                raise FatalGraspError(self._arm_fault) from e
+            if not self._wait_physical_ready():
+                raise FatalGraspError(self._arm_fault)
+            self._at_standby=True
+        self._at_standby=False  # Ready is not a sticky flag during motion.
         for attempt in range(1, self._attempts + 1):
             attached_joint = None
             if attempt > 1:
@@ -1279,6 +1292,7 @@ class PickPlaceExecutorNode(Node):
         if state in (TaskState.COMPLETED, TaskState.FAILED):
             # 终态暂存,待回待机运动结束后统一发布(见 _run_task 注释)
             self._terminal_status = (task_id, part, state, detail)
+            self._emit_arm_event(part,'PART_PLACED' if state==TaskState.COMPLETED else 'FAILED',detail)
             self.get_logger().info(
                 f'{task_id} {part.part_id}: {state.value} {detail}'
                 f'(待收尾后上报)')
