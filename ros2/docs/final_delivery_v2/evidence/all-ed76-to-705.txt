@@ -1,0 +1,16 @@
+A	ros2/docs/control_stability/CASE_SUMMARY.csv
+A	ros2/docs/control_stability/CONTROLLER_PARAMETER_AUDIT.md
+A	ros2/docs/control_stability/FINAL_RECOMMENDATION_CN.md
+A	ros2/docs/control_stability/GAIN_COMPARISON.csv
+A	ros2/docs/control_stability/GAIN_PARAMETER_DIFFS.diff
+A	ros2/docs/control_stability/GAIN_STABILITY_ROOT_CAUSE.md
+A	ros2/docs/control_stability/GAZEBO_VALIDATION.md
+A	ros2/docs/control_stability/JOINT_RESPONSE.pdf
+A	ros2/docs/control_stability/JOINT_RESPONSE.png
+A	ros2/docs/control_stability/JOINT_RESPONSE_ANALYSIS.md
+A	ros2/docs/control_stability/REPRODUCE.md
+A	ros2/docs/control_stability/YURI_FIX_SUMMARY_CN.md
+M	ros2/research_tools/control_stability/analyze_gains.py
+A	ros2/research_tools/control_stability/audit_loaded.py
+A	ros2/research_tools/control_stability/plot_joint_response.py
+A	ros2/research_tools/control_stability/write_reports.py

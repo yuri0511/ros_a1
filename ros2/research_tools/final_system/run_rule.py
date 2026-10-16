@@ -1,5 +1,5 @@
 """Bounded Rule demo supervisor. All safety decisions remain in the READY protocol."""
-import argparse,csv,datetime,hashlib,json,os,signal,subprocess,time,uuid
+import argparse,collections,csv,datetime,hashlib,json,os,signal,subprocess,time,uuid
 from pathlib import Path
 
 def main():
@@ -19,7 +19,9 @@ def main():
         if cmd.startswith('gz sim '):raise SystemExit('Existing Gazebo process; stop its owning launcher first')
     run=args.output_root/(datetime.datetime.now().strftime('%Y%m%dT%H%M%S')+'-gain1-rule-'+uuid.uuid4().hex[:6])
     run.mkdir(parents=True);(run/'home').mkdir()
-    env=os.environ.copy();env.update(HOME=str(run/'home'),ROS_LOG_DIR=str(run/'ros'),ROS_DOMAIN_ID='82',GZ_PARTITION=run.name,ROS_AUTOMATIC_DISCOVERY_RANGE='LOCALHOST',LIBGL_ALWAYS_SOFTWARE='1',GALLIUM_DRIVER='llvmpipe',LP_NUM_THREADS='2',QT_QPA_PLATFORM='xcb')
+    env=os.environ.copy()
+    for key in ('__NV_PRIME_RENDER_OFFLOAD','__NV_PRIME_RENDER_OFFLOAD_PROVIDER','__GLX_VENDOR_LIBRARY_NAME','DRI_PRIME','WAYLAND_DISPLAY','MESA_LOADER_DRIVER_OVERRIDE'):env.pop(key,None)
+    env.update(HOME=str(run/'home'),ROS_LOG_DIR=str(run/'ros'),ROS_DOMAIN_ID='82',GZ_PARTITION=run.name,ROS_AUTOMATIC_DISCOVERY_RANGE='LOCALHOST',LIBGL_ALWAYS_SOFTWARE='1',GALLIUM_DRIVER='llvmpipe',LP_NUM_THREADS='2',QT_QPA_PLATFORM='xcb')
     config=ws/'src/a1_cell_sim/config/ur5e_cell_controllers_stability_gain1.yaml'
     assert hashlib.sha256(config.read_bytes()).hexdigest()=='c96a32325ac2d66b958cb4c75ac82b794e1fe64802e25394c717436121b9a5b9'
     cmd=['ros2','launch','a1_sorting_core','sorting_demo.launch.py','gpu_offload:=false','gazebo_gui:=false','launch_rviz:=false','world_file:=fast_sim_1ms.sdf','controllers_file:=ur5e_cell_controllers_stability_gain1.yaml','fast_sim_waits:=true','feed_policy:=rule','demo_parts:=8','result_csv:='+str(run/'results.csv')]
@@ -45,7 +47,10 @@ def main():
                 if len(ready)>=8:
                     try:rows=list(csv.DictReader((run/'results.csv').open()))
                     except OSError:rows=[]
-                    if len(rows)==8 and all(r['result']=='PLACED' for r in rows):reason='completed';break
+                    if len(rows)==8:
+                        bins=collections.Counter(r['final_bin'] for r in rows)
+                        correct=all(r['result']=='PLACED' and r['target_bin']==r['final_bin'] for r in rows) and bins=={b:2 for b in ('bin_blue','bin_yellow','bin_red','bin_green')}
+                        reason='completed' if correct else 'result_failure';break
                 if child.poll() is not None:reason='early_exit';break
                 time.sleep(.2)
         finally:

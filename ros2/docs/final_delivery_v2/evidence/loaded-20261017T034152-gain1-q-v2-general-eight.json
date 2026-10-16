@@ -1,0 +1,2132 @@
+{
+  "case": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight",
+  "commit": "39e6d64f9856b0f92f76ff934f1d9011eaa23ed6",
+  "rows": [
+    {
+      "time": "03:42:32",
+      "part_id": "part_1",
+      "category": "red",
+      "target_bin": "bin_red",
+      "final_bin": "bin_red",
+      "result": "PLACED",
+      "arm": "arm2",
+      "phase": "relay"
+    },
+    {
+      "time": "03:42:50",
+      "part_id": "part_2",
+      "category": "blue",
+      "target_bin": "bin_blue",
+      "final_bin": "bin_blue",
+      "result": "PLACED",
+      "arm": "arm1",
+      "phase": "sort"
+    },
+    {
+      "time": "03:43:10",
+      "part_id": "part_3",
+      "category": "green",
+      "target_bin": "bin_green",
+      "final_bin": "bin_green",
+      "result": "PLACED",
+      "arm": "arm2",
+      "phase": "relay"
+    },
+    {
+      "time": "03:43:28",
+      "part_id": "part_4",
+      "category": "yellow",
+      "target_bin": "bin_yellow",
+      "final_bin": "bin_yellow",
+      "result": "PLACED",
+      "arm": "arm1",
+      "phase": "sort"
+    },
+    {
+      "time": "03:43:48",
+      "part_id": "part_5",
+      "category": "red",
+      "target_bin": "bin_red",
+      "final_bin": "bin_red",
+      "result": "PLACED",
+      "arm": "arm2",
+      "phase": "relay"
+    },
+    {
+      "time": "03:44:07",
+      "part_id": "part_6",
+      "category": "blue",
+      "target_bin": "bin_blue",
+      "final_bin": "bin_blue",
+      "result": "PLACED",
+      "arm": "arm1",
+      "phase": "sort"
+    },
+    {
+      "time": "03:44:26",
+      "part_id": "part_7",
+      "category": "green",
+      "target_bin": "bin_green",
+      "final_bin": "bin_green",
+      "result": "PLACED",
+      "arm": "arm2",
+      "phase": "relay"
+    },
+    {
+      "time": "03:44:44",
+      "part_id": "part_8",
+      "category": "yellow",
+      "target_bin": "bin_yellow",
+      "final_bin": "bin_yellow",
+      "result": "PLACED",
+      "arm": "arm1",
+      "phase": "sort"
+    }
+  ],
+  "bin_counts": {
+    "bin_red": 2,
+    "bin_blue": 2,
+    "bin_green": 2,
+    "bin_yellow": 2
+  },
+  "color_counts": {
+    "red": 2,
+    "blue": 2,
+    "green": 2,
+    "yellow": 2
+  },
+  "result_counts": {
+    "PLACED": 8
+  },
+  "events": [
+    {
+      "wall": 1792179731.6046774,
+      "monotonic": 61943.188753028,
+      "observed_clock": 12.051,
+      "kind": "task_status",
+      "stamp": 12.051,
+      "part": "part_1",
+      "arm": "arm2",
+      "state": "PICKING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179742.3621209,
+      "monotonic": 61953.946196515,
+      "observed_clock": 22.776,
+      "kind": "task_status",
+      "stamp": 22.774,
+      "part": "part_1",
+      "arm": "arm2",
+      "state": "CARRYING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179743.7520158,
+      "monotonic": 61955.336091545,
+      "observed_clock": 24.2,
+      "kind": "task_status",
+      "stamp": 24.2,
+      "part": "part_1",
+      "arm": "arm2",
+      "state": "ZONE_CLEAR",
+      "detail": "carry_clear"
+    },
+    {
+      "wall": 1792179746.1778734,
+      "monotonic": 61957.761949879,
+      "observed_clock": 26.5,
+      "kind": "task_status",
+      "stamp": 26.5,
+      "part": "part_1",
+      "arm": "arm2",
+      "state": "PLACING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179750.692548,
+      "monotonic": 61962.276623703,
+      "observed_clock": 30.678,
+      "kind": "task_status",
+      "stamp": 30.678,
+      "part": "part_2",
+      "arm": "arm1",
+      "state": "PICKING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179752.3176734,
+      "monotonic": 61963.901748938,
+      "observed_clock": 32.166,
+      "kind": "task_status",
+      "stamp": 32.165,
+      "part": "part_1",
+      "arm": "arm2",
+      "state": "PLACEMENT_FINISHED",
+      "detail": "bin_red"
+    },
+    {
+      "wall": 1792179752.3180375,
+      "monotonic": 61963.902112988,
+      "observed_clock": 32.167,
+      "kind": "task_status",
+      "stamp": 32.166,
+      "part": "part_1",
+      "arm": "arm2",
+      "state": "PART_PLACED",
+      "detail": "{\"result\": \"PLACED\", \"target_bin\": \"bin_red\", \"final_bin\": \"bin_red\"}"
+    },
+    {
+      "wall": 1792179753.840236,
+      "monotonic": 61965.424311448,
+      "observed_clock": 33.583,
+      "kind": "task_status",
+      "stamp": 33.581,
+      "part": "part_1",
+      "arm": "arm2",
+      "state": "COMPLETED",
+      "detail": "bin_red"
+    },
+    {
+      "wall": 1792179753.841796,
+      "monotonic": 61965.425871222,
+      "observed_clock": 33.585,
+      "kind": "task_status",
+      "stamp": 33.585,
+      "part": "part_1",
+      "arm": "arm2",
+      "state": "ARM_READY",
+      "detail": "{\"evidence\": {\"ready\": true, \"reason\": \"physical_ready\", \"samples\": 120, \"duplicate_stamps\": 526, \"source\": \"010f00ae2a17b4c10000000000008403\", \"last_stamp\": 33.58, \"receipt_age\": 0.000792491999163758, \"sim_age\": 0.0010000000000047748, \"max_reported_speed\": 9.419689420836486e-14, \"max_position_error\": 1.87960758069039e-13, \"max_difference_speed\": 0.0, \"stable_span\": 0.2560000000000002}, \"controller_result\": {\"label\": \"return_standby\", \"status\": 4, \"error_code\": 0, \"success\": true}, \"no_active_goal\": true}"
+    },
+    {
+      "wall": 1792179761.4904854,
+      "monotonic": 61973.074561162,
+      "observed_clock": 40.831,
+      "kind": "task_status",
+      "stamp": 40.831,
+      "part": "part_2",
+      "arm": "arm1",
+      "state": "CARRYING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179762.9652865,
+      "monotonic": 61974.549361787,
+      "observed_clock": 42.27,
+      "kind": "task_status",
+      "stamp": 42.269,
+      "part": "part_2",
+      "arm": "arm1",
+      "state": "ZONE_CLEAR",
+      "detail": "carry_clear"
+    },
+    {
+      "wall": 1792179765.3965669,
+      "monotonic": 61976.980642317,
+      "observed_clock": 44.449,
+      "kind": "task_status",
+      "stamp": 44.449,
+      "part": "part_2",
+      "arm": "arm1",
+      "state": "PLACING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179769.5118706,
+      "monotonic": 61981.095946498,
+      "observed_clock": 48.2,
+      "kind": "task_status",
+      "stamp": 48.2,
+      "part": "part_3",
+      "arm": "arm2",
+      "state": "PICKING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179770.967339,
+      "monotonic": 61982.551414416,
+      "observed_clock": 49.521,
+      "kind": "task_status",
+      "stamp": 49.521,
+      "part": "part_2",
+      "arm": "arm1",
+      "state": "PLACEMENT_FINISHED",
+      "detail": "bin_blue"
+    },
+    {
+      "wall": 1792179770.967639,
+      "monotonic": 61982.551714585,
+      "observed_clock": 49.522,
+      "kind": "task_status",
+      "stamp": 49.521,
+      "part": "part_2",
+      "arm": "arm1",
+      "state": "PART_PLACED",
+      "detail": "{\"result\": \"PLACED\", \"target_bin\": \"bin_blue\", \"final_bin\": \"bin_blue\"}"
+    },
+    {
+      "wall": 1792179773.8891146,
+      "monotonic": 61985.473190091,
+      "observed_clock": 52.354,
+      "kind": "task_status",
+      "stamp": 52.353,
+      "part": "part_3",
+      "arm": "arm2",
+      "state": "PICKING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179775.9055758,
+      "monotonic": 61987.489651102,
+      "observed_clock": 54.479,
+      "kind": "task_status",
+      "stamp": 54.476,
+      "part": "part_2",
+      "arm": "arm1",
+      "state": "COMPLETED",
+      "detail": "bin_blue"
+    },
+    {
+      "wall": 1792179775.9087222,
+      "monotonic": 61987.492797763,
+      "observed_clock": 54.481,
+      "kind": "task_status",
+      "stamp": 54.48,
+      "part": "part_2",
+      "arm": "arm1",
+      "state": "ARM_READY",
+      "detail": "{\"evidence\": {\"ready\": true, \"reason\": \"physical_ready\", \"samples\": 126, \"duplicate_stamps\": 892, \"source\": \"010f00ae2a17b4c10000000000008403\", \"last_stamp\": 54.472, \"receipt_age\": 0.001386091003951151, \"sim_age\": 0.0040000000000048885, \"max_reported_speed\": 1.0793026628680424e-13, \"max_position_error\": 2.0228263508670352e-13, \"max_difference_speed\": 0.0, \"stable_span\": 0.26599999999999824}, \"controller_result\": {\"label\": \"return_standby\", \"status\": 4, \"error_code\": 0, \"success\": true}, \"no_active_goal\": true}"
+    },
+    {
+      "wall": 1792179781.5645616,
+      "monotonic": 61993.148637126,
+      "observed_clock": 60.225,
+      "kind": "task_status",
+      "stamp": 60.225,
+      "part": "part_3",
+      "arm": "arm2",
+      "state": "CARRYING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179782.9875615,
+      "monotonic": 61994.57163694,
+      "observed_clock": 61.653,
+      "kind": "task_status",
+      "stamp": 61.653,
+      "part": "part_3",
+      "arm": "arm2",
+      "state": "ZONE_CLEAR",
+      "detail": "carry_clear"
+    },
+    {
+      "wall": 1792179785.7760267,
+      "monotonic": 61997.360102026,
+      "observed_clock": 64.356,
+      "kind": "task_status",
+      "stamp": 64.355,
+      "part": "part_3",
+      "arm": "arm2",
+      "state": "PLACING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179789.0688436,
+      "monotonic": 62000.652919216,
+      "observed_clock": 67.6,
+      "kind": "task_status",
+      "stamp": 67.6,
+      "part": "part_4",
+      "arm": "arm1",
+      "state": "PICKING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179790.8839183,
+      "monotonic": 62002.467993895,
+      "observed_clock": 69.468,
+      "kind": "task_status",
+      "stamp": 69.469,
+      "part": "part_3",
+      "arm": "arm2",
+      "state": "PLACEMENT_FINISHED",
+      "detail": "bin_green"
+    },
+    {
+      "wall": 1792179790.8859403,
+      "monotonic": 62002.470015797,
+      "observed_clock": 69.471,
+      "kind": "task_status",
+      "stamp": 69.469,
+      "part": "part_3",
+      "arm": "arm2",
+      "state": "PART_PLACED",
+      "detail": "{\"result\": \"PLACED\", \"target_bin\": \"bin_green\", \"final_bin\": \"bin_green\"}"
+    },
+    {
+      "wall": 1792179796.1260505,
+      "monotonic": 62007.710125989,
+      "observed_clock": 74.602,
+      "kind": "task_status",
+      "stamp": 74.602,
+      "part": "part_3",
+      "arm": "arm2",
+      "state": "COMPLETED",
+      "detail": "bin_green"
+    },
+    {
+      "wall": 1792179796.1264834,
+      "monotonic": 62007.710559319,
+      "observed_clock": 74.602,
+      "kind": "task_status",
+      "stamp": 74.602,
+      "part": "part_3",
+      "arm": "arm2",
+      "state": "ARM_READY",
+      "detail": "{\"evidence\": {\"ready\": true, \"reason\": \"physical_ready\", \"samples\": 124, \"duplicate_stamps\": 1180, \"source\": \"010f00ae2a17b4c10000000000008403\", \"last_stamp\": 74.599, \"receipt_age\": 0.013164563999453094, \"sim_age\": 0.0030000000000001137, \"max_reported_speed\": 9.00165358919125e-14, \"max_position_error\": 1.87960758069039e-13, \"max_difference_speed\": 0.0, \"stable_span\": 0.25}, \"controller_result\": {\"label\": \"return_standby\", \"status\": 4, \"error_code\": 0, \"success\": true}, \"no_active_goal\": true}"
+    },
+    {
+      "wall": 1792179799.6142113,
+      "monotonic": 62011.198286878,
+      "observed_clock": 77.815,
+      "kind": "task_status",
+      "stamp": 77.815,
+      "part": "part_4",
+      "arm": "arm1",
+      "state": "CARRYING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179801.142012,
+      "monotonic": 62012.726087484,
+      "observed_clock": 79.237,
+      "kind": "task_status",
+      "stamp": 79.237,
+      "part": "part_4",
+      "arm": "arm1",
+      "state": "ZONE_CLEAR",
+      "detail": "carry_clear"
+    },
+    {
+      "wall": 1792179803.2614725,
+      "monotonic": 62014.845547974,
+      "observed_clock": 81.189,
+      "kind": "task_status",
+      "stamp": 81.187,
+      "part": "part_4",
+      "arm": "arm1",
+      "state": "PLACING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179807.5582354,
+      "monotonic": 62019.142311011,
+      "observed_clock": 85.2,
+      "kind": "task_status",
+      "stamp": 85.2,
+      "part": "part_5",
+      "arm": "arm2",
+      "state": "PICKING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179808.5138743,
+      "monotonic": 62020.0979498,
+      "observed_clock": 86.107,
+      "kind": "task_status",
+      "stamp": 86.109,
+      "part": "part_4",
+      "arm": "arm1",
+      "state": "PLACEMENT_FINISHED",
+      "detail": "bin_yellow"
+    },
+    {
+      "wall": 1792179808.5178783,
+      "monotonic": 62020.101953724,
+      "observed_clock": 86.112,
+      "kind": "task_status",
+      "stamp": 86.109,
+      "part": "part_4",
+      "arm": "arm1",
+      "state": "PART_PLACED",
+      "detail": "{\"result\": \"PLACED\", \"target_bin\": \"bin_yellow\", \"final_bin\": \"bin_yellow\"}"
+    },
+    {
+      "wall": 1792179810.7683496,
+      "monotonic": 62022.352425329,
+      "observed_clock": 88.294,
+      "kind": "task_status",
+      "stamp": 88.29,
+      "part": "part_4",
+      "arm": "arm1",
+      "state": "COMPLETED",
+      "detail": "bin_yellow"
+    },
+    {
+      "wall": 1792179810.7695565,
+      "monotonic": 62022.353631987,
+      "observed_clock": 88.295,
+      "kind": "task_status",
+      "stamp": 88.29,
+      "part": "part_4",
+      "arm": "arm1",
+      "state": "ARM_READY",
+      "detail": "{\"evidence\": {\"ready\": true, \"reason\": \"physical_ready\", \"samples\": 115, \"duplicate_stamps\": 1388, \"source\": \"010f00ae2a17b4c10000000000008403\", \"last_stamp\": 88.29, \"receipt_age\": 0.0027142969993292354, \"sim_age\": 0.0, \"max_reported_speed\": 1.0793200101028022e-13, \"max_position_error\": 2.0183854587685346e-13, \"max_difference_speed\": 0.0, \"stable_span\": 0.2510000000000048}, \"controller_result\": {\"label\": \"return_standby\", \"status\": 4, \"error_code\": 0, \"success\": true}, \"no_active_goal\": true}"
+    },
+    {
+      "wall": 1792179818.350959,
+      "monotonic": 62029.935034721,
+      "observed_clock": 95.749,
+      "kind": "task_status",
+      "stamp": 95.75,
+      "part": "part_5",
+      "arm": "arm2",
+      "state": "CARRYING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179819.8963854,
+      "monotonic": 62031.480461152,
+      "observed_clock": 97.168,
+      "kind": "task_status",
+      "stamp": 97.167,
+      "part": "part_5",
+      "arm": "arm2",
+      "state": "ZONE_CLEAR",
+      "detail": "carry_clear"
+    },
+    {
+      "wall": 1792179822.1860833,
+      "monotonic": 62033.770158757,
+      "observed_clock": 99.242,
+      "kind": "task_status",
+      "stamp": 99.241,
+      "part": "part_5",
+      "arm": "arm2",
+      "state": "PLACING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179826.4571624,
+      "monotonic": 62038.04123817,
+      "observed_clock": 103.1,
+      "kind": "task_status",
+      "stamp": 103.1,
+      "part": "part_6",
+      "arm": "arm1",
+      "state": "PICKING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179828.419141,
+      "monotonic": 62040.003216682,
+      "observed_clock": 104.918,
+      "kind": "task_status",
+      "stamp": 104.919,
+      "part": "part_5",
+      "arm": "arm2",
+      "state": "PLACEMENT_FINISHED",
+      "detail": "bin_red"
+    },
+    {
+      "wall": 1792179828.420489,
+      "monotonic": 62040.004564629,
+      "observed_clock": 104.921,
+      "kind": "task_status",
+      "stamp": 104.92,
+      "part": "part_5",
+      "arm": "arm2",
+      "state": "PART_PLACED",
+      "detail": "{\"result\": \"PLACED\", \"target_bin\": \"bin_red\", \"final_bin\": \"bin_red\"}"
+    },
+    {
+      "wall": 1792179830.25982,
+      "monotonic": 62041.84389557,
+      "observed_clock": 106.633,
+      "kind": "task_status",
+      "stamp": 106.632,
+      "part": "part_5",
+      "arm": "arm2",
+      "state": "COMPLETED",
+      "detail": "bin_red"
+    },
+    {
+      "wall": 1792179830.260438,
+      "monotonic": 62041.844513586,
+      "observed_clock": 106.634,
+      "kind": "task_status",
+      "stamp": 106.632,
+      "part": "part_5",
+      "arm": "arm2",
+      "state": "ARM_READY",
+      "detail": "{\"evidence\": {\"ready\": true, \"reason\": \"physical_ready\", \"samples\": 128, \"duplicate_stamps\": 1695, \"source\": \"010f00ae2a17b4c10000000000008403\", \"last_stamp\": 106.632, \"receipt_age\": 0.0004694419985753484, \"sim_age\": 0.0, \"max_reported_speed\": 9.517039933903959e-14, \"max_position_error\": 1.8784973576657649e-13, \"max_difference_speed\": 0.0, \"stable_span\": 0.26500000000000057}, \"controller_result\": {\"label\": \"return_standby\", \"status\": 4, \"error_code\": 0, \"success\": true}, \"no_active_goal\": true}"
+    },
+    {
+      "wall": 1792179837.3317423,
+      "monotonic": 62048.915817658,
+      "observed_clock": 113.293,
+      "kind": "task_status",
+      "stamp": 113.292,
+      "part": "part_6",
+      "arm": "arm1",
+      "state": "CARRYING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179838.8410661,
+      "monotonic": 62050.425141683,
+      "observed_clock": 114.716,
+      "kind": "task_status",
+      "stamp": 114.713,
+      "part": "part_6",
+      "arm": "arm1",
+      "state": "ZONE_CLEAR",
+      "detail": "carry_clear"
+    },
+    {
+      "wall": 1792179841.4891863,
+      "monotonic": 62053.073261769,
+      "observed_clock": 117.087,
+      "kind": "task_status",
+      "stamp": 117.086,
+      "part": "part_6",
+      "arm": "arm1",
+      "state": "PLACING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179845.5345762,
+      "monotonic": 62057.11865211,
+      "observed_clock": 120.7,
+      "kind": "task_status",
+      "stamp": 120.7,
+      "part": "part_7",
+      "arm": "arm2",
+      "state": "PICKING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179847.7312148,
+      "monotonic": 62059.315290414,
+      "observed_clock": 122.679,
+      "kind": "task_status",
+      "stamp": 122.679,
+      "part": "part_6",
+      "arm": "arm1",
+      "state": "PLACEMENT_FINISHED",
+      "detail": "bin_blue"
+    },
+    {
+      "wall": 1792179847.7322903,
+      "monotonic": 62059.316365941,
+      "observed_clock": 122.679,
+      "kind": "task_status",
+      "stamp": 122.679,
+      "part": "part_6",
+      "arm": "arm1",
+      "state": "PART_PLACED",
+      "detail": "{\"result\": \"PLACED\", \"target_bin\": \"bin_blue\", \"final_bin\": \"bin_blue\"}"
+    },
+    {
+      "wall": 1792179852.961111,
+      "monotonic": 62064.545186653,
+      "observed_clock": 127.835,
+      "kind": "task_status",
+      "stamp": 127.834,
+      "part": "part_6",
+      "arm": "arm1",
+      "state": "COMPLETED",
+      "detail": "bin_blue"
+    },
+    {
+      "wall": 1792179852.9616098,
+      "monotonic": 62064.545685256,
+      "observed_clock": 127.835,
+      "kind": "task_status",
+      "stamp": 127.834,
+      "part": "part_6",
+      "arm": "arm1",
+      "state": "ARM_READY",
+      "detail": "{\"evidence\": {\"ready\": true, \"reason\": \"physical_ready\", \"samples\": 135, \"duplicate_stamps\": 2001, \"source\": \"010f00ae2a17b4c10000000000008403\", \"last_stamp\": 127.832, \"receipt_age\": 0.0014373579979292117, \"sim_age\": 0.0020000000000095497, \"max_reported_speed\": 9.210254087177461e-14, \"max_position_error\": 2.020605904817785e-13, \"max_difference_speed\": 0.0, \"stable_span\": 0.2709999999999866}, \"controller_result\": {\"label\": \"return_standby\", \"status\": 4, \"error_code\": 0, \"success\": true}, \"no_active_goal\": true}"
+    },
+    {
+      "wall": 1792179856.4051676,
+      "monotonic": 62067.989243171,
+      "observed_clock": 131.242,
+      "kind": "task_status",
+      "stamp": 131.242,
+      "part": "part_7",
+      "arm": "arm2",
+      "state": "CARRYING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179857.8332565,
+      "monotonic": 62069.417331977,
+      "observed_clock": 132.663,
+      "kind": "task_status",
+      "stamp": 132.662,
+      "part": "part_7",
+      "arm": "arm2",
+      "state": "ZONE_CLEAR",
+      "detail": "carry_clear"
+    },
+    {
+      "wall": 1792179860.3931122,
+      "monotonic": 62071.977187507,
+      "observed_clock": 135.097,
+      "kind": "task_status",
+      "stamp": 135.097,
+      "part": "part_7",
+      "arm": "arm2",
+      "state": "PLACING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179863.9829726,
+      "monotonic": 62075.567048066,
+      "observed_clock": 138.61,
+      "kind": "task_status",
+      "stamp": 138.611,
+      "part": "part_8",
+      "arm": "arm1",
+      "state": "PICKING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179866.351109,
+      "monotonic": 62077.9351846,
+      "observed_clock": 140.968,
+      "kind": "task_status",
+      "stamp": 140.966,
+      "part": "part_7",
+      "arm": "arm2",
+      "state": "PLACEMENT_FINISHED",
+      "detail": "bin_green"
+    },
+    {
+      "wall": 1792179866.3525357,
+      "monotonic": 62077.936611359,
+      "observed_clock": 140.969,
+      "kind": "task_status",
+      "stamp": 140.968,
+      "part": "part_7",
+      "arm": "arm2",
+      "state": "PART_PLACED",
+      "detail": "{\"result\": \"PLACED\", \"target_bin\": \"bin_green\", \"final_bin\": \"bin_green\"}"
+    },
+    {
+      "wall": 1792179871.5123317,
+      "monotonic": 62083.096407473,
+      "observed_clock": 145.883,
+      "kind": "task_status",
+      "stamp": 145.881,
+      "part": "part_7",
+      "arm": "arm2",
+      "state": "COMPLETED",
+      "detail": "bin_green"
+    },
+    {
+      "wall": 1792179871.5182586,
+      "monotonic": 62083.102334095,
+      "observed_clock": 145.888,
+      "kind": "task_status",
+      "stamp": 145.887,
+      "part": "part_7",
+      "arm": "arm2",
+      "state": "ARM_READY",
+      "detail": "{\"evidence\": {\"ready\": true, \"reason\": \"physical_ready\", \"samples\": 130, \"duplicate_stamps\": 2284, \"source\": \"010f00ae2a17b4c10000000000008403\", \"last_stamp\": 145.88, \"receipt_age\": 0.001277002003917005, \"sim_age\": 0.0010000000000047748, \"max_reported_speed\": 9.41936416018474e-14, \"max_position_error\": 1.8807178037150152e-13, \"max_difference_speed\": 0.0, \"stable_span\": 0.27199999999999136}, \"controller_result\": {\"label\": \"return_standby\", \"status\": 4, \"error_code\": 0, \"success\": true}, \"no_active_goal\": true}"
+    },
+    {
+      "wall": 1792179874.57204,
+      "monotonic": 62086.156115872,
+      "observed_clock": 148.694,
+      "kind": "task_status",
+      "stamp": 148.693,
+      "part": "part_8",
+      "arm": "arm1",
+      "state": "CARRYING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179876.1224942,
+      "monotonic": 62087.706569735,
+      "observed_clock": 150.097,
+      "kind": "task_status",
+      "stamp": 150.097,
+      "part": "part_8",
+      "arm": "arm1",
+      "state": "ZONE_CLEAR",
+      "detail": "carry_clear"
+    },
+    {
+      "wall": 1792179878.4379244,
+      "monotonic": 62090.022000153,
+      "observed_clock": 152.232,
+      "kind": "task_status",
+      "stamp": 152.231,
+      "part": "part_8",
+      "arm": "arm1",
+      "state": "PLACING",
+      "detail": ""
+    },
+    {
+      "wall": 1792179884.6585143,
+      "monotonic": 62096.242589922,
+      "observed_clock": 157.937,
+      "kind": "task_status",
+      "stamp": 157.937,
+      "part": "part_8",
+      "arm": "arm1",
+      "state": "PLACEMENT_FINISHED",
+      "detail": "bin_yellow"
+    },
+    {
+      "wall": 1792179884.6595767,
+      "monotonic": 62096.24365216,
+      "observed_clock": 157.938,
+      "kind": "task_status",
+      "stamp": 157.937,
+      "part": "part_8",
+      "arm": "arm1",
+      "state": "PART_PLACED",
+      "detail": "{\"result\": \"PLACED\", \"target_bin\": \"bin_yellow\", \"final_bin\": \"bin_yellow\"}"
+    },
+    {
+      "wall": 1792179886.6815338,
+      "monotonic": 62098.265609204,
+      "observed_clock": 159.878,
+      "kind": "task_status",
+      "stamp": 159.875,
+      "part": "part_8",
+      "arm": "arm1",
+      "state": "COMPLETED",
+      "detail": "bin_yellow"
+    },
+    {
+      "wall": 1792179886.6856048,
+      "monotonic": 62098.269680409,
+      "observed_clock": 159.881,
+      "kind": "task_status",
+      "stamp": 159.88,
+      "part": "part_8",
+      "arm": "arm1",
+      "state": "ARM_READY",
+      "detail": "{\"evidence\": {\"ready\": true, \"reason\": \"physical_ready\", \"samples\": 127, \"duplicate_stamps\": 2561, \"source\": \"010f00ae2a17b4c10000000000008403\", \"last_stamp\": 159.874, \"receipt_age\": 0.0012747090004268102, \"sim_age\": 0.0010000000000047748, \"max_reported_speed\": 9.210080614829863e-14, \"max_position_error\": 2.0228263508670352e-13, \"max_difference_speed\": 0.0, \"stable_span\": 0.27299999999999613}, \"controller_result\": {\"label\": \"return_standby\", \"status\": 4, \"error_code\": 0, \"success\": true}, \"no_active_goal\": true}"
+    }
+  ],
+  "ready_audits": [
+    {
+      "part": "part_1",
+      "arm": "arm2",
+      "wall": 1792179753.841796,
+      "sim": 33.585,
+      "evidence": {
+        "evidence": {
+          "ready": true,
+          "reason": "physical_ready",
+          "samples": 120,
+          "duplicate_stamps": 526,
+          "source": "010f00ae2a17b4c10000000000008403",
+          "last_stamp": 33.58,
+          "receipt_age": 0.000792491999163758,
+          "sim_age": 0.0010000000000047748,
+          "max_reported_speed": 9.419689420836486e-14,
+          "max_position_error": 1.87960758069039e-13,
+          "max_difference_speed": 0.0,
+          "stable_span": 0.2560000000000002
+        },
+        "controller_result": {
+          "label": "return_standby",
+          "status": 4,
+          "error_code": 0,
+          "success": true
+        },
+        "no_active_goal": true
+      },
+      "raw_ros_samples": 128,
+      "raw_unique_stamps": 120,
+      "raw_ros_max_speed": 9.419689420836486e-14,
+      "raw_ros_max_position_error": 1.87960758069039e-13,
+      "native_samples": 1542,
+      "native_max_speed": 9.419884577227533e-14,
+      "native_max_position_error": 1.87960758069039e-13,
+      "native_cmd_peak": 9.39803790345195e-11,
+      "validated": true
+    },
+    {
+      "part": "part_2",
+      "arm": "arm1",
+      "wall": 1792179775.9087222,
+      "sim": 54.48,
+      "evidence": {
+        "evidence": {
+          "ready": true,
+          "reason": "physical_ready",
+          "samples": 126,
+          "duplicate_stamps": 892,
+          "source": "010f00ae2a17b4c10000000000008403",
+          "last_stamp": 54.472,
+          "receipt_age": 0.001386091003951151,
+          "sim_age": 0.0040000000000048885,
+          "max_reported_speed": 1.0793026628680424e-13,
+          "max_position_error": 2.0228263508670352e-13,
+          "max_difference_speed": 0.0,
+          "stable_span": 0.26599999999999824
+        },
+        "controller_result": {
+          "label": "return_standby",
+          "status": 4,
+          "error_code": 0,
+          "success": true
+        },
+        "no_active_goal": true
+      },
+      "raw_ros_samples": 133,
+      "raw_unique_stamps": 126,
+      "raw_ros_max_speed": 1.0793026628680424e-13,
+      "raw_ros_max_position_error": 2.0228263508670352e-13,
+      "native_samples": 1602,
+      "native_max_speed": 1.0793026628680424e-13,
+      "native_max_position_error": 2.0228263508670352e-13,
+      "native_cmd_peak": 1.0103029524088925e-10,
+      "validated": true
+    },
+    {
+      "part": "part_3",
+      "arm": "arm2",
+      "wall": 1792179796.1264834,
+      "sim": 74.602,
+      "evidence": {
+        "evidence": {
+          "ready": true,
+          "reason": "physical_ready",
+          "samples": 124,
+          "duplicate_stamps": 1180,
+          "source": "010f00ae2a17b4c10000000000008403",
+          "last_stamp": 74.599,
+          "receipt_age": 0.013164563999453094,
+          "sim_age": 0.0030000000000001137,
+          "max_reported_speed": 9.00165358919125e-14,
+          "max_position_error": 1.87960758069039e-13,
+          "max_difference_speed": 0.0,
+          "stable_span": 0.25
+        },
+        "controller_result": {
+          "label": "return_standby",
+          "status": 4,
+          "error_code": 0,
+          "success": true
+        },
+        "no_active_goal": true
+      },
+      "raw_ros_samples": 126,
+      "raw_unique_stamps": 124,
+      "raw_ros_max_speed": 9.00165358919125e-14,
+      "raw_ros_max_position_error": 1.87960758069039e-13,
+      "native_samples": 1506,
+      "native_max_speed": 9.00165358919125e-14,
+      "native_max_position_error": 1.87960758069039e-13,
+      "native_cmd_peak": 9.39803790345195e-11,
+      "validated": true
+    },
+    {
+      "part": "part_4",
+      "arm": "arm1",
+      "wall": 1792179810.7695565,
+      "sim": 88.29,
+      "evidence": {
+        "evidence": {
+          "ready": true,
+          "reason": "physical_ready",
+          "samples": 115,
+          "duplicate_stamps": 1388,
+          "source": "010f00ae2a17b4c10000000000008403",
+          "last_stamp": 88.29,
+          "receipt_age": 0.0027142969993292354,
+          "sim_age": 0.0,
+          "max_reported_speed": 1.0793200101028022e-13,
+          "max_position_error": 2.0183854587685346e-13,
+          "max_difference_speed": 0.0,
+          "stable_span": 0.2510000000000048
+        },
+        "controller_result": {
+          "label": "return_standby",
+          "status": 4,
+          "error_code": 0,
+          "success": true
+        },
+        "no_active_goal": true
+      },
+      "raw_ros_samples": 124,
+      "raw_unique_stamps": 115,
+      "raw_ros_max_speed": 1.0793200101028022e-13,
+      "raw_ros_max_position_error": 2.0183854587685346e-13,
+      "native_samples": 1512,
+      "native_max_speed": 1.0793200101028022e-13,
+      "native_max_position_error": 2.0183854587685346e-13,
+      "native_cmd_peak": 1.0103029524088925e-10,
+      "validated": true
+    },
+    {
+      "part": "part_5",
+      "arm": "arm2",
+      "wall": 1792179830.260438,
+      "sim": 106.632,
+      "evidence": {
+        "evidence": {
+          "ready": true,
+          "reason": "physical_ready",
+          "samples": 128,
+          "duplicate_stamps": 1695,
+          "source": "010f00ae2a17b4c10000000000008403",
+          "last_stamp": 106.632,
+          "receipt_age": 0.0004694419985753484,
+          "sim_age": 0.0,
+          "max_reported_speed": 9.517039933903959e-14,
+          "max_position_error": 1.8784973576657649e-13,
+          "max_difference_speed": 0.0,
+          "stable_span": 0.26500000000000057
+        },
+        "controller_result": {
+          "label": "return_standby",
+          "status": 4,
+          "error_code": 0,
+          "success": true
+        },
+        "no_active_goal": true
+      },
+      "raw_ros_samples": 133,
+      "raw_unique_stamps": 128,
+      "raw_ros_max_speed": 9.517039933903959e-14,
+      "raw_ros_max_position_error": 1.8784973576657649e-13,
+      "native_samples": 1596,
+      "native_max_speed": 9.517039933903959e-14,
+      "native_max_position_error": 1.8784973576657649e-13,
+      "native_cmd_peak": 9.392486788328824e-11,
+      "validated": true
+    },
+    {
+      "part": "part_6",
+      "arm": "arm1",
+      "wall": 1792179852.9616098,
+      "sim": 127.834,
+      "evidence": {
+        "evidence": {
+          "ready": true,
+          "reason": "physical_ready",
+          "samples": 135,
+          "duplicate_stamps": 2001,
+          "source": "010f00ae2a17b4c10000000000008403",
+          "last_stamp": 127.832,
+          "receipt_age": 0.0014373579979292117,
+          "sim_age": 0.0020000000000095497,
+          "max_reported_speed": 9.210254087177461e-14,
+          "max_position_error": 2.020605904817785e-13,
+          "max_difference_speed": 0.0,
+          "stable_span": 0.2709999999999866
+        },
+        "controller_result": {
+          "label": "return_standby",
+          "status": 4,
+          "error_code": 0,
+          "success": true
+        },
+        "no_active_goal": true
+      },
+      "raw_ros_samples": 136,
+      "raw_unique_stamps": 135,
+      "raw_ros_max_speed": 9.210254087177461e-14,
+      "raw_ros_max_position_error": 2.020605904817785e-13,
+      "native_samples": 1632,
+      "native_max_speed": 9.210254087177461e-14,
+      "native_max_position_error": 2.020605904817785e-13,
+      "native_cmd_peak": 1.0114131754335176e-10,
+      "validated": true
+    },
+    {
+      "part": "part_7",
+      "arm": "arm2",
+      "wall": 1792179871.5182586,
+      "sim": 145.887,
+      "evidence": {
+        "evidence": {
+          "ready": true,
+          "reason": "physical_ready",
+          "samples": 130,
+          "duplicate_stamps": 2284,
+          "source": "010f00ae2a17b4c10000000000008403",
+          "last_stamp": 145.88,
+          "receipt_age": 0.001277002003917005,
+          "sim_age": 0.0010000000000047748,
+          "max_reported_speed": 9.41936416018474e-14,
+          "max_position_error": 1.8807178037150152e-13,
+          "max_difference_speed": 0.0,
+          "stable_span": 0.27199999999999136
+        },
+        "controller_result": {
+          "label": "return_standby",
+          "status": 4,
+          "error_code": 0,
+          "success": true
+        },
+        "no_active_goal": true
+      },
+      "raw_ros_samples": 137,
+      "raw_unique_stamps": 130,
+      "raw_ros_max_speed": 9.41936416018474e-14,
+      "raw_ros_max_position_error": 1.8807178037150152e-13,
+      "native_samples": 1638,
+      "native_max_speed": 9.419429212315089e-14,
+      "native_max_position_error": 1.8807178037150152e-13,
+      "native_cmd_peak": 9.39803790345195e-11,
+      "validated": true
+    },
+    {
+      "part": "part_8",
+      "arm": "arm1",
+      "wall": 1792179886.6856048,
+      "sim": 159.88,
+      "evidence": {
+        "evidence": {
+          "ready": true,
+          "reason": "physical_ready",
+          "samples": 127,
+          "duplicate_stamps": 2561,
+          "source": "010f00ae2a17b4c10000000000008403",
+          "last_stamp": 159.874,
+          "receipt_age": 0.0012747090004268102,
+          "sim_age": 0.0010000000000047748,
+          "max_reported_speed": 9.210080614829863e-14,
+          "max_position_error": 2.0228263508670352e-13,
+          "max_difference_speed": 0.0,
+          "stable_span": 0.27299999999999613
+        },
+        "controller_result": {
+          "label": "return_standby",
+          "status": 4,
+          "error_code": 0,
+          "success": true
+        },
+        "no_active_goal": true
+      },
+      "raw_ros_samples": 136,
+      "raw_unique_stamps": 127,
+      "raw_ros_max_speed": 9.210080614829863e-14,
+      "raw_ros_max_position_error": 2.0228263508670352e-13,
+      "native_samples": 1644,
+      "native_max_speed": 9.210080614829863e-14,
+      "native_max_position_error": 2.0228263508670352e-13,
+      "native_cmd_peak": 1.0114131754335176e-10,
+      "validated": true
+    }
+  ],
+  "all_ready_validated": true,
+  "faults": [],
+  "controller_results": [
+    {
+      "label": "standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "return_standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "return_standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "return_standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "return_standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "return_standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "return_standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "return_standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "return_standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    }
+  ],
+  "controller_failed_results": [],
+  "slot_releases": [
+    {
+      "part": "part_1",
+      "arm": "arm2",
+      "slot_arm1": "part_2",
+      "slot_arm2": null,
+      "zone_arm": "arm1",
+      "trigger": "ARM_READY"
+    },
+    {
+      "part": "part_2",
+      "arm": "arm1",
+      "slot_arm1": null,
+      "slot_arm2": "part_3",
+      "zone_arm": "arm2",
+      "trigger": "ARM_READY"
+    },
+    {
+      "part": "part_3",
+      "arm": "arm2",
+      "slot_arm1": "part_4",
+      "slot_arm2": null,
+      "zone_arm": "arm1",
+      "trigger": "ARM_READY"
+    },
+    {
+      "part": "part_4",
+      "arm": "arm1",
+      "slot_arm1": null,
+      "slot_arm2": "part_5",
+      "zone_arm": "arm2",
+      "trigger": "ARM_READY"
+    },
+    {
+      "part": "part_5",
+      "arm": "arm2",
+      "slot_arm1": "part_6",
+      "slot_arm2": null,
+      "zone_arm": "arm1",
+      "trigger": "ARM_READY"
+    },
+    {
+      "part": "part_6",
+      "arm": "arm1",
+      "slot_arm1": null,
+      "slot_arm2": "part_7",
+      "zone_arm": "arm2",
+      "trigger": "ARM_READY"
+    },
+    {
+      "part": "part_7",
+      "arm": "arm2",
+      "slot_arm1": "part_8",
+      "slot_arm2": null,
+      "zone_arm": "arm1",
+      "trigger": "ARM_READY"
+    },
+    {
+      "part": "part_8",
+      "arm": "arm1",
+      "slot_arm1": null,
+      "slot_arm2": null,
+      "zone_arm": null,
+      "trigger": "ARM_READY"
+    }
+  ],
+  "slot_order_ok": false,
+  "part_placed_count": 8,
+  "zone_clear_count": 8,
+  "source_gids": [
+    "010f00ae2a17b4c10000000000008403"
+  ],
+  "raw_message_counts": {
+    "controller_state": 161333,
+    "joint_state": 81202,
+    "action_status": 298,
+    "task_status": 65
+  },
+  "retry_or_grasp_failure_lines": [
+    "[pick_place_executor_node-12] [WARN] [1792179773.888638290] [pick_place_relay]: task_0002 \u7b2c 1 \u6b21\u5c1d\u8bd5\u5931\u8d25(pre_grasp_failed),\u6062\u590d\u540e\u91cd\u8bd5"
+  ],
+  "other_error_lines": [
+    "[pick_place_executor_node-12] [ERROR] [1792179772.881978725] [pick_place_relay]: pre_grasp: \u52a8\u4f5c\u672a\u6210\u529f status=6 code=99999"
+  ],
+  "task_wall_seconds": 155.08092737197876,
+  "task_sim_seconds": 147.829,
+  "reason": "completed",
+  "first_picking": {
+    "wall": 1792179731.6046774,
+    "monotonic": 61943.188753028,
+    "observed_clock": 12.051,
+    "kind": "task_status",
+    "stamp": 12.051,
+    "part": "part_1",
+    "arm": "arm2",
+    "state": "PICKING",
+    "detail": ""
+  },
+  "last_ready": {
+    "wall": 1792179886.6856048,
+    "monotonic": 62098.269680409,
+    "observed_clock": 159.881,
+    "kind": "task_status",
+    "stamp": 159.88,
+    "part": "part_8",
+    "arm": "arm1",
+    "state": "ARM_READY",
+    "detail": "{\"evidence\": {\"ready\": true, \"reason\": \"physical_ready\", \"samples\": 127, \"duplicate_stamps\": 2561, \"source\": \"010f00ae2a17b4c10000000000008403\", \"last_stamp\": 159.874, \"receipt_age\": 0.0012747090004268102, \"sim_age\": 0.0010000000000047748, \"max_reported_speed\": 9.210080614829863e-14, \"max_position_error\": 2.0228263508670352e-13, \"max_difference_speed\": 0.0, \"stable_span\": 0.27299999999999613}, \"controller_result\": {\"label\": \"return_standby\", \"status\": 4, \"error_code\": 0, \"success\": true}, \"no_active_goal\": true}"
+  }
+}

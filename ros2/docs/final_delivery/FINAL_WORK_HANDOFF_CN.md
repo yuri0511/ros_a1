@@ -1,3 +1,5 @@
+> 历史记录保留。2026-10-17最终gain1＋物理READY整合及唯一Q诊断请先读 [最终状态](../final_delivery_v2/FINAL_SYSTEM_STATUS_CN.md) 与 [Rule/Q验证](../final_delivery_v2/RULE_Q_VALIDATION_CN.md)。下文为较早阶段事实，不代表当前未修复。
+
 # Yuri 双机械臂仿真研究：最终工程交接
 
 交接日期：2026-10-16（Asia/Shanghai）。对象：Yuri、后续维护者及下一位 AI Agent。

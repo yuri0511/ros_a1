@@ -1,3 +1,5 @@
+> 历史记录保留。2026-10-17最终gain1＋物理READY整合及唯一Q诊断请先读 [最终状态](../final_delivery_v2/FINAL_SYSTEM_STATUS_CN.md) 与 [Rule/Q验证](../final_delivery_v2/RULE_Q_VALIDATION_CN.md)。下文为较早阶段事实，不代表当前未修复。
+
 # 给 Yuri 的技术审核说明
 
 上游固定基线为 ros2-dual-parallel / 72ab6f2b4d21eefe1ebb78b83aa8a413e00d7ddd。本材料记录独立实验，不是部署批准。原始已验收工作区 /home/yu/ros_a1 未覆盖；72ab、8da、V2 的独立工作树分别保存，本地快照见 current_audit/snapshots.json，无远端推送。

@@ -1,0 +1,11 @@
+{
+  "same_world_semantics_after_removing_read_only_observer": true,
+  "removed_plugins": [
+    {
+      "filename": "/home/yu/yuri_gazebo_performance/control_stability/tools/libjoint_trace_prepost.so",
+      "name": "research::JointTrace"
+    }
+  ],
+  "gain1_sha256": "c96a32325ac2d66b958cb4c75ac82b794e1fe64802e25394c717436121b9a5b9",
+  "world_sha256": "04036414979a02627a3674cecb39dde997d12acd96ffcb377ba524defc37b81b"
+}
