@@ -92,3 +92,7 @@ Yuri优先审查：整体READY生命周期和fault槽；gain1有限适用性及�
 ## 本轮Q诊断最终补充
 
 唯一Q轮8/8正确、8物理READY、149底层轨迹控制器全部成功、8决策全命中/0回退/0WAIT。part_3有一次MoveIt起始状态预测碰撞拒绝（伴空JointState），原有界恢复后重试1次；因此是带异常记录的功能完成，非零异常验收，不能据此声称提速。另记录到10个腕/夹爪基座与工件接触点（最大0.146mm），指尖最大穿深14.909mm。详见RULE_Q_VALIDATION_CN.md及原始日志，后续不自动继续实验。
+
+## 已上传版本定位
+
+本轮实际推送整合/报告提交 `f48b398a25640cf2d12e5e237a1035f2a570d574`，Draft PR https://github.com/yuri0511/ros_a1/pull/1 ，分支URL如上。后续仅回执文档提交，运行核心不变；最新精确HEAD见本地GITHUB_FINAL_RECEIPT.md及PR API，避免自引用哈希矛盾。物理Q执行提交39e6d64f9856b0f92f76ff934f1d9011eaa23ed6，核心与Rule一致。
