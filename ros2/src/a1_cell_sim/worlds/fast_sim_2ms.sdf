@@ -1,0 +1,1061 @@
+<?xml version="1.0" ?>
+<sdf version="1.11">
+  <world name="sorting_cell">
+    <!-- 物理与基础系统 -->
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.002</max_step_size>
+      <real_time_factor>4.0</real_time_factor>
+    </physics>
+    <plugin name="gz::sim::systems::Physics" filename="gz-sim-physics-system"/>
+    <plugin name="gz::sim::systems::UserCommands" filename="gz-sim-user-commands-system"/>
+    <!-- SceneBroadcaster 向 GUI 广播场景与位姿;filename 必须带 -system
+         后缀(与其他插件一致),否则加载器找不到库,GUI 里一片空白 -->
+    <plugin name="gz::sim::systems::SceneBroadcaster" filename="gz-sim-scene-broadcaster-system"/>
+    <plugin name="gz::sim::systems::Contact" filename="gz-sim-contact-system"/>
+    <!-- 相机等传感器渲染必需 -->
+    <plugin name="gz::sim::systems::Sensors" filename="gz-sim-sensors-system">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <!-- 逻辑相机由独立系统驱动 -->
+    <plugin name="gz::sim::systems::LogicalCamera" filename="gz-sim-logical-camera-system"/>
+
+    <gravity>0 0 -9.8</gravity>
+
+    <!-- 观感升级 2026-10-07:sun 保持原轴向/原强度不动(定案基线),
+         另加 warm_key + cool_fill 两盏方向光提对比与立体感;
+         attenuation 默认 1,老渲染管线兼容 -->
+    <light name="sun" type="directional">
+      <pose>0 0 3 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <direction>-0.5 0.3 -1</direction>
+      <cast_shadows>true</cast_shadows>
+    </light>
+    <light name="warm_key" type="directional">
+      <pose>1 1 3 0 0 0</pose>
+      <diffuse>0.6 0.57 0.5 1</diffuse>
+      <specular>0.3 0.3 0.28 1</specular>
+      <direction>0.4 -0.3 -0.9</direction>
+      <cast_shadows>false</cast_shadows>
+      <attenuation><range>20</range><constant>1</constant><linear>0</linear><quadratic>0</quadratic></attenuation>
+    </light>
+    <light name="cool_fill" type="directional">
+      <pose>-1 -1 2 0 0 0</pose>
+      <diffuse>0.25 0.28 0.32 1</diffuse>
+      <specular>0.05 0.05 0.05 1</specular>
+      <direction>-0.3 0.4 -0.6</direction>
+      <cast_shadows>false</cast_shadows>
+      <attenuation><range>20</range><constant>1</constant><linear>0</linear><quadratic>0</quadratic></attenuation>
+    </light>
+
+    <scene>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.35 0.4 0.45 1</background>
+      <shadows>true</shadows>
+    </scene>
+
+    <!-- 观感升级 2026-10-07:GUI 机位预设 45° 俯拍走外挂配置
+         worlds/sorting_cell.gui.config(基于 gz-sim8 默认配置,仅改
+         camera_pose=西南 45° 俯拍机位与背景色)。
+         本机实测内嵌 <gui> 块有毒(2026-10-08 重启后):pristine 正常
+         文件加同款块截图即纯色空白(testH/testI/testJ 三组实锤,带不带
+         window 声明、pose 值为何均空白),外挂同内容配置则正常出图。
+         启动方式:gz sim 世界文件 + gui-config 开关(双连字符)指向
+         sorting_cell.gui.config;六机位摆拍工具 tools/take_six_shots.py
+         走 /gui/move_to/pose 服务。 -->
+
+    <!-- 地面 -->
+    <model name="ground">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry><plane><normal>0 0 1</normal><size>6 6</size></plane></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><plane><normal>0 0 1</normal><size>6 6</size></plane></geometry>
+          <material><ambient>0.12 0.20 0.17 1</ambient><diffuse>0.20 0.32 0.27 1</diffuse><specular>0.1 0.1 0.1 1</specular><shininess>8</shininess></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 工作台基座:保持 box 跨 [-0.36,0.36](顶 0.36)。
+         2026-10-03 修复史:曾把本 box 升到 [0,0.72] 想让"台面 0.72"成立,
+         但机器人按 URDF 零位出生(臂水平,连杆 z 0.50-0.63, x 0.05-0.93),
+         全高台体让臂出生即埋进桌体,物理穿透解析炸飞卡死(standby 60s 超时,
+         move_group 取消竞态崩溃)。终案=基座维持 0.36 顶 + 下述桌面板,
+         零位臂(z<=0.63)从板下 7cm 穿过,带/箱/立柱落板面 0.72 -->
+    <model name="table">
+      <static>true</static>
+      <pose>0.65 0 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>1.2 0.8 0.72</size></box></geometry>
+        </collision>
+        <!-- ============ 桌子视觉换装 2026-10-13 / 修订 2026-10-14(new desk.FCStd)============
+             用户用 FreeCAD 重绘 newdesk,要求"换建模不换碰撞体"。
+             FCStd 实测(FreeCADCmd 读 BRep 面/wire 切片),单位 cm(100 doc-unit=1m):
+               台面 120×80×7cm,顶 z=72cm -> 0.72m(与 collision 砖顶逐字共面)
+               四腿 5×5×65cm,立于 ±57.5/±37.5cm -> ±0.575/±0.375m
+               南北缘各一半圆缺口 r=20cm -> 0.20m
+                 **2026-10-14 修订:两缺口心都移到桌内 (-5cm,±40cm)**
+                 -> 世界 (0.60,±0.40);北缺口旧值 +8cm(世界 0.73)已废,
+                    南缺口旧值 -8cm(世界 0.57)已废。东西对称于 x=0.60。
+             横档(stretcher,2026-10-13 自加的"结构感"件)本次**整体删除**:
+               ① 它不在用户 FCStd 原模里(原模只有 Pad+Pocket+Pocket01+Mirrored);
+               ② 臂扫掠实测穿它,且"只切中间"无用(见 docs/evidence/20261014/
+                  desk_notch_v2.md:残余最深 -14.8mm,80~173 个位姿命中)。
+             **本块全部是 visual;上方 collision 砖 1.2×0.8×0.72 一字未动**
+             (tools/check_collision_locked.py 26 块逐字节 PASS 为证)。
+
+             实现口径:SDF 无布尔/polyline 简件,台面拆成"中带 1 块 + 南北各 12 层
+             横条"(共 49 块 box,层厚 1.67cm),横条在缺口宽度处断开,
+             断开沿用层中线半径 => 缺口半径误差 <=0.13mm(逐层实测)。
+             ogre2 教训(2026-10-07 观感v2):polyline+extrude 在该管线会
+             成立墙且三角化失败,故一律 box 拼。
+             腿底 z=0 与地面共面;台面底 0.65 与腿顶 0.65 严格相接,无悬空。
+             换算表(FCStd cm -> 桌内 m;桌内 -> 世界:x+0.65,y 不变,z 绝对):
+               台面 120/80/7cm -> 1.20/0.80/0.07m(0.65..0.72)
+               腿 5×5×65cm -> 0.05×0.05×0.65m(0..0.65)
+               腿位 ±57.5/±37.5cm -> ±0.575/±0.375m
+               缺口 r**22.5cm** -> 0.225m(2026-10-14 实测定档:r20 时臂在
+               sb->carryA / top->sb 过渡段仍穿层条最多 -8.3mm;连续圆判据需
+               >=21.4cm,取本值留余量。南北对称,心世界 x=0.60);
+               心 (-5,±40)cm -> 桌内 -0.05/±0.40 -> 世界 x=0.60,y=±0.40 -->
+        <visual name="slab_top">
+          <!-- 台面中带(y -0.20..+0.20 整幅无缺口):定案闸要求桌面唯一大面
+               名为 slab_top 且顶面恰 0.72;缺口由南北横条断开形成 -->
+          <pose>0 0 0.6850 0 0 0</pose>
+          <geometry><box><size>1.2 0.4 0.07</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a00">
+          <pose>-0.3839 0.2083 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4322 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b00">
+          <pose>0.3339 0.2083 0.6850 0 0 0</pose>
+          <geometry><box><size>0.5322 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a01">
+          <pose>-0.3957 0.2250 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4086 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b01">
+          <pose>0.3457 0.2250 0.6850 0 0 0</pose>
+          <geometry><box><size>0.5086 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a02">
+          <pose>-0.4049 0.2417 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3901 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b02">
+          <pose>0.3549 0.2417 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4901 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a03">
+          <pose>-0.4124 0.2583 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3752 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b03">
+          <pose>0.3624 0.2583 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4752 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a04">
+          <pose>-0.4185 0.2750 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3629 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b04">
+          <pose>0.3685 0.2750 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4629 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a05">
+          <pose>-0.4236 0.2917 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3528 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b05">
+          <pose>0.3736 0.2917 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4528 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a06">
+          <pose>-0.4277 0.3083 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3445 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b06">
+          <pose>0.3777 0.3083 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4445 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a07">
+          <pose>-0.4311 0.3250 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3379 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b07">
+          <pose>0.3811 0.3250 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4379 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a08">
+          <pose>-0.4337 0.3417 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3327 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b08">
+          <pose>0.3837 0.3417 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4327 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a09">
+          <pose>-0.4356 0.3583 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3289 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b09">
+          <pose>0.3856 0.3583 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4289 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a10">
+          <pose>-0.4368 0.3750 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3264 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b10">
+          <pose>0.3868 0.3750 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4264 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_a11">
+          <pose>-0.4374 0.3917 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3252 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_north_b11">
+          <pose>0.3874 0.3917 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4252 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a00">
+          <pose>-0.4374 -0.3917 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3252 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b00">
+          <pose>0.3874 -0.3917 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4252 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a01">
+          <pose>-0.4368 -0.3750 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3264 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b01">
+          <pose>0.3868 -0.3750 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4264 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a02">
+          <pose>-0.4356 -0.3583 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3289 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b02">
+          <pose>0.3856 -0.3583 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4289 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a03">
+          <pose>-0.4337 -0.3417 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3327 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b03">
+          <pose>0.3837 -0.3417 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4327 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a04">
+          <pose>-0.4311 -0.3250 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3379 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b04">
+          <pose>0.3811 -0.3250 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4379 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a05">
+          <pose>-0.4277 -0.3083 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3445 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b05">
+          <pose>0.3777 -0.3083 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4445 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a06">
+          <pose>-0.4236 -0.2917 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3528 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b06">
+          <pose>0.3736 -0.2917 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4528 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a07">
+          <pose>-0.4185 -0.2750 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3629 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b07">
+          <pose>0.3685 -0.2750 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4629 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a08">
+          <pose>-0.4124 -0.2583 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3752 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b08">
+          <pose>0.3624 -0.2583 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4752 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a09">
+          <pose>-0.4049 -0.2417 0.6850 0 0 0</pose>
+          <geometry><box><size>0.3901 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b09">
+          <pose>0.3549 -0.2417 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4901 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a10">
+          <pose>-0.3957 -0.2250 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4086 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b10">
+          <pose>0.3457 -0.2250 0.6850 0 0 0</pose>
+          <geometry><box><size>0.5086 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_a11">
+          <pose>-0.3839 -0.2083 0.6850 0 0 0</pose>
+          <geometry><box><size>0.4322 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="notch_south_b11">
+          <pose>0.3339 -0.2083 0.6850 0 0 0</pose>
+          <geometry><box><size>0.5322 0.0167 0.0700</size></box></geometry>
+          <material><ambient>0.42 0.30 0.18 1</ambient><diffuse>0.52 0.38 0.24 1</diffuse><specular>0.25 0.25 0.25 1</specular><shininess>20</shininess></material>
+        </visual>
+        <visual name="leg_ne">
+          <pose>0.575 0.375 0.3250 0 0 0</pose>
+          <geometry><box><size>0.05 0.05 0.65</size></box></geometry>
+          <material><ambient>0.16 0.16 0.18 1</ambient><diffuse>0.24 0.24 0.27 1</diffuse><specular>0.4 0.4 0.4 1</specular><shininess>40</shininess></material>
+        </visual>
+        <visual name="leg_nw">
+          <pose>-0.575 0.375 0.3250 0 0 0</pose>
+          <geometry><box><size>0.05 0.05 0.65</size></box></geometry>
+          <material><ambient>0.16 0.16 0.18 1</ambient><diffuse>0.24 0.24 0.27 1</diffuse><specular>0.4 0.4 0.4 1</specular><shininess>40</shininess></material>
+        </visual>
+        <visual name="leg_se">
+          <pose>0.575 -0.375 0.3250 0 0 0</pose>
+          <geometry><box><size>0.05 0.05 0.65</size></box></geometry>
+          <material><ambient>0.16 0.16 0.18 1</ambient><diffuse>0.24 0.24 0.27 1</diffuse><specular>0.4 0.4 0.4 1</specular><shininess>40</shininess></material>
+        </visual>
+        <visual name="leg_sw">
+          <pose>-0.575 -0.375 0.3250 0 0 0</pose>
+          <geometry><box><size>0.05 0.05 0.65</size></box></geometry>
+          <material><ambient>0.16 0.16 0.18 1</ambient><diffuse>0.24 0.24 0.27 1</diffuse><specular>0.4 0.4 0.4 1</specular><shininess>40</shininess></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 桌面板(2026-10-03):z [0.70,0.72],x [0.15,1.25] —— 台面 0.72 由
+         本板承载(布局 v2 + 拉长带:带 x0.15-0.75、四色四箱全在其上;
+         相机立柱 (-0.10,-0.48) 在板**外**直接落地,不压桌板);左缘
+         0.15 让出零位出生臂的穿行走廊(z<=0.63 从板下过,余 7cm);
+         工件落入箱内落在板面=0.72(修复前曾落到 0.36 基座顶=36cm 深井
+         坠落,逻辑相机实测静止 z=0.385,放置方差总根因) -->
+    <model name="tabletop">
+      <static>true</static>
+      <pose>0.70 0 0.71 0 0 0</pose>
+      <link name="link">
+        <!-- E0 定罪修复(2026-10-05,活体实验:g4/g5 会话 pan 冻结在
+             -0.14 且 effort 顶死 ±150,冻结态逐个移除世界件,移除本板
+             大面碰撞瞬间 panEff -150→0.1 归零,其余件移除无此效应;
+             G7 会话删板后 e0b 协议 10/10 全绿 + e0_probe 40 PASS/0 FAIL)。
+             但大板顶面 0.72 是箱内工件承托面(36cm 深井事故史,见上注释),
+             不可整体移除——改为四块箱底局部碰撞补丁(顶面 z=0.72 逐字
+             等价、只覆盖四箱内口 footprint),大板本体退纯 visual。 -->
+        <collision name="floor_blue">
+          <pose>-0.40 0.28 0 0 0 0</pose>
+          <geometry><box><size>0.14 0.19 0.02</size></box></geometry>
+        </collision>
+        <collision name="floor_yellow">
+          <pose>0.20 0.28 0 0 0 0</pose>
+          <geometry><box><size>0.14 0.19 0.02</size></box></geometry>
+        </collision>
+        <collision name="floor_red">
+          <pose>-0.40 -0.28 0 0 0 0</pose>
+          <geometry><box><size>0.14 0.19 0.02</size></box></geometry>
+        </collision>
+        <collision name="floor_green">
+          <pose>0.20 -0.28 0 0 0 0</pose>
+          <geometry><box><size>0.14 0.19 0.02</size></box></geometry>
+        </collision>
+        <!-- 穿模修复 2026-10-09(用户拍板"去除桌面这部分"):整块浅色
+             大面 visual 删除(它与 table 深色板顶互穿 5mm、西缘凸出
+             100mm 台阶,是截图"补丁感"的全部来源)。四块 floor_* 碰撞
+             补丁**一字未动**(E0 定罪承托面,锚表红线),其顶面 0.72
+             改由深色板抬到 0.72 承接,承托/观感两全。 -->
+      </link>
+    </model>
+
+    <!-- 传送带(model 必须位于原点,不带 model 级 pose;高度偏移只写在
+         collision/visual 的 pose 内。已实证:带 model 带 pose 偏移会让
+         TrackController 表面速度静默失效,工件冻结且无任何报错)。
+         顶面 0.78,写法与 tools/spike_belt.sdf 一致。
+         2026-10-03 加宽:y 0.10 -> 0.16(0.05 方块配 10cm 带面视觉过窄)。
+         2026-10-04 拉长(用户拍板,Lead 派单结构件):x 0.35 -> 0.60、
+         pose x 0.325 -> 0.45 ⇒ 带面覆盖 x 0.15..0.75(原 0.15..0.50)。
+         **带顶高度 0.78 / friction mu 1.0 / mu2 2.0 / fdir1 (0,1,0) /
+         插件与话题名一律未动**;停位线与挡停板同步右移(见 stop_plate /
+         pusher 与 sorting_params_pipeline.yaml belt_stop_x)。 -->
+    <model name="belt">
+      <static>true</static>
+      <link name="belt_link">
+        <collision name="belt_collision">
+          <pose>0.45 0 0.75 0 0 0</pose>
+          <geometry><box><size>0.60 0.16 0.06</size></box></geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.0</mu>
+                <mu2>2.0</mu2>
+                <fdir1>0 1 0</fdir1>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="belt_visual">
+          <pose>0.45 0 0.75 0 0 0</pose>
+          <geometry><box><size>0.60 0.16 0.06</size></box></geometry>
+          <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.05 0.05 0.055 1</diffuse><specular>0.18 0.18 0.18 1</specular><shininess>10</shininess></material>
+        </visual>
+      </link>
+      <!-- TrackController 必须是 model 级子元素(放 link 内只警告不生效);
+           速度话题 gz 侧 /model/belt/link/belt_link/track_cmd_vel 由模型与
+           链接名派生,不得改名 -->
+    </model>
+
+
+    <!-- 观感升级 2026-10-07:传送带装饰件(黄侧栏+橡胶滚纹)。
+         独立 static model、纯 visual 零 collision;定案集成闸
+         test_belt_geometry_v2_lengthened_and_params_agree 对 belt model
+         块用粗正则钉 size/pose,装饰件必须待在本块外。坐标=世界系
+         (belt 系原点即世界原点)。侧栏顶 0.778 低于带顶 0.78,
+         滚纹中心 z 0.7525(顶 0.785 凸出 5mm,与 collision 顶面正距离
+         ≥5mm,不入任何 collision AABB)。 -->
+    <model name="belt_side_rails">
+      <static>true</static>
+      <link name="link">
+        <visual name="belt_rail_north">
+          <pose>0.45 0.093 0.764 0 0 0</pose>
+          <geometry><box><size>0.60 0.014 0.028</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse><specular>0.3 0.3 0.3 1</specular><shininess>24</shininess></material>
+        </visual>
+        <visual name="belt_rail_south">
+          <pose>0.45 -0.093 0.764 0 0 0</pose>
+          <geometry><box><size>0.60 0.014 0.028</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse><specular>0.3 0.3 0.3 1</specular><shininess>24</shininess></material>
+        </visual>
+        <visual name="belt_rib_00">
+          <pose>0.18 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_01">
+          <pose>0.23 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_02">
+          <pose>0.28 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_03">
+          <pose>0.33 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_04">
+          <pose>0.38 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_05">
+          <pose>0.42 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_06">
+          <pose>0.47 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_07">
+          <pose>0.52 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_08">
+          <pose>0.57 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_09">
+          <pose>0.62 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_10">
+          <pose>0.67 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+        <visual name="belt_rib_11">
+          <pose>0.72 0 0.7525 0 0 0</pose>
+          <geometry><box><size>0.012 0.17 0.065</size></box></geometry>
+          <material><ambient>0.10 0.10 0.11 1</ambient><diffuse>0.14 0.14 0.16 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 挡停板:2026-10-04 拉长带同步右移 pose x 0.47 -> 0.71(板跨
+         0.705..0.715,内缘 x=0.705),仍保证整块板立在带面 x 0.75 以内、
+         板底贴带顶 0.78(板厚 0.01/高 0.02/y 0.18/材质一律未动)。
+         旧值 0.47 对应旧带尾 0.50;新停位 x ≈ 0.60(见 pipeline yaml
+         belt_stop_x 0.58 + 板前余量),与 Lead 派单的带尾取件目标一致 -->
+    <!-- 推板:prismatic 沿 x(parent=world),JointController 速度控制
+         (话题 /model/pusher/joint/pusher_slide/cmd_vel)。真实接触推进工件:
+         TrackController 接触表面速度在 dartsim 上不稳定(持续接触随机停滞/
+         新接触爆发),弃用;推板全程真实接触。回位 x=0.12(推面 0.13),
+         上限 2026-10-04 0.44 -> 0.59(随带拉长 +0.15;限位是硬保险,
+         实际行程受工件+挡停板阻挡。推板尺寸/质量/damping/话题名未动) -->
+    <model name="pusher">
+      <pose>0.12 0 0.805 0 0 0</pose>
+      <link name="pusher_link">
+        <inertial>
+          <mass>1.0</mass>
+          <inertia><ixx>0.0005</ixx><iyy>0.0005</iyy><izz>0.001</izz></inertia>
+        </inertial>
+        <collision name="c">
+          <geometry><box><size>0.02 0.18 0.05</size></box></geometry>
+        </collision>
+        <visual name="v">
+          <geometry><box><size>0.02 0.18 0.05</size></box></geometry>
+          <material><ambient>0.8 0.5 0.1 1</ambient><diffuse>0.8 0.5 0.1 1</diffuse></material>
+        </visual>
+      </link>
+      <joint name="pusher_slide" type="prismatic">
+        <parent>world</parent>
+        <child>pusher_link</child>
+        <axis>
+          <xyz>1 0 0</xyz>
+          <limit><lower>0.0</lower><upper>0.59</upper></limit>
+          <dynamics><damping>5.0</damping></dynamics>
+        </axis>
+      </joint>
+      <plugin name="gz::sim::systems::JointController"
+              filename="gz-sim-joint-controller-system">
+        <joint_name>pusher_slide</joint_name>
+      </plugin>
+    </model>
+
+    <model name="stop_plate">
+      <static>true</static>
+      <pose>0.71 0 0.79 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.01 0.18 0.02</size></box></geometry>
+        </collision>
+        <!-- 观感升级:黑黄警示条纹板(visual-only;两侧斜条 z 微前后错层,
+             面向带内侧优先可见,无 collision) -->
+        <visual name="stripe_back">
+          <pose>0.002 0 0 0 0 0</pose>
+          <geometry><box><size>0.006 0.18 0.02</size></box></geometry>
+          <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material>
+        </visual>
+        <visual name="stripe_a_front">
+          <pose>-0.0021 -0.135 0.002 0 0 0</pose>
+          <geometry><box><size>0.006 0.045 0.024</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse></material>
+        </visual>
+        <visual name="stripe_a_front2">
+          <pose>-0.0021 -0.045 0.002 0 0 0</pose>
+          <geometry><box><size>0.006 0.045 0.024</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse></material>
+        </visual>
+        <visual name="stripe_a_front3">
+          <pose>-0.0021 0.045 0.002 0 0 0</pose>
+          <geometry><box><size>0.006 0.045 0.024</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse></material>
+        </visual>
+        <visual name="stripe_a_front4">
+          <pose>-0.0021 0.135 0.002 0 0 0</pose>
+          <geometry><box><size>0.006 0.045 0.024</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse></material>
+        </visual>
+        <visual name="stripe_b_back">
+          <pose>0.0021 -0.09 0 0 0 0</pose>
+          <geometry><box><size>0.006 0.045 0.022</size></box></geometry>
+          <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material>
+        </visual>
+        <visual name="stripe_b_back2">
+          <pose>0.0021 0 0 0 0 0</pose>
+          <geometry><box><size>0.006 0.045 0.022</size></box></geometry>
+          <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material>
+        </visual>
+        <visual name="stripe_b_back3">
+          <pose>0.0021 0.09 0 0 0 0</pose>
+          <geometry><box><size>0.006 0.045 0.022</size></box></geometry>
+          <material><ambient>0.05 0.05 0.05 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ================= 布局 v2 四色四箱(2026-10-04 G1)=================
+         旧暖冷两箱 bin_A/bin_B(橙红底收 red+yellow / 绿底收
+         green+blue)废止;四箱一箱一色,箱心坐标 ±2cm 用户拍板:
+           bin_blue   (0.30,+0.28)  bin_yellow (0.90,+0.28)  -> arm1 北排
+           bin_red    (0.30,-0.28)  bin_green  (0.90,-0.28)  -> arm2 南排
+         每箱三格对角网格(bin_grid_offsets x[-0.03,0,-0.03] /
+         y[-0.05,0,+0.05]),箱内口 x 半宽 0.06 / y 半宽 0.085
+         ⇒ 判定 AABB 与内口一致(G0 定档口径)。 ======================= -->
+    <!-- 蓝箱 bin_blue:中心 (0.30, 0.28)。布局 v2 四色四箱(用户拍板 2026-10-04,
+         一箱一色绝不混色),arm1 北排 = blue/yellow,arm2 南排 = red/green。
+         几何与旧 bin_A/bin_B 逐字节同法:内口 0.12(x)×0.17(y),壁厚 0.01,
+         壁高 0.095(壁顶/箱口 0.815),壁中心 z=0.7675(0.72..0.815),
+         壁拼法=左右壁沿 x 长 0.13 放 y=±0.09、前后壁沿 y 长 0.19 放 x=±0.065
+         (外廓 0.14×0.19);长边沿 y 给夹爪开合留通道(张指轴 = 世界 y,
+         G0 notes §7 张指轴修正);内底即桌面 0.72,下述彩色薄板 visual-only。
+         箱内底色 = 蓝色,与 spawn_parts.COLOR_RGB 同源(不混色口径) -->
+    <model name="bin_blue">
+      <static>true</static>
+      <pose>0.30 0.28 0 0 0 0</pose>
+      <link name="link">
+        <collision name="wall_y_pos_collision">
+          <pose>0 0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_y_pos_visual">
+          <pose>0 0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+          <material><ambient>0.045 0.135 0.315 1</ambient><diffuse>0.100 0.300 0.700 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_y_neg_collision">
+          <pose>0 -0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_y_neg_visual">
+          <pose>0 -0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+          <material><ambient>0.045 0.135 0.315 1</ambient><diffuse>0.100 0.300 0.700 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_x_pos_collision">
+          <pose>0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_x_pos_visual">
+          <pose>0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+          <material><ambient>0.045 0.135 0.315 1</ambient><diffuse>0.100 0.300 0.700 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_x_neg_collision">
+          <pose>-0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_x_neg_visual">
+          <pose>-0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+          <material><ambient>0.045 0.135 0.315 1</ambient><diffuse>0.100 0.300 0.700 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <visual name="floor_visual">
+          <pose>0 0 0.7225 0 0 0</pose>
+          <geometry><box><size>0.13 0.18 0.005</size></box></geometry>
+          <material><ambient>0.12 0.28 0.72 1</ambient><diffuse>0.15 0.35 0.90 1</diffuse></material>
+        </visual>
+        <!-- 观感升级 2026-10-07:箱口亮边 = 四根边框条(visual-only,零 collision;2026-10-08 配色:黄边改本箱同色系亮色,黄箱保持黄边)。
+             沿壁顶 z=0.818(壁顶 0.815 之上 3mm),仅覆盖壁体投影(外廓
+             0.14x0.19/壁厚 0.01),箱内口 0.12x0.17 完全敞口不遮挡 -->
+        <visual name="rim_y_pos">
+          <pose>0 0.095 0.818 0 0 0</pose>
+          <geometry><box><size>0.14 0.01 0.006</size></box></geometry>
+          <material><ambient>0.16 0.30 0.55 1</ambient><diffuse>0.45 0.65 0.98 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_y_neg">
+          <pose>0 -0.095 0.818 0 0 0</pose>
+          <geometry><box><size>0.14 0.01 0.006</size></box></geometry>
+          <material><ambient>0.16 0.30 0.55 1</ambient><diffuse>0.45 0.65 0.98 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_x_pos">
+          <pose>0.065 0 0.818 0 0 0</pose>
+          <geometry><box><size>0.01 0.17 0.006</size></box></geometry>
+          <material><ambient>0.16 0.30 0.55 1</ambient><diffuse>0.45 0.65 0.98 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_x_neg">
+          <pose>-0.065 0 0.818 0 0 0</pose>
+          <geometry><box><size>0.01 0.17 0.006</size></box></geometry>
+          <material><ambient>0.16 0.30 0.55 1</ambient><diffuse>0.45 0.65 0.98 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 黄箱 bin_yellow:中心 (0.90, 0.28)。布局 v2 四色四箱(用户拍板 2026-10-04,
+         一箱一色绝不混色),arm1 北排 = blue/yellow,arm2 南排 = red/green。
+         几何与旧 bin_A/bin_B 逐字节同法:内口 0.12(x)×0.17(y),壁厚 0.01,
+         壁高 0.095(壁顶/箱口 0.815),壁中心 z=0.7675(0.72..0.815),
+         壁拼法=左右壁沿 x 长 0.13 放 y=±0.09、前后壁沿 y 长 0.19 放 x=±0.065
+         (外廓 0.14×0.19);长边沿 y 给夹爪开合留通道(张指轴 = 世界 y,
+         G0 notes §7 张指轴修正);内底即桌面 0.72,下述彩色薄板 visual-only。
+         箱内底色 = 黄色,与 spawn_parts.COLOR_RGB 同源(不混色口径) -->
+    <model name="bin_yellow">
+      <static>true</static>
+      <pose>0.90 0.28 0 0 0 0</pose>
+      <link name="link">
+        <collision name="wall_y_pos_collision">
+          <pose>0 0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_y_pos_visual">
+          <pose>0 0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+          <material><ambient>0.383 0.306 0.045 1</ambient><diffuse>0.850 0.680 0.100 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_y_neg_collision">
+          <pose>0 -0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_y_neg_visual">
+          <pose>0 -0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+          <material><ambient>0.383 0.306 0.045 1</ambient><diffuse>0.850 0.680 0.100 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_x_pos_collision">
+          <pose>0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_x_pos_visual">
+          <pose>0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+          <material><ambient>0.383 0.306 0.045 1</ambient><diffuse>0.850 0.680 0.100 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_x_neg_collision">
+          <pose>-0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_x_neg_visual">
+          <pose>-0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+          <material><ambient>0.383 0.306 0.045 1</ambient><diffuse>0.850 0.680 0.100 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <visual name="floor_visual">
+          <pose>0 0 0.7225 0 0 0</pose>
+          <geometry><box><size>0.13 0.18 0.005</size></box></geometry>
+          <material><ambient>0.80 0.68 0.08 1</ambient><diffuse>0.95 0.80 0.10 1</diffuse></material>
+        </visual>
+        <!-- 观感升级 2026-10-07:箱口黄边 = 四根边框条(visual-only,零 collision)。
+             沿壁顶 z=0.818(壁顶 0.815 之上 3mm),仅覆盖壁体投影(外廓
+             0.14x0.19/壁厚 0.01),箱内口 0.12x0.17 完全敞口不遮挡 -->
+        <visual name="rim_y_pos">
+          <pose>0 0.095 0.818 0 0 0</pose>
+          <geometry><box><size>0.14 0.01 0.006</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_y_neg">
+          <pose>0 -0.095 0.818 0 0 0</pose>
+          <geometry><box><size>0.14 0.01 0.006</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_x_pos">
+          <pose>0.065 0 0.818 0 0 0</pose>
+          <geometry><box><size>0.01 0.17 0.006</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_x_neg">
+          <pose>-0.065 0 0.818 0 0 0</pose>
+          <geometry><box><size>0.01 0.17 0.006</size></box></geometry>
+          <material><ambient>0.62 0.50 0.05 1</ambient><diffuse>0.88 0.70 0.08 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 红箱 bin_red:中心 (0.30, -0.28)。布局 v2 四色四箱(用户拍板 2026-10-04,
+         一箱一色绝不混色),arm1 北排 = blue/yellow,arm2 南排 = red/green。
+         几何与旧 bin_A/bin_B 逐字节同法:内口 0.12(x)×0.17(y),壁厚 0.01,
+         壁高 0.095(壁顶/箱口 0.815),壁中心 z=0.7675(0.72..0.815),
+         壁拼法=左右壁沿 x 长 0.13 放 y=±0.09、前后壁沿 y 长 0.19 放 x=±0.065
+         (外廓 0.14×0.19);长边沿 y 给夹爪开合留通道(张指轴 = 世界 y,
+         G0 notes §7 张指轴修正);内底即桌面 0.72,下述彩色薄板 visual-only。
+         箱内底色 = 红色,与 spawn_parts.COLOR_RGB 同源(不混色口径) -->
+    <model name="bin_red">
+      <static>true</static>
+      <pose>0.30 -0.28 0 0 0 0</pose>
+      <link name="link">
+        <collision name="wall_y_pos_collision">
+          <pose>0 0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_y_pos_visual">
+          <pose>0 0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+          <material><ambient>0.338 0.054 0.054 1</ambient><diffuse>0.750 0.120 0.120 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_y_neg_collision">
+          <pose>0 -0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_y_neg_visual">
+          <pose>0 -0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+          <material><ambient>0.338 0.054 0.054 1</ambient><diffuse>0.750 0.120 0.120 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_x_pos_collision">
+          <pose>0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_x_pos_visual">
+          <pose>0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+          <material><ambient>0.338 0.054 0.054 1</ambient><diffuse>0.750 0.120 0.120 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_x_neg_collision">
+          <pose>-0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_x_neg_visual">
+          <pose>-0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+          <material><ambient>0.338 0.054 0.054 1</ambient><diffuse>0.750 0.120 0.120 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <visual name="floor_visual">
+          <pose>0 0 0.7225 0 0 0</pose>
+          <geometry><box><size>0.13 0.18 0.005</size></box></geometry>
+          <material><ambient>0.70 0.08 0.08 1</ambient><diffuse>0.85 0.10 0.10 1</diffuse></material>
+        </visual>
+        <!-- 观感升级 2026-10-07:箱口亮边 = 四根边框条(visual-only,零 collision;2026-10-08 配色:黄边改本箱同色系亮色,黄箱保持黄边)。
+             沿壁顶 z=0.818(壁顶 0.815 之上 3mm),仅覆盖壁体投影(外廓
+             0.14x0.19/壁厚 0.01),箱内口 0.12x0.17 完全敞口不遮挡 -->
+        <visual name="rim_y_pos">
+          <pose>0 0.095 0.818 0 0 0</pose>
+          <geometry><box><size>0.14 0.01 0.006</size></box></geometry>
+          <material><ambient>0.50 0.10 0.10 1</ambient><diffuse>0.98 0.38 0.38 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_y_neg">
+          <pose>0 -0.095 0.818 0 0 0</pose>
+          <geometry><box><size>0.14 0.01 0.006</size></box></geometry>
+          <material><ambient>0.50 0.10 0.10 1</ambient><diffuse>0.98 0.38 0.38 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_x_pos">
+          <pose>0.065 0 0.818 0 0 0</pose>
+          <geometry><box><size>0.01 0.17 0.006</size></box></geometry>
+          <material><ambient>0.50 0.10 0.10 1</ambient><diffuse>0.98 0.38 0.38 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_x_neg">
+          <pose>-0.065 0 0.818 0 0 0</pose>
+          <geometry><box><size>0.01 0.17 0.006</size></box></geometry>
+          <material><ambient>0.50 0.10 0.10 1</ambient><diffuse>0.98 0.38 0.38 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 绿箱 bin_green:中心 (0.90, -0.28)。布局 v2 四色四箱(用户拍板 2026-10-04,
+         一箱一色绝不混色),arm1 北排 = blue/yellow,arm2 南排 = red/green。
+         几何与旧 bin_A/bin_B 逐字节同法:内口 0.12(x)×0.17(y),壁厚 0.01,
+         壁高 0.095(壁顶/箱口 0.815),壁中心 z=0.7675(0.72..0.815),
+         壁拼法=左右壁沿 x 长 0.13 放 y=±0.09、前后壁沿 y 长 0.19 放 x=±0.065
+         (外廓 0.14×0.19);长边沿 y 给夹爪开合留通道(张指轴 = 世界 y,
+         G0 notes §7 张指轴修正);内底即桌面 0.72,下述彩色薄板 visual-only。
+         箱内底色 = 绿色,与 spawn_parts.COLOR_RGB 同源(不混色口径) -->
+    <model name="bin_green">
+      <static>true</static>
+      <pose>0.90 -0.28 0 0 0 0</pose>
+      <link name="link">
+        <collision name="wall_y_pos_collision">
+          <pose>0 0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_y_pos_visual">
+          <pose>0 0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+          <material><ambient>0.045 0.270 0.081 1</ambient><diffuse>0.100 0.600 0.180 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_y_neg_collision">
+          <pose>0 -0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_y_neg_visual">
+          <pose>0 -0.09 0.7675 0 0 0</pose>
+          <geometry><box><size>0.13 0.01 0.095</size></box></geometry>
+          <material><ambient>0.045 0.270 0.081 1</ambient><diffuse>0.100 0.600 0.180 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_x_pos_collision">
+          <pose>0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_x_pos_visual">
+          <pose>0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+          <material><ambient>0.045 0.270 0.081 1</ambient><diffuse>0.100 0.600 0.180 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <collision name="wall_x_neg_collision">
+          <pose>-0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+        </collision>
+        <visual name="wall_x_neg_visual">
+          <pose>-0.065 0 0.7675 0 0 0</pose>
+          <geometry><box><size>0.01 0.19 0.095</size></box></geometry>
+          <material><ambient>0.045 0.270 0.081 1</ambient><diffuse>0.100 0.600 0.180 1</diffuse><specular>0.30 0.30 0.30 1</specular><shininess>24</shininess></material>
+        </visual>
+        <visual name="floor_visual">
+          <pose>0 0 0.7225 0 0 0</pose>
+          <geometry><box><size>0.13 0.18 0.005</size></box></geometry>
+          <material><ambient>0.08 0.62 0.12 1</ambient><diffuse>0.10 0.75 0.15 1</diffuse></material>
+        </visual>
+        <!-- 观感升级 2026-10-07:箱口亮边 = 四根边框条(visual-only,零 collision;2026-10-08 配色:黄边改本箱同色系亮色,黄箱保持黄边)。
+             沿壁顶 z=0.818(壁顶 0.815 之上 3mm),仅覆盖壁体投影(外廓
+             0.14x0.19/壁厚 0.01),箱内口 0.12x0.17 完全敞口不遮挡 -->
+        <visual name="rim_y_pos">
+          <pose>0 0.095 0.818 0 0 0</pose>
+          <geometry><box><size>0.14 0.01 0.006</size></box></geometry>
+          <material><ambient>0.10 0.42 0.16 1</ambient><diffuse>0.38 0.85 0.48 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_y_neg">
+          <pose>0 -0.095 0.818 0 0 0</pose>
+          <geometry><box><size>0.14 0.01 0.006</size></box></geometry>
+          <material><ambient>0.10 0.42 0.16 1</ambient><diffuse>0.38 0.85 0.48 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_x_pos">
+          <pose>0.065 0 0.818 0 0 0</pose>
+          <geometry><box><size>0.01 0.17 0.006</size></box></geometry>
+          <material><ambient>0.10 0.42 0.16 1</ambient><diffuse>0.38 0.85 0.48 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+        <visual name="rim_x_neg">
+          <pose>-0.065 0 0.818 0 0 0</pose>
+          <geometry><box><size>0.01 0.17 0.006</size></box></geometry>
+          <material><ambient>0.10 0.42 0.16 1</ambient><diffuse>0.38 0.85 0.48 1</diffuse><specular>0.35 0.35 0.35 1</specular><shininess>30</shininess></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 相机立柱(布局 v2,2026-10-04;终档 2026-10-05 G1 收口):
+         西南角桌外落地 **(-0.10, -0.48)**,杆从地面 z=0 一直到头高
+         2.10(SDF 圆柱以 link
+         原点为中心,故 pose z=1.05、length=2.10,跨 0..2.10)。
+         沿革:旧位 (0.65,-0.32) 杆长 0.83 + pose z=1.135(跨 0.72..1.55,
+         坐在桌面板上)。v2 两臂分居南北桌缘外,旧柱位正卡 arm2 工作区;
+         且 spec 原稿的 SW 角 (≈0.02,-0.48) 经 Lead mesh 实测会让 arm2
+         rise_yp 上臂穿柱 -7.2mm(FAIL),沿 x 西扫到 -0.05 才 +23.7mm PASS
+         ⇒ 2026-10-04 曾定档 (-0.05,-0.48),相对 spec 偏差 70mm 登记
+         deviation(docs/evidence/G0_lead_review.md §5;桌体只到 x=0.05,
+         西扫不占任何工作区)。**2026-10-05 终档再西移 5cm 到 -0.10**:图像相机
+         带缘余量 h1.2 全灭/h1.35 下 -0.05 有 relB→standby 腿 7.9mm 触边,
+         -0.10 双闸全过(累计 deviation ≈ -12cm,纯相机侧,Lead 拍板)。
+         FOV(逻辑相机 h_fov 2.2 / far 2.5 未改):四箱箱心/远角 + 生成点
+         x0.18 + 新带尾停位 (0.60,0)(2026-10-04 晚拉长带)全部入半锥
+         (新停位离轴 32.1° @柱 -0.10,Lead docs/evidence/g0_belt_east.py 实测 30.8° 系柱 -0.05 时)。
+         TODO(Lead 单发)②柱 x 终值三档补测中(-0.10 / -0.125 / -0.15,
+         双约束 = 图像相机视场余量 + 双臂全圈净距。**Lead 2026-10-05
+         03:3x 终档 = [-0.10, -0.48] + 图像相机 h_fov 1.2→1.35**(v3
+         meta.pole_final=-0.1;G0_g0full.json pole_trials:FOV 轴语义更正
+         —— rpy(0,90°,0) 下 480px 窄轴=世界 x,带缘三点 x0.18..0.60 走
+         窄轴,h1.2 六档全灭;h1.35 时 -0.10 带缘余量 +52.4mm 且腿/全圈
+         ≥8mm 双闸过,-0.05 因 relB→standby 腿 7.9mm 触边降次选)。
+         本文件的柱/相机两 pose x 与图像相机 h_fov、sorting_params.yaml
+         的 camera_xy/recorder camera.x 已由 G1 同步钉死,单测
+         test_world_camera_pose_matches_params 是跨文件闸。
+         注意:x<0.05 且 |y|>0.40 ⇒ 柱完全在桌体外,不与桌体/台基重叠;
+         终档实测全圈最紧 arm1 +34.0 / arm2 +42.0mm(柱 -0.10)。 -->
+    <model name="camera_pole">
+      <static>true</static>
+      <pose>-0.10 -0.48 1.05 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><cylinder><radius>0.015</radius><length>2.10</length></cylinder></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><cylinder><radius>0.015</radius><length>2.10</length></cylinder></geometry>
+          <material><ambient>0.15 0.15 0.15 1</ambient><diffuse>0.2 0.2 0.2 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- 俯视相机:rpy=(0, 90°, 0) 视线向下,内参由 camera_info 桥接获得。
+         相机头悬在杆顶 z=2.10(与 camera_pole 同 xy **-0.10/-0.48**,
+         G1 收口按 Lead 终档同步)。逻辑相机 h_fov 2.2 / near 0.1 /
+         far 2.5 **未动**(识别走逻辑相机,不受图像视场改动影响);
+         图像相机 horizontal_fov **1.2→1.35**(Lead 终档:带缘三点在
+         480px 窄轴上,h1.2 全档出框;h1.35 余量 +52.4mm。G2 若与 vision
+         对账后收窄,须两 pose 与 yaml 链同改,单测闸会拦)。
+         世界换算式(俯视 rpy(0,90°,0))不变:world_x = cam_x + rel_z、
+         world_y = cam_y + rel_y;rel_x(深度)有 ~0.36 系统偏差不可信。
+         ⇒ camera_xy 全链定档 [-0.10, -0.48]、头高 2.10 -->
+    <model name="overhead_camera_model">
+      <static>true</static>
+      <pose>-0.10 -0.48 2.10 0 1.5707963 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry><box><size>0.06 0.06 0.06</size></box></geometry>
+          <material><ambient>0.1 0.1 0.1 1</ambient><diffuse>0.1 0.1 0.1 1</diffuse></material>
+        </visual>
+        <sensor name="overhead_camera" type="camera">
+          <topic>overhead_camera</topic>
+          <update_rate>10</update_rate>
+          <always_on>1</always_on>
+          <visualize>false</visualize>
+          <camera>
+            <horizontal_fov>1.35</horizontal_fov>
+            <image><width>640</width><height>480</height><format>RGB_INT8</format></image>
+            <clip><near>0.05</near><far>5</far></clip>
+          </camera>
+        </sensor>
+        <!-- 逻辑相机:连续发布视野内模型名与相对位姿(不依赖渲染),
+             作为工件位姿来源;位姿为传感器系相对值,由 vision/recorder
+             与已知相机安装位姿复合成世界位姿 -->
+        <sensor name="overhead_logical" type="logical_camera">
+          <topic>overhead_logical</topic>
+          <update_rate>10</update_rate>
+          <always_on>1</always_on>
+          <visualize>false</visualize>
+          <logical_camera>
+            <horizontal_fov>2.2</horizontal_fov>
+            <near>0.1</near>
+            <far>2.5</far>
+          </logical_camera>
+        </sensor>
+      </link>
+    </model>
+  </world>
+</sdf>

@@ -41,9 +41,9 @@
     # 2026-10-16 接入已训好的 Q 表。路径空着则仍是谁闲推谁。
     # 两份 JSON 只读:里面的 overlap_validated 仍是 false,和表一致,这里不改文件。
     # 批次是蓝、黄、红、绿各 2 件,加起来等于演示的 8 件。忙着的臂不预送。
-    q_package_dir: /home/yuri/lead_ws/ai-collaboration/codex_rl
-    q_config_path: /home/yuri/lead_ws/ai-collaboration/codex_rl/config/timing.gazebo-v1.json
-    q_table_path: /home/yuri/lead_ws/ai-collaboration/codex_rl/artifacts/gazebo-v1/q_table.json
+    q_package_dir: ""
+    q_config_path: ""
+    q_table_path: ""
     q_batch: [2, 2, 2, 2]
     spawn_topic: /parts/request_spawn
     camera_xy: [-0.10, -0.48]   # 问题①定罪修复(2026-10-06):v2 柱终档

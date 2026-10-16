@@ -155,7 +155,8 @@ def launch_setup(context, *args, **kwargs):
                      'world_name': 'sorting_cell',
                      'mode': spawn_mode}],
         output='screen')
-    delayed_parts = TimerAction(period=15.0, actions=[spawn_parts])
+    fast = LaunchConfiguration('fast_sim_waits').perform(context).lower() in ('true','1','yes')
+    delayed_parts = spawn_parts if fast else TimerAction(period=15.0, actions=[spawn_parts])
 
     return [*offload_env, ur_control, delayed_grippers, bridge,
             delayed_parts]
@@ -163,6 +164,7 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     return LaunchDescription([
+        DeclareLaunchArgument('fast_sim_waits', default_value='false'),
         DeclareLaunchArgument('ur_type', default_value='ur5e'),
         DeclareLaunchArgument('part_colors', default_value='red,green,red'),
         DeclareLaunchArgument(

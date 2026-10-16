@@ -74,6 +74,7 @@ false 的 legacy 轮专属,pipeline/dual 零差):
   NO_IK/重试通道读数不失真)。无观测放行(no_camera_pose 重试语义兜底)。
   纯逻辑与计数在 pipeline_logic.DispatchWindowGate(离线可单测)。
 """
+import json
 import threading
 import time
 
@@ -102,6 +103,13 @@ class TaskDispatcherNode(Node):
 
     def __init__(self):
         super().__init__('task_dispatcher')
+        self.declare_parameter('fast_sim_waits', False)
+        self._fast_waits = bool(self.get_parameter('fast_sim_waits').value)
+        self._startup_logical_wall = 0.0
+        self._startup_pusher = None
+        self._startup_rgb_wall = 0.0
+        self._first_feed_t0 = time.monotonic()
+        self._first_feed_logged = False
         self.declare_parameter('auto_start', False)   # 来料后是否自动开始分拣
         self.declare_parameter('dispatch_delay', 1.0)  # 上一件结束后延迟派发(秒)
         # ---- 双臂接力 ----
@@ -362,7 +370,9 @@ class TaskDispatcherNode(Node):
             # 首件请求 + 推板前进。首条命令延迟 belt_first_cmd_delay(墙钟
             # Timer)发布:防止早于 gz 桥/TrackController 订阅就绪被丢
             # (见参数注释);延迟期间无任何来料,门控/计数均不受影响
-            if self._belt_first_cmd_delay > 0.0:
+            if self._fast_waits:
+                self._start_ready_feed()
+            elif self._belt_first_cmd_delay > 0.0:
                 self._destroy_spawn_timer()
                 self._spawn_timer = threading.Timer(
                     self._belt_first_cmd_delay,
@@ -535,6 +545,117 @@ class TaskDispatcherNode(Node):
         self._spawn_timer.daemon = True
         self._spawn_timer.start()
 
+    def _start_ready_feed(self):
+        """Wall-bounded readiness; no feed on timeout. Physical/scheduling gates remain."""
+        import subprocess
+        from controller_manager_msgs.srv import ListControllers
+        from ros_gz_interfaces.srv import SpawnEntity
+        from sensor_msgs.msg import Image
+        from moveit_msgs.action import MoveGroup
+        from rclpy.action import ActionClient
+        from rclpy.qos import qos_profile_sensor_data
+        from gz.transport13 import Node as GzNode
+        self._ready_control = self.create_client(ListControllers, '/controller_manager/list_controllers')
+        self._ready_spawn = self.create_client(SpawnEntity, '/world/sorting_cell/create')
+        self._startup_readiness_complete = False
+        def observe_startup_rgb(message):
+            self._startup_rgb_wall = time.monotonic()
+            if self._startup_readiness_complete and self._ready_image is not None:
+                subscription = self._ready_image
+                self._ready_image = None
+                # Destroy our temporary observer inside its own executor callback.
+                # Gazebo, the original vision node and the performance probe remain.
+                self.destroy_subscription(subscription)
+                self.get_logger().info('STARTUP_OBSERVER_RELEASED: temporary RGB readiness subscriber only')
+        self._ready_image = self.create_subscription(
+            Image, '/overhead_camera', observe_startup_rgb,
+            qos_profile_sensor_data)
+        self._ready_gz = GzNode()
+        self._ready_move = ActionClient(self, MoveGroup, '/move_action')
+        def run():
+            deadline = time.monotonic() + 60.0
+            required = {'joint_state_broadcaster', 'joint_trajectory_controller',
+                        'arm2_joint_trajectory_controller', 'gripper_controller',
+                        'arm2_gripper_controller'}
+            active = set(); future = None; last_sim = 0.0; checks = {}
+            query_started = 0.0; response_at = 0.0; next_query = 0.0
+            transport_at = 0.0; next_cli = 0.0; next_diagnostic = 0.0
+            query_timeouts = 0; query_error = ''; transport_error = ''
+            while rclpy.ok() and time.monotonic() < deadline:
+                now = time.monotonic(); sim = self.get_clock().now().nanoseconds / 1e9
+                if future is not None and future.done():
+                    try:
+                        active = {c.name for c in future.result().controller if c.state == 'active'}
+                        response_at = now; query_error = ''
+                    except Exception as exc:
+                        active = set(); query_error = str(exc)
+                    future = None; next_query = now + .5
+                if future is not None and now - query_started >= 2.0:
+                    # One lost RPC must not occupy the whole startup deadline.
+                    self._ready_control.remove_pending_request(future)
+                    future.cancel(); future = None
+                    query_timeouts += 1; next_query = now + .1
+                if future is None and now >= next_query and self._ready_control.service_is_ready():
+                    future = self._ready_control.call_async(ListControllers.Request())
+                    query_started = now
+                try:
+                    _, subscribers = self._ready_gz.topic_info(self._belt_speed_topic)
+                    if subscribers:
+                        transport_at = time.monotonic(); transport_error = ''
+                except Exception as exc:
+                    transport_error = str(exc)
+                if now - transport_at > 3.0 and now >= next_cli:
+                    # Harmonic Python discovery can miss an existing subscriber.
+                    # Independently require a real typed subscriber; never bypass.
+                    remaining = deadline - time.monotonic()
+                    if remaining > .1:
+                        try:
+                            result = subprocess.run(
+                                ['gz', 'topic', '-i', '-t', self._belt_speed_topic],
+                                capture_output=True, text=True,
+                                timeout=min(2.0, remaining), check=False)
+                            subscriber_section = result.stdout.partition('Subscribers [Address, Message Type]:')[2]
+                            if result.returncode == 0 and any(
+                                    'tcp://' in line and 'gz.msgs.Double' in line
+                                    for line in subscriber_section.splitlines()):
+                                transport_at = time.monotonic(); transport_error = ''
+                            else:
+                                transport_error = 'no typed subscriber in CLI discovery'
+                        except (subprocess.TimeoutExpired, OSError) as exc:
+                            transport_error = str(exc)
+                    next_cli = time.monotonic() + 2.0
+                now = time.monotonic()
+                transport_ok = now - transport_at < 3.0
+                checks = {
+                    'world_clock_advances': sim > last_sim > 0.0,
+                    'logical_fresh': now-self._startup_logical_wall < 1.0,
+                    'rgb_fresh': now-self._startup_rgb_wall < 1.0,
+                    'pusher_at_home': self._startup_pusher is not None and self._startup_pusher <= .14,
+                    'spawn_bridge_service': self._ready_spawn.service_is_ready(),
+                    'spawn_subscriber': self._pub_spawn.get_subscription_count() > 0,
+                    'pusher_bridge_subscriber': self._pub_belt.get_subscription_count() > 0,
+                    'pusher_transport_subscriber': transport_ok,
+                    'controllers_active': required.issubset(active) and now-response_at < 3.0,
+                    'move_group_ready': self._ready_move.server_is_ready(),
+                }
+                if all(checks.values()):
+                    self.get_logger().info('STARTUP_READY '+json.dumps({'checks':checks,'active':sorted(active),'wall_wait':now-self._first_feed_t0,'sim':sim}))
+                    self._startup_readiness_complete = True
+                    self._request_spawn_and_start_belt()
+                    return
+                if now >= next_diagnostic:
+                    self.get_logger().info('STARTUP_CHECK '+json.dumps({
+                        'checks': checks, 'active': sorted(active),
+                        'controller_reply_age_s': now-response_at if response_at else None,
+                        'controller_rpc_timeouts': query_timeouts,
+                        'controller_error': query_error, 'transport_error': transport_error}))
+                    next_diagnostic = now + 5.0
+                last_sim = sim
+                time.sleep(.1)
+            self._halted = True
+            self.get_logger().error('STARTUP_READINESS_TIMEOUT: no feed; '+json.dumps(checks))
+        threading.Thread(target=run, daemon=True).start()
+
     def _note_sim(self, stamp):
         """记下状态消息上的仿真秒。没有戳时保持上一次的值。"""
         sim = float(stamp.sec) + float(stamp.nanosec) * 1e-9
@@ -546,6 +667,7 @@ class TaskDispatcherNode(Node):
         config_path = str(self.get_parameter('q_config_path').value).strip()
         table_path = str(self.get_parameter('q_table_path').value).strip()
         if not config_path or not table_path:
+            self.get_logger().info('调度策略=规则: 谁闲推谁; Q 表显式关闭(路径为空)')
             return
         try:
             self._q_config, self._q_table = load_q_policy(
@@ -650,6 +772,9 @@ class TaskDispatcherNode(Node):
                 self._belt.start()   # 复位本轮回位/settle,门控关闭
         request = String()
         request.data = color
+        if not self._first_feed_logged:
+            self._first_feed_logged = True
+            self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'first_feed','wall':time.monotonic()-self._first_feed_t0,'fast':self._fast_waits,'sim':self.get_clock().now().nanoseconds/1e9}))
         self._pub_spawn.publish(request)
         self.get_logger().info(
             f'按需来料: 已请求 {spawned}'
@@ -775,6 +900,8 @@ class TaskDispatcherNode(Node):
         等它回到起点附近再发板停;时间戳用消息上的仿真时间做兜底,
         不再用墙钟 2.6 秒。
         """
+        self._startup_logical_wall = time.monotonic()
+        self._startup_pusher = self._pusher_world_x(msg)
         self._cam_cache.update(
             (m.name, m.pose.position.x, m.pose.position.y, m.pose.position.z)
             for m in msg.model)
@@ -849,6 +976,10 @@ class TaskDispatcherNode(Node):
                 self._relay_timer.daemon = True
                 self._relay_timer.start()
             elif kind == DISPATCH:
+                self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'dispatch_delay_path','configured':delay,'fast':self._fast_waits,'per_arm':self._per_arm_slots}))
+                if self._fast_waits and self._per_arm_slots:
+                    self._try_dispatch()  # existing atomic slot/zone/belt/dedup gates
+                    continue
                 if self._next_timer is None:
                     self._next_timer = threading.Timer(delay, self._try_dispatch)
                     self._next_timer.daemon = True
