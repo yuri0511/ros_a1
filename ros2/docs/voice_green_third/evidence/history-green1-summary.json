@@ -1,0 +1,17 @@
+{
+  "source": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/instance-1",
+  "sample_count": 1335,
+  "sim_window": [
+    73.356,
+    87.4
+  ],
+  "minimum_tool0_z": 1.0438035192093245,
+  "bin_contact_points": 2390,
+  "max_bin_depth_m": 2.1e-05,
+  "contact_pairs": [
+    [
+      "ur::arm2_gripper_finger_left_link::arm2_gripper_finger_left_link_fixed_joint_lump__arm2_gripper_finger_left_collision_collision",
+      "bin_green::link::wall_y_neg_collision"
+    ]
+  ]
+}

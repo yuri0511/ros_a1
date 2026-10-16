@@ -1,0 +1,650 @@
+{
+  "rows_by_slot": {
+    "1": 195960,
+    "2": 190440,
+    "3": 183540
+  },
+  "hits": 222,
+  "groups": [
+    {
+      "key": [
+        1,
+        "settle_top",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 8,
+      "max_depth_m": 0.00199171752701727
+    },
+    {
+      "key": [
+        1,
+        "settle_top",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 8,
+      "max_depth_m": 0.00299171752701084
+    },
+    {
+      "key": [
+        1,
+        "settle_top",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 8,
+      "max_depth_m": 0.00799171752697875
+    },
+    {
+      "key": [
+        1,
+        "settle_1",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00199171752701727
+    },
+    {
+      "key": [
+        1,
+        "settle_1",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00299171752701084
+    },
+    {
+      "key": [
+        1,
+        "settle_1",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00799171752697875
+    },
+    {
+      "key": [
+        1,
+        "settle_2",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.001992221107814
+    },
+    {
+      "key": [
+        1,
+        "settle_2",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00299222110780756
+    },
+    {
+      "key": [
+        1,
+        "settle_2",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00799222110777548
+    },
+    {
+      "key": [
+        1,
+        "settle_3",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00200213586774631
+    },
+    {
+      "key": [
+        1,
+        "settle_3",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00300213586773987
+    },
+    {
+      "key": [
+        1,
+        "settle_3",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00800213586770779
+    },
+    {
+      "key": [
+        1,
+        "settle_3",
+        [
+          -0.003,
+          -0.003
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 2,
+      "max_depth_m": 2.13586775912964e-06
+    },
+    {
+      "key": [
+        1,
+        "retreat",
+        [
+          -0.003,
+          -0.003
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 1,
+      "max_depth_m": 2.13586775912964e-06
+    },
+    {
+      "key": [
+        1,
+        "retreat",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 9,
+      "max_depth_m": 0.00200213586774631
+    },
+    {
+      "key": [
+        1,
+        "retreat",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 9,
+      "max_depth_m": 0.00300213586773987
+    },
+    {
+      "key": [
+        1,
+        "retreat",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_neg_collision",
+        "arm2_gripper_finger_left_link__0"
+      ],
+      "count": 9,
+      "max_depth_m": 0.00800213586770779
+    },
+    {
+      "key": [
+        3,
+        "settle_top",
+        [
+          -0.003,
+          -0.003
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 6,
+      "max_depth_m": 0.000701992427885484
+    },
+    {
+      "key": [
+        3,
+        "settle_top",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 8,
+      "max_depth_m": 0.00270199242788547
+    },
+    {
+      "key": [
+        3,
+        "settle_top",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 8,
+      "max_depth_m": 0.00370199242788547
+    },
+    {
+      "key": [
+        3,
+        "settle_top",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 8,
+      "max_depth_m": 0.00870199242788548
+    },
+    {
+      "key": [
+        3,
+        "settle_1",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00209622326531669
+    },
+    {
+      "key": [
+        3,
+        "settle_1",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.0030962232650048
+    },
+    {
+      "key": [
+        3,
+        "settle_1",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00809622326344536
+    },
+    {
+      "key": [
+        3,
+        "settle_1",
+        [
+          -0.003,
+          -0.003
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 4,
+      "max_depth_m": 9.62232659404635e-05
+    },
+    {
+      "key": [
+        3,
+        "settle_2",
+        [
+          -0.003,
+          -0.003
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.000108306366879554
+    },
+    {
+      "key": [
+        3,
+        "settle_2",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00210830636652703
+    },
+    {
+      "key": [
+        3,
+        "settle_2",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00310830636635079
+    },
+    {
+      "key": [
+        3,
+        "settle_2",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00810830636546949
+    },
+    {
+      "key": [
+        3,
+        "settle_3",
+        [
+          -0.003,
+          -0.003
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 4,
+      "max_depth_m": 9.45263789891718e-05
+    },
+    {
+      "key": [
+        3,
+        "settle_3",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00209452637880457
+    },
+    {
+      "key": [
+        3,
+        "settle_3",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.00309452637871229
+    },
+    {
+      "key": [
+        3,
+        "settle_3",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 5,
+      "max_depth_m": 0.0080945263782508
+    },
+    {
+      "key": [
+        3,
+        "retreat",
+        [
+          -0.001,
+          -0.001
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 9,
+      "max_depth_m": 0.00338879159357979
+    },
+    {
+      "key": [
+        3,
+        "retreat",
+        [
+          0.0,
+          0.0
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 9,
+      "max_depth_m": 0.00438879159357979
+    },
+    {
+      "key": [
+        3,
+        "retreat",
+        [
+          0.005,
+          0.005
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 9,
+      "max_depth_m": 0.00938879159357979
+    },
+    {
+      "key": [
+        3,
+        "retreat",
+        [
+          -0.003,
+          -0.003
+        ],
+        "bin_green_wall_y_pos_collision",
+        "arm2_gripper_finger_right_link__0"
+      ],
+      "count": 8,
+      "max_depth_m": 0.00138879159357979
+    }
+  ],
+  "min_gripper_green_distances": [
+    {
+      "slot": 1,
+      "fingers": [
+        -0.003,
+        -0.003
+      ],
+      "distance": 2.13758873760559e-06
+    },
+    {
+      "slot": 1,
+      "fingers": [
+        -0.001,
+        -0.001
+      ],
+      "distance": 0.00499808343479969
+    },
+    {
+      "slot": 1,
+      "fingers": [
+        0.0,
+        0.0
+      ],
+      "distance": 0.00499808343479969
+    },
+    {
+      "slot": 1,
+      "fingers": [
+        0.005,
+        0.005
+      ],
+      "distance": 0.00499808343479969
+    },
+    {
+      "slot": 1,
+      "fingers": [
+        0.04,
+        0.04
+      ],
+      "distance": 0.00499808343479969
+    },
+    {
+      "slot": 2,
+      "fingers": [
+        -0.003,
+        -0.003
+      ],
+      "distance": 0.0394540501642428
+    },
+    {
+      "slot": 2,
+      "fingers": [
+        -0.001,
+        -0.001
+      ],
+      "distance": 0.0394480884681927
+    },
+    {
+      "slot": 2,
+      "fingers": [
+        0.0,
+        0.0
+      ],
+      "distance": 0.0393862547092288
+    },
+    {
+      "slot": 2,
+      "fingers": [
+        0.005,
+        0.005
+      ],
+      "distance": 0.0383441186031977
+    },
+    {
+      "slot": 2,
+      "fingers": [
+        0.04,
+        0.04
+      ],
+      "distance": 0.00627178576052522
+    },
+    {
+      "slot": 3,
+      "fingers": [
+        -0.003,
+        -0.003
+      ],
+      "distance": 5.15122736176833e-06
+    },
+    {
+      "slot": 3,
+      "fingers": [
+        -0.001,
+        -0.001
+      ],
+      "distance": 0.0041265395558631
+    },
+    {
+      "slot": 3,
+      "fingers": [
+        0.0,
+        0.0
+      ],
+      "distance": 0.0041265395558631
+    },
+    {
+      "slot": 3,
+      "fingers": [
+        0.005,
+        0.005
+      ],
+      "distance": 0.0041265395558631
+    },
+    {
+      "slot": 3,
+      "fingers": [
+        0.04,
+        0.04
+      ],
+      "distance": 0.0041265395558631
+    }
+  ]
+}

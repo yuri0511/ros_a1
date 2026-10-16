@@ -1,0 +1,27 @@
+{
+  "case": 1795,
+  "object1": "bin_green_wall_y_pos_collision",
+  "object2": "arm2_gripper_finger_right_link__0",
+  "collision": "1",
+  "penetration_depth_m": "0.00138879159357979",
+  "distance_m": "-1",
+  "slot": 3,
+  "label": "retreat",
+  "point": 6,
+  "time": {
+    "sec": 0,
+    "nanosec": 600000000
+  },
+  "fingers": [
+    -0.003,
+    -0.003
+  ],
+  "joints": {
+    "arm2_shoulder_pan_joint": -1.2221,
+    "arm2_shoulder_lift_joint": -1.8729335543452523,
+    "arm2_elbow_joint": 1.5096,
+    "arm2_wrist_1_joint": -1.2074664456547477,
+    "arm2_wrist_2_joint": -1.5708,
+    "arm2_wrist_3_joint": -1.2221
+  }
+}

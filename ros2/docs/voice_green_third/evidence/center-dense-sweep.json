@@ -1,0 +1,19 @@
+{
+  "kind": "exact_OBB_separating_axis_on_dense_JTC_command_spline",
+  "dt_max": 0.002,
+  "slot": 2,
+  "limits": "commanded trajectory, not physical tracking; held-part offsets bounded sensitivity, not actual fresh attachment",
+  "samples": 6590,
+  "finger_wall_intersections": [],
+  "part_wall_intersections": [],
+  "min_positive_separating_axis_gap_m": 0.006258118117306074,
+  "fingers_swept_range": [
+    -0.003,
+    0.04
+  ],
+  "part_local_xy_offsets_m": [
+    -0.03,
+    0.0,
+    0.03
+  ]
+}
