@@ -21,4 +21,4 @@ V2源码source/ros2/codex_rl_v2，配置和Q表training/v2；canonical配置哈�
 
 Windows未配置VMware共享时，先在VMware设置→选项→共享文件夹添加Windows目录，Ubuntu的/mnt/hgfs/共享名可写后复制ZIP；本任务不修改Windows配置。也可在Ubuntu文件管理器找到ZIP后使用VMware已启用的拖放功能（是否可用取决于宿主机设置）。无可用共享/SSH服务时不宣称Windows可直接访问。
 
-GitHub只检查自己的授权。CLI缺失时可安装官方GitHub CLI，再用 `gh auth login --web --hostname github.com` 浏览器授权自己的账号；不要提供密码/Token给AI，不登录Yuri账号。不执行推送/建PR，PR草稿文本见github目录。
+GitHub只检查自己的授权。CLI缺失时可安装官方GitHub CLI，再用 `gh auth login --web --hostname github.com` [浏览器授权](https://cli.github.com/manual/gh_auth_login)自己的账号；不要提供密码/Token给AI，不登录Yuri账号。不执行推送/建PR，PR草稿文本见github目录。

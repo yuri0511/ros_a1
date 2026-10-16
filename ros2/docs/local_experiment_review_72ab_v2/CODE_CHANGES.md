@@ -15,3 +15,28 @@
 | codex_rl_v2/experiment_tools/*.py | 数据审计、训练、DP、适配器验证和报告驱动，含本机来源路径 |
 
 8da分支额外有2ms失败世界及当时YAML改动，仅历史对照，未移植其YAML到72ab。72ab正式feed_policy默认q仍保留；本地实验启动器显式rule。诊断观察/停止补丁独立于上述性能快照，见diagnostic目录，不是正式状态机修复。
+
+## 本地审阅分支Python文件完整清单
+
+- `ros2/codex_rl_v2/dual_arm_rl/__init__.py`（A）。
+- `ros2/codex_rl_v2/dual_arm_rl/evaluate.py`（A）。
+- `ros2/codex_rl_v2/dual_arm_rl/model.py`（A）。
+- `ros2/codex_rl_v2/dual_arm_rl/qtable.py`（A）。
+- `ros2/codex_rl_v2/dual_arm_rl/train.py`（A）。
+- `ros2/codex_rl_v2/experiment_tools/adapter_audit.py`（A）。
+- `ros2/codex_rl_v2/experiment_tools/assess.py`（A）。
+- `ros2/codex_rl_v2/experiment_tools/evaluate_v2.py`（A）。
+- `ros2/codex_rl_v2/experiment_tools/extract_traces.py`（A）。
+- `ros2/codex_rl_v2/experiment_tools/finalize.py`（A）。
+- `ros2/codex_rl_v2/experiment_tools/freeze_model.py`（A）。
+- `ros2/codex_rl_v2/experiment_tools/oracle_general.py`（A）。
+- `ros2/codex_rl_v2/experiment_tools/train_v2.py`（A）。
+- `ros2/codex_rl_v2/experiment_tools/write_reports.py`（A）。
+- `ros2/src/a1_cell_sim/launch/cell_bringup.launch.py`（M）。
+- `ros2/src/a1_sorting_core/a1_sorting_core/motion_client.py`（M）。
+- `ros2/src/a1_sorting_core/a1_sorting_core/pick_place_executor_node.py`（M）。
+- `ros2/src/a1_sorting_core/a1_sorting_core/task_dispatcher_node.py`（M）。
+- `ros2/src/a1_sorting_core/launch/sorting_demo.launch.py`（M）。
+- `ros2/src/a1_sorting_core/test/test_fast_sim_waits.py`（A）。
+
+A表示独立新增包/工具，M表示相对于72ab修改；V2 evaluate.py/__init__.py为上游包复制，实际模型修改在model.py、qtable.py、train.py。源码差异以source/72ab-to-review-code.patch为准。
