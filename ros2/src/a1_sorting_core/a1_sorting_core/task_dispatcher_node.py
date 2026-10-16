@@ -509,6 +509,7 @@ class TaskDispatcherNode(Node):
             if accepted:
                 arm = msg.arm or 'arm1'   # 空串视为 arm1(兼容旧消息)
                 self._arm_post[arm] = None
+                self.get_logger().info('ARM_SLOT_RELEASE '+json.dumps({'part':msg.part_id,'arm':arm,'slot_arm1':self._seq.slot('arm1'),'slot_arm2':self._seq.slot('arm2'),'zone_arm':self._seq.zone_arm,'trigger':msg.state}))
                 stage = 'arm2 接力' if arm == 'arm2' else 'arm1 分拣'
                 summary = (f'{msg.part_id} {stage}完成'
                            if terminal_state == 'COMPLETED'

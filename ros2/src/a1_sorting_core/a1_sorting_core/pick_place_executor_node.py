@@ -637,9 +637,10 @@ class PickPlaceExecutorNode(Node):
             f' 注入失败工件 {self._inject or "无"}')
 
     # ================================================================ 命令入口
-    def _on_joint_state(self, msg: JointState):
+    def _on_joint_state(self, msg: JointState, info):
         self._ready_monitor.observe(list(msg.name),list(msg.position),list(msg.velocity),
-            msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic())
+            msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic(),
+            source=bytes(info.publisher_gid).hex() if info is not None else None)
         self._js_wall = time.time()
         self._store_joint_states(msg)
         if not self._grip_key_checked:
@@ -824,7 +825,9 @@ class PickPlaceExecutorNode(Node):
                 return
             self._publish_zone_clear(part,'verified_return_standby')
             self._flush_terminal_status()  # Legacy result compatibility only.
-            self._emit_arm_event(part,'ARM_READY','controller_success+fresh_named_joints+stable_window')
+            self._emit_arm_event(part,'ARM_READY',json.dumps({'evidence':fresh,
+                'controller_result':getattr(getattr(self,'_motion',None),'last_controller_result',None),
+                'no_active_goal':not getattr(getattr(self,'_motion',None),'_own_goal_inflight',True) and getattr(getattr(self,'_motion',None),'_own_controller_active',1)==0}))
             with self._command_lock:
                 nxt=self._pending.pop(0) if self._pending else None
                 if nxt is None:self._busy=False
