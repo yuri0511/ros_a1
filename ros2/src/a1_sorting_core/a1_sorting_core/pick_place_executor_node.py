@@ -24,6 +24,7 @@
   attach(现状)。verified_only 下即使 pose_from_camera=false 也订阅
   逻辑相机(无条件缓存采样)。
 """
+import json
 import math
 import threading
 import time
@@ -78,6 +79,11 @@ class _FollowSampler:
         self._thread = None
         self._gripper: list[tuple[float, float]] = []
         self._part: list[tuple[float, float]] = []
+        self._sample_times = []
+        self._source_stamps = []
+        self._source_fn = lambda: None
+        self._source_fresh = lambda: True
+        self._condition = threading.Condition()
 
     def start(self):
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -88,9 +94,27 @@ class _FollowSampler:
             g = self._grip_fn()
             p = self._part_fn()
             if g is not None and p is not None:
-                self._gripper.append((float(g[0]), float(g[1])))
-                self._part.append((float(p[0]), float(p[1])))
+                with self._condition:
+                    self._gripper.append((float(g[0]), float(g[1])))
+                    self._part.append((float(p[0]), float(p[1])))
+                    self._sample_times.append(time.monotonic())
+                    self._source_stamps.append(self._source_fn())
+                    self._condition.notify_all()
             self._stop.wait(self._period)
+
+    def wait_evidence(self, span, verifier):
+        """Never shorten an unsuccessful/undersampled probe; retain original wall cap."""
+        deadline = time.monotonic() + span
+        with self._condition:
+            while True:
+                count = len(self._sample_times)
+                elapsed = self._sample_times[-1]-self._sample_times[0] if count>1 else 0.
+                distinct = len({x for x in self._source_stamps if x is not None})
+                enough = count >= math.ceil(span/self._period)+1 and elapsed >= span and distinct >= max(2, math.ceil(span*10))
+                if enough and self._source_fresh() and verifier(self._gripper,self._part)[0]:return True
+                remaining = deadline-time.monotonic()
+                if remaining <= 0:return False
+                self._condition.wait(remaining)
 
     def stop(self) -> tuple[list, list]:
         """停止采样并返回两路序列(重复调用返回同一结果)。"""
@@ -239,6 +263,10 @@ class PickPlaceExecutorNode(Node):
         self.declare_parameter('attach_rate_hz', 40.0)
         self.declare_parameter('verify_gripper_move', 0.03)  # GraspVerifier 阈值
         self.declare_parameter('verify_follow_move', 0.02)
+        self.declare_parameter('fast_sim_waits', False)
+        self._fast_waits = bool(self.get_parameter('fast_sim_waits').value)
+        self._part_source_stamps = {}
+        self._part_source_walls = {}
         self.declare_parameter('verify_sample_span', 0.5)  # 抬升后追加采样秒数
         # 水平验证探针(组长仲裁方案 B):verified_only 抬升完成后、verify
         # 前往返 LIN 平移该偏移(+x 去/回),给验证器一个夹爪水平位移窗
@@ -669,6 +697,11 @@ class PickPlaceExecutorNode(Node):
 
     def _on_logical(self, msg: LogicalCameraImage):
         """逻辑相机观测 -> 真值 xy 缓存(只缓存 part_ 开头的模型名)。"""
+        stamp = msg.header.stamp.sec + msg.header.stamp.nanosec*1e-9
+        for model in msg.model:
+            if model.name.startswith('part_'):
+                self._part_source_stamps[model.name] = stamp
+                self._part_source_walls[model.name] = time.monotonic()
         self._cam_cache.update(
             (m.name, m.pose.position.x, m.pose.position.y, m.pose.position.z)
             for m in msg.model)
@@ -913,7 +946,13 @@ class PickPlaceExecutorNode(Node):
                         self._confirm_clamped('锁紧段')
                         self._lift(center, center[2] + self._tcp_z)
                         self._verify_probe(center)
-                        time.sleep(self._verify_sample_span)
+                        t_wait = time.monotonic(); sim_wait = self.get_clock().now().nanoseconds/1e9
+                        evidence = False
+                        if self._fast_waits:
+                            evidence = sampler.wait_evidence(self._verify_sample_span, self._verifier.verify)
+                        else:
+                            time.sleep(self._verify_sample_span)
+                        self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'grasp_extra','wall':time.monotonic()-t_wait,'sim_start':sim_wait,'sim_end':self.get_clock().now().nanoseconds/1e9,'fast':self._fast_waits,'evidence':evidence,'pairs':len(sampler._gripper),'sample_wall_span':sampler._sample_times[-1]-sampler._sample_times[0] if len(sampler._sample_times)>1 else 0.,'distinct_source_frames':len(set(sampler._source_stamps))}))
                     finally:
                         gripper_xy, part_xy = sampler.stop()
                     ok, reason = self._verify_follow(gripper_xy, part_xy)
@@ -963,6 +1002,7 @@ class PickPlaceExecutorNode(Node):
                 # ---------------- CARRYING ----------------
                 self._set_state(sm, task_id, part, TaskState.CARRYING, '')
                 place = self._place_pose(target)
+                self.get_logger().info('POSE_TARGET '+json.dumps({'part':part.part_id,'task':task_id,'bin':target,'xyz':list(place)}))
                 # 落入模式下松爪高度(clearance)可能高于抬升高度(lift_h):
                 # above 取二者较大值,保证 carry_descend 不低于松爪点
                 above = (place[0], place[1],
@@ -1140,7 +1180,9 @@ class PickPlaceExecutorNode(Node):
                     # 仅 4mm 且随 0N 内收收窄)→ 保持小开抬臂出箱 →
                     # **箱沿之上**才全开(见 settle_rise 之后)。
                     self._open_to_release_gap()
-                    time.sleep(0.4)
+                    t_wait = time.monotonic()
+                    time.sleep(0.4)  # retained: gap alone does not prove settled release
+                    self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'release_settle','wall':time.monotonic()-t_wait,'fast':self._fast_waits}))
                     # 原路抬升回同格高位 anchor(逆向下探的已验证路径),
                     # 再走既有 return_standby。抬升失败不否定本件结果:
                     # 工件已释放到位,失败只影响下一件起始构型(收尾的
@@ -1173,7 +1215,9 @@ class PickPlaceExecutorNode(Node):
                     # 稳定误差超位姿闸 2.5cm 反而 60s 挂。终案 = 直接
                     # return_standby 关节 PTP(FK 实测全程工件底 ≥0.830,
                     # 高于壁顶 0.815)。
+                    t_wait = time.monotonic()
                     time.sleep(1.5)
+                    self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'drop_return_branch','wall':time.monotonic()-t_wait,'fast':self._fast_waits}))
                     # 全开补齐:保证下一件取件前指在开限位(状态确定性)
                     self._grip(close=False)
                 if self._place_drop_clearance <= 0.0:
@@ -1298,7 +1342,8 @@ class PickPlaceExecutorNode(Node):
                 wedge_detect=self._wedge_detect,
                 tool_settle_fix=self._tool_settle_fix,
                 split_plan_execute=self._split_plan_execute,
-                controller_action=self._controller_action)
+                controller_action=self._controller_action,
+                fast_sim_waits=self._fast_waits)
         except Exception as e:   # noqa: BLE001 R1-P2(2026-10-04)
             # 构造失败保持 _motion=None 并转为可重试 GraspError:
             # 原样上抛 RuntimeError 会在 _run_task 的兜底层落 FAILED,
@@ -1790,6 +1835,8 @@ class PickPlaceExecutorNode(Node):
         sampler = _FollowSampler(
             gripper_xy_fn=self._gripper_world_xy,
             part_xy_fn=lambda: self._cam_cache.get(part_id))
+        sampler._source_fn = lambda: self._part_source_stamps.get(part_id)
+        sampler._source_fresh = lambda: (time.monotonic()-self._part_source_walls.get(part_id,0.) < .5 and abs(self.get_clock().now().nanoseconds/1e9-self._part_source_stamps.get(part_id,-100.)) < .2)
         sampler.start()
         return sampler
 

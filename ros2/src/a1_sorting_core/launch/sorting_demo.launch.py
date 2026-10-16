@@ -46,6 +46,7 @@ def launch_setup(context, *args, **kwargs):
     gpu_offload = LaunchConfiguration('gpu_offload')
     demo_parts = LaunchConfiguration('demo_parts')
     feed_policy = LaunchConfiguration('feed_policy')
+    policy_params = LaunchConfiguration('policy_params').perform(context)
     world_file = LaunchConfiguration('world_file')
     controllers_file = LaunchConfiguration('controllers_file')
 
@@ -93,6 +94,8 @@ def launch_setup(context, *args, **kwargs):
                           'world_file': world_file,
                           'controllers_file': controllers_file,
                           'gpu_offload': gpu_offload,
+                          'gazebo_gui': LaunchConfiguration('gazebo_gui'),
+                          'fast_sim_waits': LaunchConfiguration('fast_sim_waits'),
                           'spawn_mode': 'service' if pipeline_on
                                         else 'batch'}.items())
 
@@ -105,7 +108,7 @@ def launch_setup(context, *args, **kwargs):
              'cell_moveit.launch.py'])),
         launch_arguments={'ur_type': ur_type,
                           'use_sim_time': 'true',
-                          'launch_rviz': 'true',
+                          'launch_rviz': LaunchConfiguration('launch_rviz'),
                           'dual': dual_eff}.items())
 
     # 2b) 单变量判别实验透传(空=不覆盖,维持 yaml 定值;设置则在本
@@ -209,7 +212,7 @@ def launch_setup(context, *args, **kwargs):
         package='a1_sorting_core', executable='task_dispatcher_node',
         name='task_dispatcher', output='screen',
         parameters=[*core_params_list,
-                    {'use_sim_time': True,
+                    {'use_sim_time': True, 'fast_sim_waits': ParameterValue(LaunchConfiguration('fast_sim_waits'), value_type=bool),
                      # 双臂接力:dual_eff 已解析为确定字符串,这里直接给
                      # Python bool(旧代码传 LaunchConfiguration+value_type=
                      # bool 由 launch 延迟转型;字符串字面量会被当场拒收)
@@ -223,11 +226,11 @@ def launch_setup(context, *args, **kwargs):
                      'auto_start': ParameterValue(auto_start,
                                                   value_type=bool),
                      **dispatcher_overrides,
-                     **q_overrides}])
+                     **q_overrides}] + ([policy_params] if policy_params else []))
     executor_node = Node(
         package='a1_sorting_core', executable='pick_place_executor_node',
         name='pick_place_executor', output='screen',
-        parameters=[*core_params_list, {'use_sim_time': True,
+        parameters=[*core_params_list, {'use_sim_time': True, 'fast_sim_waits': ParameterValue(LaunchConfiguration('fast_sim_waits'), value_type=bool),
                                          'inject_failure_parts':
                                              inject_failure_parts,
                                          **executor_overrides}])
@@ -241,7 +244,7 @@ def launch_setup(context, *args, **kwargs):
         # 楔死三开关同步给 arm2(D2b 实验对象就是 arm2);tcp_z 等臂1
         # 实验覆盖不传(与 64cd236 口径一致,relay 用自己的 yaml 段)
         parameters=[*relay_params_list,
-                    {'use_sim_time': True, **motion_flags}])
+                    {'use_sim_time': True, 'fast_sim_waits': ParameterValue(LaunchConfiguration('fast_sim_waits'), value_type=bool), **motion_flags}])
     # 3c) 静态规划场景(仅 pipeline):世界几何对规划器不可见会盲规划穿障
     scene_pub = Node(
         package='a1_sorting_core', executable='scene_publisher_node',
@@ -252,7 +255,7 @@ def launch_setup(context, *args, **kwargs):
         package='a1_sorting_core', executable='result_recorder_node',
         name='result_recorder', output='screen',
         parameters=[*core_params_list,
-                    {'use_sim_time': True,
+                    {'use_sim_time': True, 'fast_sim_waits': ParameterValue(LaunchConfiguration('fast_sim_waits'), value_type=bool),
                      # ---- 布局 v2 台账料区(四箱,参数化;不再硬编码三箱)----
                      # 单臂/legacy:arm1 只服务北排 => 只计北排两箱;
                      # 双臂(dual_arm):四色四箱全部纳入计数与 RViz 标记。
@@ -260,6 +263,7 @@ def launch_setup(context, *args, **kwargs):
                      # 世界变体一并废止(binC.sdf 已删,历史可考 64cd236/
                      # 3f02c2b)。bin_names 只影响 recorder 判定/计数集合,
                      # 与两臂执行器各自的 bin_names(北排/南排)正交。
+                     'csv_path': LaunchConfiguration('result_csv'),
                      'bin_names': (list(north_bins) if not dual_on
                                    else list(all_bins)),
                      # 并联分色无"arm1 中间态"语义:expect_relay 关闭,
@@ -285,6 +289,10 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     return LaunchDescription([
+        DeclareLaunchArgument('fast_sim_waits', default_value='false'),
+        DeclareLaunchArgument('gazebo_gui', default_value='false'),
+        DeclareLaunchArgument('launch_rviz', default_value='false'),
+        DeclareLaunchArgument('result_csv', default_value='/tmp/yuri_performance_results.csv'),
         DeclareLaunchArgument('ur_type', default_value='ur5e'),
         DeclareLaunchArgument('part_colors', default_value='red,green,red'),
         DeclareLaunchArgument(
@@ -302,6 +310,8 @@ def generate_launch_description():
             description='流水线模式:传送带逐件来料+真实包夹+触底放置。'
                         '2026-10-03 起为默认演示路径;pipeline:=false 回'
                         'legacy 一次性 batch 三件(验收回归基线用)'),
+        DeclareLaunchArgument('policy_params', default_value='',
+                              description='Optional local experiment ROS parameter overlay'),
         DeclareLaunchArgument(
             'feed_policy', default_value='q',
             description='来料算法。q(默认)=读 ros2/codex_rl 里的 Q 表;'
