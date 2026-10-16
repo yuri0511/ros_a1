@@ -4,14 +4,16 @@ import math
 import threading
 
 class PhysicalReadyMonitor:
-    # Retain original .55rad/.3rad/s/.5wall freshness limits; do not widen.
-    def __init__(self, window=.25, min_samples=50, pos_tol=.55, vel_tol=.3,
+    # Standby uses the existing MoveIt joint-goal .01rad tolerance.
+    # Keep original .3rad/s and .5wall freshness limits; never widen.
+    def __init__(self, window=.25, min_samples=50, pos_tol=.01, vel_tol=.3,
                  freshness=.5, max_gap=.05, future_tol=.01):
         self.window=window; self.min_samples=min_samples; self.pos_tol=pos_tol
         self.vel_tol=vel_tol; self.freshness=freshness; self.max_gap=max_gap
         self.future_tol=future_tol; self._samples=deque(maxlen=2000)
         self._lock=threading.RLock(); self._last_stamp=None
         self._fault=None; self._not_before=-math.inf
+        self.duplicate_stamps=0; self._last_issue=None
 
     def begin(self, now_wall):
         with self._lock:self._not_before=now_wall
@@ -23,14 +25,20 @@ class PhysicalReadyMonitor:
                 self._fault='ambiguous_or_incomplete_joint_state';return
             if not all(math.isfinite(float(x)) for x in [stamp,receipt_wall,*positions,*velocities]):
                 self._fault='nonfinite_joint_state';return
-            if self._last_stamp is not None and stamp<=self._last_stamp:
-                self._fault='nonincreasing_joint_stamp';return
+            if self._last_stamp is not None and stamp<self._last_stamp:
+                self._fault='backward_joint_stamp';return
+            if self._last_stamp is not None and stamp==self._last_stamp:
+                # Repeated simulation stamps are observed in this broadcaster.
+                # They never count as new evidence, refresh age or bridge a window.
+                self._samples.clear();self.duplicate_stamps+=1
+                self._last_issue='duplicate_joint_stamp';return
+            self._last_issue=None
             self._last_stamp=stamp
             self._samples.append((stamp,receipt_wall,dict(zip(names,positions)),dict(zip(names,velocities))))
 
     def evaluate(self, names, targets, now_sim, now_wall, controller_ok, no_active_goal):
         with self._lock:
-            info={'ready':False,'reason':'insufficient_samples','samples':0}
+            info={'ready':False,'reason':self._last_issue or 'insufficient_samples','samples':0,'duplicate_stamps':self.duplicate_stamps}
             if self._fault:return dict(info,reason=self._fault)
             if not controller_ok:return dict(info,reason='controller_not_successful')
             if not no_active_goal:return dict(info,reason='controller_goal_active_or_unresolved')

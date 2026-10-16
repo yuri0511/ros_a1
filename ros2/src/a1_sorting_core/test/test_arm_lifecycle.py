@@ -56,8 +56,8 @@ def test_executor_placement_survives_fault_but_slot_only_released_by_ready(retur
  def ret():
   if returned=='exception':raise RuntimeError('planning_rejected')
   return returned
- n=N(_arm_fault=None,_busy=True,_pending=[],_terminal_status=None,_run_task_impl=impl,
-     _try_return_standby=ret,_emit_arm_event=emit,_publish_zone_clear=lambda p,r:events.append('ZONE_CLEAR'),
+ n=N(_arm_fault=None,_busy=True,_pending=[],_terminal_status=None,_command_lock=threading.Lock(),_run_task_impl=impl,
+     _try_return_standby=ret,_await_placement_result=lambda p:True,_current_ready_evidence=lambda:{'ready':True},_emit_arm_event=emit,_publish_zone_clear=lambda p,r:events.append('ZONE_CLEAR'),
      _flush_terminal_status=lambda:events.append('LEGACY_COMPLETED'),get_logger=lambda:Logger())
  PickPlaceExecutorNode._run_task(n,N(part_id='p'))
  assert events[0]=='PART_PLACED'
@@ -80,3 +80,96 @@ def test_dispatcher_fault_latches_before_future_dispatch_and_keeps_outcome():
  TaskDispatcherNode._on_status(n,N(header=N(stamp=None),state='ARM_FAULT',part_id='p',arm='arm1',detail='unstable'))
  assert n._halted and q.slot('arm1')=='p' and q.zone_arm=='arm1' and stops[-1]==0
  response=N(accepted=True,message='');assert not TaskDispatcherNode._on_sort_task(n,None,response).accepted
+
+
+def test_ready_and_validated_outcome_can_arrive_in_either_order():
+ q=RelaySequencer(per_arm_slots=True,require_arm_ready=True);q.enqueue('p');q.try_dispatch('arm1')
+ assert not q.arm_ready('p','arm1')[0] and q.slot('arm1')=='p'
+ assert q.has_ready('p','arm1') and q.note_outcome('p','arm1','PART_PLACED')
+ assert q.arm_ready('p','arm1')[0] and q.slot('arm1') is None
+
+
+def test_missing_placement_confirmation_faults_even_if_arm_returned():
+ events=[]
+ n=N(_arm_fault=None,_busy=True,_pending=[],_terminal_status=None,_command_lock=threading.Lock(),
+     _run_task_impl=lambda p:None,_try_return_standby=lambda:True,
+     _await_placement_result=lambda p:False,_emit_arm_event=lambda p,s,d:events.append(s),get_logger=lambda:Logger())
+ PickPlaceExecutorNode._run_task(n,N(part_id='p'))
+ assert events==['ARM_FAULT'] and n._busy
+
+
+@pytest.mark.parametrize('xy,expected',[( (.3,.2),'PART_PLACED'),((1.,1.),'PART_REJECTED'),(None,'PART_REJECTED')])
+def test_only_recorder_ground_truth_confirms_part_placed(xy,expected):
+ from a1_sorting_core.result_recorder_node import ResultRecorderNode
+ from a1_sorting_core.bins import Bin
+ from a1_interfaces.msg import TaskStatus
+ rows=[];acks=[];stamp=TaskStatus().header.stamp
+ n=N(_finished=set(),_poses={'p':xy} if xy is not None else {},_categories={'p':'blue'},
+     _bins=[Bin('bin_blue',.3,.2,.06,.085)],_failed_parts=set(),_recycle_delay=0.,
+     _book=N(record=lambda *a,**k:rows.append(a)),_pub_placement_result=N(publish=lambda m:acks.append(m)),
+     get_clock=lambda:N(now=lambda:N(to_msg=lambda:stamp)),get_logger=lambda:Logger(),
+     _publish_counts=lambda:None,_publish_bin_markers=lambda:None,_batch_finished=lambda:False)
+ msg=TaskStatus();msg.part_id='p';msg.arm='arm1';msg.task_id='t';msg.state='PLACEMENT_FINISHED';msg.detail='bin_blue'
+ ResultRecorderNode._on_status(n,msg);assert len(rows)==1 and acks[0].state==expected
+ msg.state='COMPLETED';ResultRecorderNode._on_status(n,msg);assert len(rows)==1
+
+
+def test_conflicting_outcomes_and_late_zone_clear_fail_closed():
+ q=RelaySequencer(per_arm_slots=True,require_arm_ready=True);q.enqueue('p');q.try_dispatch('arm1')
+ assert q.note_outcome('p','arm1','PART_PLACED')
+ assert not q.note_outcome('p','arm1','FAILED') and q.is_faulted('arm1')
+ assert not q.release_zone('p','arm1') and not q.arm_ready('p','arm1')[0]
+ assert q.slot('arm1')=='p' and q.zone_arm=='arm1'
+
+@pytest.mark.parametrize('accepted,status,code',[(False,4,1),(True,6,-1),(True,4,-1)])
+def test_planning_rejection_or_moveit_error_never_executes_controller(accepted,status,code):
+ m=object.__new__(MotionClient)
+ m._group='arm1';m._vel=.5;m._acc=.5;m._split=True
+ m._wait_slot_free=lambda **k:None;m._note_outcome=lambda *a,**k:None
+ wrapped=N(status=status,result=N(error_code=N(val=code)))
+ m._client=N(send_goal_async=lambda g:Future(N(accepted=accepted,get_result_async=lambda:Future(wrapped))))
+ m._execute_split=lambda *a:pytest.fail('planner failure must not execute trajectory')
+ assert not m._move_to_joints_once(['j'],[0],'return_standby',60,Logger(),settle_check=False)
+
+
+def test_executor_duplicate_or_faulted_commands_do_not_start_new_work():
+ n=N(_command_lock=threading.Lock(),_arm_fault=None,_command_ids=set(),_busy=True,_pending=[],get_logger=lambda:Logger())
+ p=N(part_id='p');PickPlaceExecutorNode._on_command(n,p);PickPlaceExecutorNode._on_command(n,p)
+ assert len(n._pending)==1
+ n._arm_fault='stale_state';PickPlaceExecutorNode._on_command(n,N(part_id='q'));assert len(n._pending)==1 and 'q' not in n._command_ids
+
+
+def test_placement_ack_timeout_is_bounded_and_latches_fault(monkeypatch):
+ from a1_sorting_core.state_machine import TaskState
+ n=N(_terminal_status=('t',None,TaskState.COMPLETED,'bin_blue'),_active_task_id='t',_placement_ack={})
+ clock=iter([0.,1.]);monkeypatch.setattr('a1_sorting_core.pick_place_executor_node.time.monotonic',lambda:next(clock))
+ assert not PickPlaceExecutorNode._await_placement_result(n,N(part_id='p'),timeout=.1)
+ assert n._arm_fault=='placement_result_unconfirmed'
+
+
+def test_late_placement_ack_cannot_reuse_stale_ready_snapshot():
+ events=[]
+ n=N(_arm_fault=None,_busy=True,_pending=[],_terminal_status=None,_run_task_impl=lambda p:None,
+     _try_return_standby=lambda:True,_await_placement_result=lambda p:True,
+     _current_ready_evidence=lambda:{'ready':False,'reason':'stale_joint_receipt'},
+     _emit_arm_event=lambda p,s,d:events.append(s),get_logger=lambda:Logger())
+ PickPlaceExecutorNode._run_task(n,N(part_id='p'))
+ assert events==['ARM_FAULT'] and n._arm_fault.startswith('ready_changed_before_publication')
+
+
+def test_rejected_placement_ack_never_becomes_arm_ready():
+ from a1_sorting_core.state_machine import TaskState
+ n=N(_terminal_status=('t',None,TaskState.COMPLETED,'bin_blue'),_active_task_id='t',
+     _placement_ack={('p','t'):'PART_REJECTED'})
+ assert not PickPlaceExecutorNode._await_placement_result(n,N(part_id='p'))
+ assert n._arm_fault=='placement_rejected_requires_inspection'
+
+
+def test_permanent_task_exception_stops_without_new_recovery_motion():
+ events=[]
+ def fail(p):raise RuntimeError('unknown_pose')
+ n=N(_arm_fault=None,_busy=True,_pending=[],_terminal_status=None,_run_task_impl=fail,
+     _try_return_standby=lambda:pytest.fail('unknown state must stop, not start another motion'),
+     _emit_arm_event=lambda p,s,d:events.append(s),get_logger=lambda:Logger())
+ PickPlaceExecutorNode._run_task(n,N(part_id='p'))
+ assert events==['FAILED','ARM_FAULT'] and n._busy

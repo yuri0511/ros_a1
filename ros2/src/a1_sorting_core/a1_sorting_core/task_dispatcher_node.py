@@ -338,6 +338,7 @@ class TaskDispatcherNode(Node):
         self._pub_relay = self.create_publisher(PartInfo, relay_topic, 10)
         self.create_subscription(PartInfo, '/parts/arrival', self._on_arrival, 10)
         self.create_subscription(TaskStatus, '/task/status', self._on_status, 10)
+        self.create_subscription(TaskStatus,'/task/placement_result',self._on_status,10)
         self.create_service(SortTask, '/sort_task', self._on_sort_task)
         if parallel_active:
             mode = (f'双臂并联分色(arm2 专收: {sorted(self._arm2_colors)}'
@@ -462,9 +463,18 @@ class TaskDispatcherNode(Node):
             self._on_zone_clear(msg)
             return
         arm = msg.arm or 'arm1'
-        if msg.state in ('PART_PLACED','FAILED'):
-            with self._lock:self._seq.note_outcome(msg.part_id,arm,msg.state)
-            return
+        outcome_event=msg.state in ('PART_PLACED','PART_REJECTED','FAILED')
+        if outcome_event:
+            with self._lock:
+                accepted=self._seq.note_outcome(msg.part_id,arm,'FAILED' if msg.state=='PART_REJECTED' else msg.state)
+                seen_ready=self._seq.has_ready(msg.part_id,arm)
+                if self._seq.is_faulted(arm):self._halted=True
+            if self._halted:
+                self._destroy_spawn_timer();self._destroy_next_timer();self._destroy_relay_timer()
+                stop=Float64();stop.data=0.;self._pub_belt.publish(stop)
+                self.get_logger().error('ARM_OUTCOME_FAULT '+msg.part_id+' '+arm)
+                return
+            if not accepted or not seen_ready:return
         if msg.state == 'ARM_FAULT':
             with self._lock:
                 accepted=self._seq.arm_fault(msg.part_id,arm)
@@ -474,7 +484,7 @@ class TaskDispatcherNode(Node):
                 stop=Float64();stop.data=0.;self._pub_belt.publish(stop)
                 self.get_logger().error('ARM_FAULT_HALT '+msg.part_id+' '+arm+' '+msg.detail)
             return
-        if msg.state != 'ARM_READY':
+        if msg.state != 'ARM_READY' and not outcome_event:
             return
         # R1-P1 停轮:执行器报告 move_group 会话楔死判死 ⇒ 停派发+停来料
         # (中毒会话内任何后续件都只会产出 -4 假 FAILED,读数失真)

@@ -100,7 +100,7 @@ class MotionClient:
 
         def _st_cb(m):
             # GoalStatus: UNKNOWN=0 ACCEPTED=1 EXECUTING=2 CANCELING=3
-            # (CANCELED=4/SUCCEEDED=5/ABORTED=6/REJECTED=7 均为终态)
+            # (SUCCEEDED=4/CANCELED=5/ABORTED=6 均为终态)
             self._active[0] = sum(
                 1 for g in m.status_list if g.status in (1, 2, 3))
             if self._active[0] == 0:self._slot_event.set()
@@ -445,6 +445,8 @@ class MotionClient:
                       f'code={code}')
             self._note_outcome(False, code=code)              # R1-P1
             return False
+        if label in ('standby','return_standby') and result_wrap.result.error_code.val != 1:
+            log.error(f'{label}: MoveIt did not report SUCCESS');return False
         if self._split:
             ok = self._execute_split(
                 result_wrap.result, label, timeout,
@@ -602,6 +604,8 @@ class MotionClient:
             log.error(f'{label}: 动作未成功 status={status} code={code}')
             self._note_outcome(False, code=code)              # R1-P1
             return False, code
+        if label in ('standby','return_standby') and code != 1:
+            log.error(f'{label}: MoveIt did not report SUCCESS');return False,code
         if self._split:
             ok = self._execute_split(
                 result, label, timeout, lambda: self._tool_settled(pose))

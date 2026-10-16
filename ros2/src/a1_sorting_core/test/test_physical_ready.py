@@ -47,5 +47,24 @@ def test_fault_keeps_slot_zone_and_blocks_late_ready_until_full_restart():
  # Explicit fresh process/world is the supported recovery; no automatic latch clear.
  fresh=RelaySequencer(per_arm_slots=True,require_arm_ready=True);assert fresh.enqueue('new_batch_p1');assert fresh.try_dispatch('arm1')=='new_batch_p1'
 
-def test_failed_part_can_release_only_after_verified_return_ready():
- q=seq();q.note_outcome('p1','arm1','FAILED');assert q.slot('arm1')=='p1';assert q.arm_ready('p1','arm1')[0]
+def test_permanent_task_failure_stays_latched_even_after_return_ready():
+ q=seq();q.note_outcome('p1','arm1','FAILED');assert q.slot('arm1')=='p1';assert not q.arm_ready('p1','arm1')[0]
+
+
+def test_duplicate_stamp_resets_window_without_becoming_a_permanent_startup_fault():
+ m=window();m.observe(['j'],[0],[0],1.3,10.301)
+ assert not evaluate(m,now_wall=10.301)['ready'] and m.duplicate_stamps==1
+ for k in range(151):m.observe(['j'],[0],[0],1.302+k*.002,10.302+k*.002)
+ assert evaluate(m,now_sim=1.602,now_wall=10.602)['ready']
+
+def test_clock_rollback_stays_latched_even_after_new_stable_data():
+ m=window();m.observe(['j'],[0],[0],.5,10.301)
+ for k in range(151):m.observe(['j'],[0],[0],2+k*.002,11+k*.002)
+ assert not evaluate(m,now_sim=2.3,now_wall=11.3)['ready']
+
+
+@pytest.mark.parametrize('offset,ready',[(.009,True),(.011,False)])
+def test_standby_uses_existing_joint_goal_tolerance_not_compensation_gate(offset,ready):
+ m=PhysicalReadyMonitor();m.begin(10)
+ for k in range(151):m.observe(['j'],[offset],[0],1+k*.002,10+k*.002)
+ assert evaluate(m)['ready']==ready

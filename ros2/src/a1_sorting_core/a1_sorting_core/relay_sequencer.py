@@ -47,6 +47,7 @@ class RelaySequencer:
                  dispatch_delay: float = 1.0, per_arm_slots: bool = False, require_arm_ready: bool = False):
         self._require_arm_ready = require_arm_ready
         self._outcomes = {}
+        self._ready_claims = set()
         self._faulted_arms = set()
         self._relay_mode = bool(relay_mode)
         self._relay_delay = float(relay_delay)
@@ -171,6 +172,7 @@ class RelaySequencer:
         if not self._per_arm_slots:
             return False
         arm = 'arm2' if arm == 'arm2' else 'arm1'
+        if arm in self._faulted_arms:return False
         if self._zone_arm != arm or self._zone_part != part_id:
             return False
         self._zone_arm = None
@@ -229,8 +231,11 @@ class RelaySequencer:
         if state not in ('PART_PLACED','FAILED') or not self._matches_slot(part_id,arm):return False
         key=(part_id,arm)
         outcome='COMPLETED' if state=='PART_PLACED' else 'FAILED'
-        if key in self._outcomes:return self._outcomes[key]==outcome
+        if key in self._outcomes:
+            if self._outcomes[key]!=outcome:self._faulted_arms.add(arm);return False
+            return True
         self._outcomes[key]=outcome
+        if state=='FAILED':self._faulted_arms.add(arm)
         return True
 
     def arm_fault(self, part_id, arm):
@@ -238,9 +243,18 @@ class RelaySequencer:
         self._faulted_arms.add(arm)
         return True  # Keep slot, queue/dedup and zone ownership unchanged.
 
+    def is_faulted(self,arm):
+        return arm in self._faulted_arms
+
+    def has_ready(self,part_id,arm):
+        return (part_id,arm) in self._ready_claims
+
     def arm_ready(self, part_id, arm):
         key=(part_id,arm)
-        if arm in self._faulted_arms or key not in self._outcomes or not self._matches_slot(part_id,arm):return False, [], None
+        if arm in self._faulted_arms or not self._matches_slot(part_id,arm):return False, [], None
+        self._ready_claims.add(key)
+        if key not in self._outcomes:return False, [], None
+        self._ready_claims.discard(key)
         state=self._outcomes.pop(key)
         accepted,actions=self._accept_terminal(part_id,arm,state)
         return accepted,actions,state

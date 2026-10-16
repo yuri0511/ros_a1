@@ -527,7 +527,11 @@ class PickPlaceExecutorNode(Node):
         self._at_standby = False
         self._arm_fault = None
         self._command_ids = set()
+        self._command_lock = threading.Lock()
         self._ready_monitor = PhysicalReadyMonitor()
+        self._placement_ack={}
+        self._placement_event=threading.Event()
+        self.create_subscription(TaskStatus,'/task/placement_result',self._on_placement_result,10)
         self._steps = max(1, int(gp('descend_steps')))
         self._vel_scale = float(gp('vel_scale'))
         self._acc_scale = float(gp('acc_scale'))
@@ -735,20 +739,19 @@ class PickPlaceExecutorNode(Node):
         self.get_logger().info(f'[标定] {bin_name} 放置关节角: {vals}')
 
     def _on_command(self, msg: PartInfo):
-        if self._arm_fault:
-            self.get_logger().error('COMMAND_REJECTED_ARM_FAULT '+msg.part_id)
-            return
-        if msg.part_id in self._command_ids:
-            self.get_logger().warn('DUPLICATE_COMMAND_IGNORED '+msg.part_id)
-            return
-        self._command_ids.add(msg.part_id)
-        if self._busy:
-            self._pending.append(msg)
-            self.get_logger().info(
-                f'排队命令: 正在执行任务, {msg.part_id} 等待({len(self._pending)} 待处理)')
-            return
-        self._busy = True
-        threading.Thread(target=self._run_task, args=(msg,), daemon=True).start()
+        with self._command_lock:
+            if self._arm_fault:
+                self.get_logger().error('COMMAND_REJECTED_ARM_FAULT '+msg.part_id)
+                return
+            if msg.part_id in self._command_ids:
+                self.get_logger().warn('DUPLICATE_COMMAND_IGNORED '+msg.part_id)
+                return
+            self._command_ids.add(msg.part_id)
+            if self._busy:
+                self._pending.append(msg)
+                return
+            self._busy=True
+        threading.Thread(target=self._run_task,args=(msg,),daemon=True).start()
 
     # ================================================================ 任务主流程
     def _emit_arm_event(self, part, state, detail):
@@ -758,20 +761,38 @@ class PickPlaceExecutorNode(Node):
         msg.state=state;msg.detail=detail;self._pub_status.publish(msg)
         self.get_logger().info('ARM_EVENT '+json.dumps({'part':part.part_id,'arm':self._arm_name,'state':state,'detail':detail}))
 
+    def _current_ready_evidence(self):
+        result=getattr(self._motion,'last_controller_result',None) or {}
+        return self._ready_monitor.evaluate(self._joint_names,self._standby_joints,
+            self.get_clock().now().nanoseconds*1e-9,time.monotonic(),
+            controller_ok=bool(result.get('success')),
+            no_active_goal=not getattr(self._motion,'_own_goal_inflight',True) and getattr(self._motion,'_own_controller_active',1)==0)
+
     def _wait_physical_ready(self, timeout=8.):
         self._ready_monitor.begin(time.monotonic());deadline=time.monotonic()+timeout;last={};next_log=0
         while time.monotonic()<deadline:
-            result=getattr(self._motion,'last_controller_result',None) or {}
-            last=self._ready_monitor.evaluate(self._joint_names,self._standby_joints,
-                self.get_clock().now().nanoseconds*1e-9,time.monotonic(),
-                controller_ok=bool(result.get('success')),
-                no_active_goal=not getattr(self._motion,'_own_goal_inflight',True) and getattr(self._motion,'_own_controller_active',1)==0)
+            last=self._current_ready_evidence()
             if time.monotonic()>=next_log or last['ready']:
                 self.get_logger().info('READY_CHECK '+json.dumps(last));next_log=time.monotonic()+.2
             if last['ready']:return True
             time.sleep(.02)
         self._arm_fault='physical_ready_timeout:'+last.get('reason','unknown')
         return False
+
+    def _on_placement_result(self,msg):
+        if (msg.arm==self._arm_name and msg.state in ('PART_PLACED','PART_REJECTED')):
+            self._placement_ack[(msg.part_id,msg.task_id)]=msg.state
+            self._placement_event.set()
+
+    def _await_placement_result(self,part,timeout=4.):
+        if self._terminal_status is None or self._terminal_status[2]!=TaskState.COMPLETED:return True
+        key=(part.part_id,self._active_task_id);deadline=time.monotonic()+timeout
+        while time.monotonic()<deadline:
+            if key in self._placement_ack:
+                if self._placement_ack[key]=='PART_PLACED':return True
+                self._arm_fault='placement_rejected_requires_inspection';return False
+            self._placement_event.wait(.05);self._placement_event.clear()
+        self._arm_fault='placement_result_unconfirmed';return False
 
     def _run_task(self, part: PartInfo):
         self._zone_published=False
@@ -784,10 +805,17 @@ class PickPlaceExecutorNode(Node):
                 self._emit_arm_event(part,'FAILED',f'executor_error({e})')
         finally:
             ready=False
+            if self._terminal_status is not None and self._terminal_status[2]==TaskState.FAILED:
+                self._arm_fault=self._arm_fault or 'task_failed_requires_inspection'
             try:
                 if not self._arm_fault:ready=self._try_return_standby()
             except Exception as e:
                 self._arm_fault=f'return_exception:{e!r}'
+            if ready and not self._await_placement_result(part):ready=False
+            if ready:
+                fresh=self._current_ready_evidence()
+                if not fresh['ready']:
+                    self._arm_fault='ready_changed_before_publication:'+fresh['reason'];ready=False
             if not ready:
                 self._at_standby=False
                 self._arm_fault=self._arm_fault or 'return_standby_failed'
@@ -797,10 +825,10 @@ class PickPlaceExecutorNode(Node):
             self._publish_zone_clear(part,'verified_return_standby')
             self._flush_terminal_status()  # Legacy result compatibility only.
             self._emit_arm_event(part,'ARM_READY','controller_success+fresh_named_joints+stable_window')
-            if self._pending:
-                nxt=self._pending.pop(0)
-                threading.Thread(target=self._run_task,args=(nxt,),daemon=True).start()
-            else:self._busy=False
+            with self._command_lock:
+                nxt=self._pending.pop(0) if self._pending else None
+                if nxt is None:self._busy=False
+            if nxt is not None:threading.Thread(target=self._run_task,args=(nxt,),daemon=True).start()
 
     def _try_return_standby(self):
         self._at_standby=False
@@ -1292,7 +1320,7 @@ class PickPlaceExecutorNode(Node):
         if state in (TaskState.COMPLETED, TaskState.FAILED):
             # 终态暂存,待回待机运动结束后统一发布(见 _run_task 注释)
             self._terminal_status = (task_id, part, state, detail)
-            self._emit_arm_event(part,'PART_PLACED' if state==TaskState.COMPLETED else 'FAILED',detail)
+            self._emit_arm_event(part,'PLACEMENT_FINISHED' if state==TaskState.COMPLETED else 'FAILED',detail)
             self.get_logger().info(
                 f'{task_id} {part.part_id}: {state.value} {detail}'
                 f'(待收尾后上报)')

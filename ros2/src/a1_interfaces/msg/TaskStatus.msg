@@ -7,7 +7,9 @@ string task_id
 # 对应工件编号
 string part_id
 
-# 状态: PART_PLACED=placement outcome only; ARM_READY=verified reusable arm;
+# 状态: PLACEMENT_FINISHED=executor placement stage ended.
+# /task/placement_result: PART_PLACED=original recorder XYZ check passed, PART_REJECTED=not passed.
+# /task/status: ARM_READY=verified reusable arm;
 # ARM_FAULT=latched, no reuse; ZONE_CLEAR=pick-zone release only.
 # COMPLETED is legacy telemetry, never a runtime slot-release signal.
 # IDLE / PICKING / CARRYING / PLACING / COMPLETED / FAILED
