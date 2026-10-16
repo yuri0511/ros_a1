@@ -29,7 +29,9 @@ try:
   time.sleep(.2)
  out={'controllers':message_to_ordereddict(controllers),'hardware_interfaces':message_to_ordereddict(call('/controller_manager/list_hardware_interfaces',ListHardwareInterfaces,ListHardwareInterfaces.Request())),'parameters':{}}
  for node,params in [('/gz_ros_control',['position_proportional_gain','hold_joints']),('/controller_manager',['update_rate','use_sim_time']),('/joint_trajectory_controller',['command_interfaces','state_interfaces','open_loop','open_loop_control','interpolate_from_desired_state','constraints.stopped_velocity_tolerance','constraints.goal_time']),('/arm2_joint_trajectory_controller',['command_interfaces','state_interfaces','open_loop','open_loop_control','constraints.goal_time'])]:
-  req=GetParameters.Request();req.names=params;v=call(node+'/get_parameters',GetParameters,req)
-  out['parameters'][node]={k:parameter_value_to_python(x) for k,x in zip(params,v.values)}
+  out['parameters'][node]={}
+  for key in params:
+   req=GetParameters.Request();req.names=[key];v=call(node+'/get_parameters',GetParameters,req)
+   out['parameters'][node][key]=parameter_value_to_python(v.values[0]) if v.values else {'unavailable':True}
  out['wall']=time.time();dest.write_text(json.dumps(out,indent=2));print(json.dumps(out['parameters'],indent=2))
 finally:n.destroy_node();rclpy.shutdown()
