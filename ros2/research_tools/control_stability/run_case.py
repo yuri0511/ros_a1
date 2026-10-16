@@ -33,7 +33,7 @@ for i in range(num):
  if policy_params:inner+=' policy_params:='+policy_params
  if os.environ.get('PERF_ISOLATION_ONLY')=='1':inner+=' auto_start:=false'
  if fixture=='1':
-  inner=f'source {ROOT}/activate.sh; source {WS}/install/setup.bash; export PATH={ROOT}/tools/bin:$PATH; exec ros2 launch a1_cell_sim cell_bringup.launch.py dual:=true gpu_offload:=false gazebo_gui:=false spawn_mode:=service world_file:=control_stability_prepost_1ms.sdf controllers_file:=ur5e_cell_controllers_stability_gain{os.environ.get('CONTROL_GAIN_TAG','1')}.yaml' 
+  inner=f'source {ROOT}/activate.sh; source {WS}/install/setup.bash; export PATH={ROOT}/tools/bin:$PATH; exec ros2 launch a1_cell_sim cell_bringup.launch.py dual:=true gpu_offload:=false gazebo_gui:=false spawn_mode:=service world_file:=control_stability_prepost_1ms.sdf controllers_file:=ur5e_cell_controllers_stability_gain{os.environ.get('CONTROL_GAIN_TAG','1')}.yaml'
  cmd=['bash','-c',inner];f=(run/'launch.log').open('w');files.append(f)
  diag=subprocess.Popen(['bash','-c',f'source {ROOT}/activate.sh; source {WS}/install/setup.bash; exec python {ROOT}/tools/observe.py {run}'],cwd=WS,env=env,stdout=(run/'observer.log').open('w'),stderr=subprocess.STDOUT,start_new_session=True)
  observers.append(diag)
