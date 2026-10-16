@@ -120,3 +120,29 @@ def test_action_active_excludes_entire_transit_before_begin():
  assert not evaluate(m,now_wall=10.301)['ready']
  for k in range(151):m.observe(['j'],[0],[0],1.302+k*.002,10.302+k*.002)
  assert evaluate(m,now_sim=1.602,now_wall=10.602)['ready']
+
+
+@pytest.mark.parametrize('dictionary',[True,False])
+def test_native_rclpy_dict_and_message_info_object_identity(dictionary):
+ from types import SimpleNamespace
+ from a1_sorting_core.physical_ready import publisher_identity
+ gid=bytes(range(16));info={'publisher_gid':gid} if dictionary else SimpleNamespace(publisher_gid=gid)
+ assert publisher_identity(info)==gid.hex()
+
+def test_missing_publisher_identity_is_not_silently_anonymous():
+ from a1_sorting_core.physical_ready import publisher_identity
+ with pytest.raises(ValueError):publisher_identity({})
+ with pytest.raises(ValueError):publisher_identity({'publisher_gid':bytes(16)})
+
+
+@pytest.mark.parametrize('count',[0,2])
+def test_no_gid_callback_refuses_missing_or_multiple_graph_endpoints(count):
+ from types import SimpleNamespace
+ from a1_sorting_core.physical_ready import publisher_identity
+ with pytest.raises(ValueError):publisher_identity({'source_timestamp':1},[SimpleNamespace(endpoint_gid=bytes(range(16)))]*count)
+
+def test_installed_jazzy_callback_uses_unique_graph_gid():
+ from types import SimpleNamespace
+ from a1_sorting_core.physical_ready import publisher_identity
+ gid=bytes(range(16))
+ assert publisher_identity({'source_timestamp':1,'publication_sequence_number':3},[SimpleNamespace(endpoint_gid=gid)])==gid.hex()

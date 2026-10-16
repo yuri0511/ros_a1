@@ -10,6 +10,24 @@ import math
 import threading
 
 
+def publisher_identity(info, publishers=None):
+    """Use DDS GID when exposed, otherwise require exactly one graph endpoint.
+
+    This installed Jazzy build exposes timestamps/sequence numbers but no GID
+    in callback info. A single graph endpoint is the only unambiguous source;
+    never invent identity from receive time or merge multiple publishers.
+    """
+    gid = info.get('publisher_gid') if isinstance(info, dict) else getattr(info, 'publisher_gid', None)
+    if gid is None:
+        if publishers is None or len(publishers) != 1:
+            raise ValueError('joint publisher source is not unique')
+        gid = publishers[0].endpoint_gid
+    identity = bytes(gid).hex()
+    if not identity or not any(bytes(gid)):
+        raise ValueError('missing DDS publisher identity')
+    return identity
+
+
 class PhysicalReadyMonitor:
     def __init__(self, window=.25, min_samples=50, pos_tol=.01, vel_tol=.3,
                  freshness=.5, max_gap=.05, future_tol=.01):
@@ -29,6 +47,10 @@ class PhysicalReadyMonitor:
         self._last_clock = None
         self._clock_progress_wall = None
         self.duplicate_stamps = 0
+
+    def invalidate(self, reason):
+        with self._lock:
+            self._fault = reason
 
     def begin(self, now_wall):
         """Begin evidence strictly after the completed controller Action."""

@@ -28,7 +28,7 @@ import json
 import math
 import threading
 import time
-from a1_sorting_core.physical_ready import PhysicalReadyMonitor
+from a1_sorting_core.physical_ready import PhysicalReadyMonitor, publisher_identity
 
 import rclpy
 from geometry_msgs.msg import PoseStamped
@@ -638,9 +638,14 @@ class PickPlaceExecutorNode(Node):
 
     # ================================================================ 命令入口
     def _on_joint_state(self, msg: JointState, info):
+        try:
+            source=publisher_identity(info,self.get_publishers_info_by_topic('/joint_states'))
+        except ValueError as e:
+            self._ready_monitor.invalidate(str(e))
+            self._arm_fault='joint_publisher_ambiguous'
+            return
         self._ready_monitor.observe(list(msg.name),list(msg.position),list(msg.velocity),
-            msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic(),
-            source=bytes(info.publisher_gid).hex() if info is not None else None)
+            msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic(),source=source)
         self._js_wall = time.time()
         self._store_joint_states(msg)
         if not self._grip_key_checked:
