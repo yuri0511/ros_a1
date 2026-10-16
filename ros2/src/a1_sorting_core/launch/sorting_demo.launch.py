@@ -172,7 +172,12 @@ def launch_setup(context, *args, **kwargs):
         dispatcher_overrides['arm2_colors'] = arm2_colors
     # q:用 yaml 里的相对路径,节点启动时解析到 ros2/codex_rl。
     # rule:盖成空路径,调度器打印「退回谁闲推谁」。
+    voice_on=LaunchConfiguration('voice_batch_mode').perform(context).lower() in ('true','1','yes')
     feed_mode = perform_substitutions(context, [feed_policy]).strip().lower()
+    if voice_on and (feed_mode!='rule' or not parallel_on or not pipeline_on or LaunchConfiguration('fast_sim_waits').perform(context).lower()!='true'):
+        raise ValueError('voice_batch_mode requires explicit rule, dual pipeline and fast_sim_waits=true')
+    if voice_on and LaunchConfiguration('controllers_file').perform(context)!='ur5e_cell_controllers_stability_gain1.yaml':
+        raise ValueError('voice_batch_mode requires the verified gain1 controller profile')
     if feed_mode == 'q':
         q_overrides = {}
     elif feed_mode == 'rule':
@@ -223,6 +228,7 @@ def launch_setup(context, *args, **kwargs):
                      # 语言指挥模式(2026-10-06):默认 true=来料即入队
                      # (旧行为);false=只登记,派发完全由 /sort_task
                      # 服务(语音节点)驱动
+                     'voice_batch_mode': voice_on,
                      'auto_start': ParameterValue(auto_start,
                                                   value_type=bool),
                      **dispatcher_overrides,
@@ -263,6 +269,7 @@ def launch_setup(context, *args, **kwargs):
                      # 世界变体一并废止(binC.sdf 已删,历史可考 64cd236/
                      # 3f02c2b)。bin_names 只影响 recorder 判定/计数集合,
                      # 与两臂执行器各自的 bin_names(北排/南排)正交。
+                     'voice_batch_mode': voice_on,
                      'csv_path': LaunchConfiguration('result_csv'),
                      'bin_names': (list(north_bins) if not dual_on
                                    else list(all_bins)),
@@ -289,6 +296,7 @@ def launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     return LaunchDescription([
+        DeclareLaunchArgument('voice_batch_mode',default_value='false'),
         DeclareLaunchArgument('fast_sim_waits', default_value='false'),
         DeclareLaunchArgument('gazebo_gui', default_value='false'),
         DeclareLaunchArgument('launch_rviz', default_value='false'),

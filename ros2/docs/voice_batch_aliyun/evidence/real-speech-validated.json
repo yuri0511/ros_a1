@@ -1,0 +1,26 @@
+{
+  "source": "audio/voice-primary/llm-parse-asr.json",
+  "source_is_real_asr_and_real_llm": true,
+  "transcript_unmodified": "开始分拣，三个绿色，一个红色，一个黄色的，先分拣黄色。",
+  "validated": true,
+  "plan": {
+    "schema_version": 1,
+    "action": "sort_batch",
+    "counts": {
+      "blue": 0,
+      "yellow": 1,
+      "red": 1,
+      "green": 3
+    },
+    "priority_first": "yellow",
+    "proposed_order": [
+      "yellow",
+      "red",
+      "green",
+      "green",
+      "green"
+    ]
+  },
+  "plan_sha256": "481ae03763ddd82c59a38a46a0ac39d34aad6f50ff1dccf6901b0d78bcc797cb",
+  "note": "Added grammatical synonym 色的 alongside 色/的. Original transcript/LLM evidence and initial rejection are preserved. No extra API call, no forced counts/order, no ROS confirmation."
+}

@@ -14,6 +14,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PartInfo.msg"
   "msg/TaskStatus.msg"
   "srv/SortTask.srv"
+  "srv/SubmitBatchPlan.srv"
   DEPENDENCIES std_msgs geometry_msgs
 )
 

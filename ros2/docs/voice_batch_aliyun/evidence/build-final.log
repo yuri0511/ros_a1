@@ -1,0 +1,10 @@
+Starting >>> a1_interfaces
+Starting >>> a1_cell_sim
+Finished <<< a1_cell_sim [0.08s]
+Finished <<< a1_interfaces [0.38s]
+Starting >>> a1_sorting_core
+Starting >>> a1_vision
+Finished <<< a1_vision [1.02s]
+Finished <<< a1_sorting_core [1.03s]
+
+Summary: 4 packages finished [1.48s]

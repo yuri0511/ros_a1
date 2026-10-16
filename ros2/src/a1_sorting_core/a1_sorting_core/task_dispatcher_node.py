@@ -111,6 +111,8 @@ class TaskDispatcherNode(Node):
         self._startup_rgb_wall = 0.0
         self._first_feed_t0 = time.monotonic()
         self._first_feed_logged = False
+        self.declare_parameter('voice_batch_mode', False)
+        self._voice_mode = bool(self.get_parameter('voice_batch_mode').value)
         self.declare_parameter('auto_start', False)   # 来料后是否自动开始分拣
         self.declare_parameter('dispatch_delay', 1.0)  # 上一件结束后延迟派发(秒)
         # ---- 双臂接力 ----
@@ -238,6 +240,10 @@ class TaskDispatcherNode(Node):
         self._window_timer = None
 
         self._lock = threading.Lock()
+        from a1_sorting_core.voice_batch_state import VoiceBatchState
+        self._voice = VoiceBatchState() if self._voice_mode else None
+        self._voice_visible = set()
+        self._voice_logical_wall = 0.0
         self._catalog: dict[str, PartInfo] = {}  # part_id -> 最新来料信息
         self._order: list[str] = []              # 来料顺序
         self._arm2_colors = {
@@ -272,6 +278,8 @@ class TaskDispatcherNode(Node):
         self._q_table = None
         self._q_package_dir = str(self.get_parameter('q_package_dir').value)
         self._q_batch = [int(n) for n in self.get_parameter('q_batch').value]
+        if self._voice_mode and (not self._demand_spawn or not self._per_arm_slots or not self._fast_waits or not self._belt_control or self._legacy_prime or str(self.get_parameter('q_table_path').value).strip()):
+            raise ValueError('voice mode requires dual demand spawn, v3 and explicit rule, no legacy prime or Q')
         self._load_q_policy()
         self._seq = RelaySequencer(
             relay_mode=relay_mode and not parallel_active,
@@ -363,12 +371,23 @@ class TaskDispatcherNode(Node):
             self.get_logger().info(
                 f'流水线: 按需来料 {self._demand_spawn}'
                 f'(计划 '
-                 + ('持续无限' if self._demand_unlimited
-                    else f'{self._demand_parts} 件')
+                 + ('语音动态计划待确认，未授权零送料' if self._voice_mode else ('持续无限' if self._demand_unlimited
+                    else f'{self._demand_parts} 件'))
                  + f', 话题 {self._spawn_topic}), '
                 f'推板控制 {self._belt_control}'
                 f'(前进 {self._belt_speed} m/s, 停推进线 x>={self._belt_stop_x}, '
                 f'{home_note})')
+        if getattr(self,'_voice_mode',False):
+            from a1_interfaces.srv import SubmitBatchPlan
+            from std_srvs.srv import Trigger
+            self._voice_pub = self.create_publisher(String, '/voice_batch/status', QoSProfile(depth=1,durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,reliability=QoSReliabilityPolicy.RELIABLE))
+            self.create_service(SubmitBatchPlan, '/voice_batch/submit', self._voice_on_submit)
+            self.create_service(Trigger, '/voice_batch/stop', self._voice_on_stop)
+            self.create_subscription(String, '/voice_batch/recycle', self._voice_on_recycle, 10)
+            with self._lock:self._voice_flush_locked()
+            self._voice_stopping=False
+            self._voice_watchdog_thread=threading.Thread(target=self._voice_watchdog,daemon=True)
+            self._voice_watchdog_thread.start()
         if self._demand_spawn:
             # 首件请求 + 推板前进。首条命令延迟 belt_first_cmd_delay(墙钟
             # Timer)发布:防止早于 gz 桥/TrackController 订阅就绪被丢
@@ -390,12 +409,17 @@ class TaskDispatcherNode(Node):
 
     # ---------------------------------------------------------------- 来料
     def _on_arrival(self, msg: PartInfo):
+        if getattr(self,'_voice_mode',False):
+            with self._lock:
+                fresh=self._voice.arrival(msg.part_id,msg.category,time.monotonic())
+                self._voice_flush_locked()
+                if self._halted or not fresh:return
         with self._lock:
             if msg.part_id not in self._catalog:
                 self._order.append(msg.part_id)
                 self.get_logger().info(
                     f'来料登记: {msg.part_id} (类别 {msg.category})')
-                if self._auto_start:
+                if self._auto_start or getattr(self,'_voice_mode',False):
                     self._seq.enqueue(msg.part_id)
                 if self._per_arm_slots and self._belt_part_id is None:
                     self._belt_part_id = msg.part_id
@@ -406,11 +430,13 @@ class TaskDispatcherNode(Node):
             # L1 串推:满 3 件即试探(_prime_maybe_start 内自校验桥就绪,
             # 未就绪则等排程 timer,幂等安全)
             self._prime_maybe_start(False)
-        if self._auto_start:
+        if self._auto_start or getattr(self,'_voice_mode',False):
             self._try_dispatch()
 
     # ---------------------------------------------------------------- 服务
     def _on_sort_task(self, request, response):
+        if getattr(self,'_voice_mode',False):
+            response.accepted=False;response.message='voice_batch exclusive: use confirmed /voice_batch/submit';return response
         if self._halted:
             response.accepted=False;response.message="ARM_FAULT: controlled full restart required"
             return response
@@ -458,6 +484,11 @@ class TaskDispatcherNode(Node):
 
     # ---------------------------------------------------------------- 状态
     def _on_status(self, msg: TaskStatus):
+        if getattr(self,'_voice_mode',False):
+            with self._lock:
+                self._voice.status(msg.part_id,msg.arm or 'arm1',msg.state,msg.detail)
+                self._voice_flush_locked()
+                if self._halted:return
         self._note_sim(msg.header.stamp)
         if msg.state == 'ZONE_CLEAR':
             self._on_zone_clear(msg)
@@ -521,6 +552,9 @@ class TaskDispatcherNode(Node):
                 # DISPATCH 动作同源的判断,此后才允许来下一件
                 full_terminal = not any(kind == RELAY for kind, _ in actions)
                 if full_terminal:
+                    if getattr(self,'_voice_mode',False):
+                        self._voice.release(msg.part_id,arm,time.monotonic())
+                        self._voice_flush_locked()
                     self._finished_parts.add(msg.part_id)
                     # 指定箱覆盖防串:完全终态后清除该件残留覆盖
                     # (缓存命令同步清空,防同名件下一轮串用)
@@ -589,7 +623,7 @@ class TaskDispatcherNode(Node):
         self._startup_readiness_complete = False
         def observe_startup_rgb(message):
             self._startup_rgb_wall = time.monotonic()
-            if self._startup_readiness_complete and self._ready_image is not None:
+            if self._startup_readiness_complete and not getattr(self,'_voice_mode',False) and self._ready_image is not None:
                 subscription = self._ready_image
                 self._ready_image = None
                 # Destroy our temporary observer inside its own executor callback.
@@ -610,7 +644,7 @@ class TaskDispatcherNode(Node):
             query_started = 0.0; response_at = 0.0; next_query = 0.0
             transport_at = 0.0; next_cli = 0.0; next_diagnostic = 0.0
             query_timeouts = 0; query_error = ''; transport_error = ''
-            while rclpy.ok() and time.monotonic() < deadline:
+            while rclpy.ok() and not getattr(self,'_voice_stopping',False) and time.monotonic() < deadline:
                 now = time.monotonic(); sim = self.get_clock().now().nanoseconds / 1e9
                 if future is not None and future.done():
                     try:
@@ -670,6 +704,10 @@ class TaskDispatcherNode(Node):
                 if all(checks.values()):
                     self.get_logger().info('STARTUP_READY '+json.dumps({'checks':checks,'active':sorted(active),'wall_wait':now-self._first_feed_t0,'sim':sim}))
                     self._startup_readiness_complete = True
+                    if getattr(self,'_voice_mode',False):
+                        with self._lock:
+                            self._voice.ready()
+                            self._voice_flush_locked()
                     self._request_spawn_and_start_belt()
                     return
                 if now >= next_diagnostic:
@@ -681,9 +719,11 @@ class TaskDispatcherNode(Node):
                     next_diagnostic = now + 5.0
                 last_sim = sim
                 time.sleep(.1)
+            if getattr(self,'_voice_stopping',False):return
             self._halted = True
             self.get_logger().error('STARTUP_READINESS_TIMEOUT: no feed; '+json.dumps(checks))
-        threading.Thread(target=run, daemon=True).start()
+        self._startup_ready_thread=threading.Thread(target=run, daemon=True)
+        self._startup_ready_thread.start()
 
     def _note_sim(self, stamp):
         """记下状态消息上的仿真秒。没有戳时保持上一次的值。"""
@@ -799,6 +839,9 @@ class TaskDispatcherNode(Node):
         并联时不发 random。接了 Q 表就问表,否则谁闲推谁。
         一次只占一个送料槽。取件区还被占、或已经有一件在送,这次直接返回。
         """
+        if getattr(self,'_voice_mode',False):
+            self._voice_request_spawn()
+            return
         with self._lock:
             if self._halted:
                 return
@@ -963,6 +1006,13 @@ class TaskDispatcherNode(Node):
         不再用墙钟 2.6 秒。
         """
         self._startup_logical_wall = time.monotonic()
+        if getattr(self,'_voice_mode',False):
+            with self._lock:
+                self._voice_visible={m.name for m in msg.model if m.name.startswith('part_')}
+                self._voice_logical_wall=time.monotonic()
+                self._voice.observe_entities(self._voice_visible)
+                self._voice_flush_locked()
+                if self._halted:return
         self._startup_pusher = self._pusher_world_x(msg)
         self._cam_cache.update(
             (m.name, m.pose.position.x, m.pose.position.y, m.pose.position.z)
@@ -1008,7 +1058,7 @@ class TaskDispatcherNode(Node):
                 f'pusher_x={None if pusher_x is None else round(pusher_x, 3)}')
             cmd = Float64()
             cmd.data = cmd_value
-            self._pub_belt.publish(cmd)
+            self._voice_safe_belt(cmd)
             self._destroy_settle_timer()
             self.get_logger().info(
                 f'停推进: 工件 world_x >= {self._belt_stop_x},'
@@ -1018,7 +1068,7 @@ class TaskDispatcherNode(Node):
         if stop_value is not None:
             cmd = Float64()
             cmd.data = stop_value
-            self._pub_belt.publish(cmd)
+            self._voice_safe_belt(cmd)
             shown = '无' if pusher_x is None else f'{pusher_x:.3f}'
             if stop_reason == 'position':
                 self.get_logger().info(
@@ -1139,6 +1189,85 @@ class TaskDispatcherNode(Node):
                         f'派发任务: {part_id} (类别 {command.category})'
                         f'{ovr_note}'
                         + ('，取件区上锁' if self._per_arm_slots else ''))
+
+    # ------------------------------------------------ independent voice batch
+    def _voice_flush_locked(self):
+        if self._voice.state=='HALTED':
+            self._halted=True
+            self._destroy_spawn_timer();self._destroy_next_timer();self._destroy_relay_timer();self._destroy_settle_timer()
+            if self._pub_belt is not None:
+                stop=Float64();stop.data=0.;self._pub_belt.publish(stop)
+        while self._voice.events:
+            event=self._voice.events.pop(0)
+            self.get_logger().info('VOICE_BATCH '+json.dumps({'wall':time.time(),'sim':self.get_clock().now().nanoseconds/1e9,**event},ensure_ascii=False))
+        message=String();message.data=json.dumps(self._voice.snapshot(),ensure_ascii=False)
+        self._voice_pub.publish(message)
+
+    def _voice_on_submit(self,request,response):
+        from a1_sorting_core.voice_batch_plan import validate_candidate,PlanRejected
+        try:
+            plan=validate_candidate(json.dumps({'schema_version':1,'action':'sort_batch','counts':dict(zip(('blue','yellow','red','green'),(request.blue,request.yellow,request.red,request.green))),'priority_first':request.priority_first,'proposed_order':list(request.proposed_order)}))
+            from a1_sorting_core.voice_batch_safety import ensure_geometry_review
+            ensure_geometry_review(plan)
+            with self._lock:
+                self._voice.accept(request.session_id,request.request_id,request.user_confirmed,plan,request.plan_sha256,time.monotonic())
+                self._voice_flush_locked()
+            response.accepted=True;response.message='confirmed plan accepted; feed remains readiness/slot/vision/recycle gated'
+            self._request_spawn_and_start_belt()
+        except PlanRejected as exc:
+            response.accepted=False;response.message=str(exc)
+        return response
+
+    def _voice_on_stop(self,request,response):
+        with self._lock:
+            self._voice.halt('operator_stop');self._voice_flush_locked()
+        response.success=True;response.message='New feeding/dispatch halted; active motion requires supervised pause/cleanup, not an emergency stop guarantee'
+        return response
+
+    def _voice_on_recycle(self,msg):
+        try:
+            record=json.loads(msg.data)
+            if set(record)!={'part_id','deleted','sim_time'} or record['deleted'] is not True:raise ValueError('invalid recycle ACK')
+            with self._lock:
+                self._voice.recycle(record['part_id'],time.monotonic());self._voice_flush_locked()
+        except (ValueError,TypeError,KeyError):
+            with self._lock:self._voice.halt('invalid_recycle_ack');self._voice_flush_locked()
+
+    def _voice_safe_belt(self,command):
+        if not self._voice_mode:
+            self._pub_belt.publish(command);return
+        with self._lock:
+            if not self._halted or command.data==0.:self._pub_belt.publish(command)
+
+    def _voice_request_spawn(self):
+        with self._lock:
+            if self._halted:return
+            now=time.monotonic()
+            can_feed=(not self._feed_inflight and not self._seq.busy_parts() and self._seq.zone_arm is None and now-self._startup_rgb_wall<1. and now-self._voice_logical_wall<1.)
+            color=self._voice.reserve(now,can_feed,self._voice_visible,self._voice_logical_wall)
+            if color is None:return
+            self._spawned+=1;self._feed_counts[color]+=1;self._feed_inflight=True
+            self._destroy_settle_timer();self._belt.start()
+            self._voice_flush_locked()
+            request=String();request.data=color;self._pub_spawn.publish(request)
+            command=Float64();command.data=self._belt_speed;self._pub_belt.publish(command)
+
+    def _voice_watchdog(self):
+        while rclpy.ok() and not getattr(self,'_voice_stopping',False):
+            time.sleep(.2)
+            if not rclpy.ok() or getattr(self,'_voice_stopping',False):return
+            with self._lock:
+                if self._halted and self._voice.state!='HALTED':self._voice.halt('base_dispatcher_halted')
+                self._voice.check_timeout(time.monotonic());self._voice_flush_locked()
+            self._request_spawn_and_start_belt()
+
+    def destroy_node(self):
+        if getattr(self,'_voice_mode',False):
+            self._voice_stopping=True
+            for name in ('_voice_watchdog_thread','_startup_ready_thread'):
+                thread=getattr(self,name,None)
+                if thread is not None and thread is not threading.current_thread():thread.join(timeout=3.)
+        return super().destroy_node()
 
     def _window_recheck(self):
         """停位窗越窗后的复检触发(2s 墙钟;窗口自愈=件被碰回带内,

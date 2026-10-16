@@ -1,0 +1,36 @@
+{
+  "transcript": "开始分拣。三个绿色，一个红色，一个黄的。先分拣黄色。",
+  "raw_candidate": "{\n  \"schema_version\": 1,\n  \"action\": \"sort_batch\",\n  \"counts\": {\n    \"blue\": 0,\n    \"yellow\": 1,\n    \"red\": 1,\n    \"green\": 3\n  },\n  \"priority_first\": \"yellow\",\n  \"proposed_order\": [\n    \"yellow\",\n    \"red\",\n    \"green\",\n    \"green\",\n    \"green\"\n  ]\n}",
+  "api": {
+    "model": "qwen-flash",
+    "request_number": 1,
+    "wall": 1792191743.7335358,
+    "success": true,
+    "usage": {
+      "completion_tokens": 90,
+      "prompt_tokens": 246,
+      "total_tokens": 336
+    },
+    "request_id": "chatcmpl-f44dae21-e60a-91a0-bd68-b157e0e81d6a"
+  },
+  "validated": true,
+  "plan": {
+    "schema_version": 1,
+    "action": "sort_batch",
+    "counts": {
+      "blue": 0,
+      "yellow": 1,
+      "red": 1,
+      "green": 3
+    },
+    "priority_first": "yellow",
+    "proposed_order": [
+      "yellow",
+      "red",
+      "green",
+      "green",
+      "green"
+    ]
+  },
+  "plan_sha256": "481ae03763ddd82c59a38a46a0ac39d34aad6f50ff1dccf6901b0d78bcc797cb"
+}

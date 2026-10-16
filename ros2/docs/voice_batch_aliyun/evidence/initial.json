@@ -1,0 +1,13 @@
+{
+  "baseline": "f6a7afc8ed7451e161023c6039b5f2494ea55ab6",
+  "branch": "feature/aliyun-voice-batch-20261017",
+  "old_worktree_clean": true,
+  "spec_sha256": "9aa65dcf82f8c040547de6cda88c753bcf5a3e30680397363db3e2a0580930a3",
+  "when": "2026-10-17T06:54:45.405858+08:00",
+  "capture_device": "ALSA card0 AudioPCI ES1371/1",
+  "audio_tools": [
+    "arecord",
+    "pw-record"
+  ],
+  "pactl_installed": false
+}

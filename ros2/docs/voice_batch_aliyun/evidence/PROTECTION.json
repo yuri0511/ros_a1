@@ -1,0 +1,17 @@
+{
+  "ros2/src/a1_sorting_core/a1_sorting_core/physical_ready.py": true,
+  "ros2/src/a1_sorting_core/a1_sorting_core/motion_client.py": true,
+  "ros2/src/a1_sorting_core/a1_sorting_core/pick_place_executor_node.py": true,
+  "ros2/src/a1_sorting_core/a1_sorting_core/relay_sequencer.py": true,
+  "ros2/src/a1_sorting_core/a1_sorting_core/bins.py": true,
+  "ros2/src/a1_interfaces/msg/TaskStatus.msg": true,
+  "ros2/src/a1_interfaces/srv/SortTask.srv": true,
+  "ros2/src/a1_sorting_core/config": true,
+  "ros2/src/a1_cell_sim": true,
+  "ros2/src/a1_vision": true,
+  "ros2/codex_rl": true,
+  "ros2/codex_rl_v2": true,
+  "ros2/pixi.lock": true,
+  "ros2/pixi.toml": true,
+  "old_final_worktree_clean": true
+}

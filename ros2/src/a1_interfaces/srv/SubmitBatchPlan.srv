@@ -1,0 +1,15 @@
+# Voice-only confirmed plan. Never overload SortTask's part_id/target_bin.
+# Client creates request_id locally; session_id must match the live server nonce.
+string session_id
+string request_id
+bool user_confirmed
+string plan_sha256
+uint8 blue
+uint8 yellow
+uint8 red
+uint8 green
+string priority_first
+string[] proposed_order
+---
+bool accepted
+string message

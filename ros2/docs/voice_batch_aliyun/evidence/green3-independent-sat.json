@@ -1,0 +1,150 @@
+{
+  "purpose": "Independent exact box-vs-box 15-axis SAT; no mesh conservatism or expanded tolerance",
+  "sample": {
+    "case": "114",
+    "object1": "green_wall_y_pos_collision",
+    "object2": "arm2_gripper_finger_right_link__0",
+    "collision": "1",
+    "penetration_depth_m": "0.000715471241696615",
+    "distance_m": "-1",
+    "config": {
+      "index": 114,
+      "slot": 3,
+      "path_sample": 4,
+      "finger_position": -0.003,
+      "arm2_joints": [
+        -1.2221,
+        -1.8531,
+        1.42355,
+        -1.1412,
+        -1.5708,
+        -1.2221
+      ]
+    }
+  },
+  "axis_checks": [
+    {
+      "axis": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "signed_separation_m": -0.042987833150445354
+    },
+    {
+      "axis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "signed_separation_m": -0.0007164431590811603
+    },
+    {
+      "axis": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "signed_separation_m": -0.009592349538565147
+    },
+    {
+      "axis": [
+        0.9999999991060364,
+        -5.276633104434056e-10,
+        -4.228388741943412e-05
+      ],
+      "signed_separation_m": -0.0429857016820486
+    },
+    {
+      "axis": [
+        2.8761305533372603e-10,
+        -0.9999999998141211,
+        1.9281020066492868e-05
+      ],
+      "signed_separation_m": -0.0007154712667230617
+    },
+    {
+      "axis": [
+        -4.228388742179751e-05,
+        -1.928102006139721e-05,
+        -0.9999999989201576
+      ],
+      "signed_separation_m": -0.009596207866901369
+    },
+    {
+      "axis": [
+        0.0,
+        0.9999999999221365,
+        -1.2479063364448376e-05
+      ],
+      "signed_separation_m": -0.0007158141124300648
+    },
+    {
+      "axis": [
+        0.0,
+        -1.9281020066492868e-05,
+        -0.9999999998141211
+      ],
+      "signed_separation_m": -0.009592528555533466
+    },
+    {
+      "axis": [
+        0.0,
+        0.9999999998141211,
+        -1.9281020078633736e-05
+      ],
+      "signed_separation_m": -0.0007154712416966138
+    },
+    {
+      "axis": [
+        -4.228388741943412e-05,
+        0.0,
+        -0.9999999991060364
+      ],
+      "signed_separation_m": -0.009596028849932901
+    },
+    {
+      "axis": [
+        0.999999999888743,
+        0.0,
+        -1.4916900366778293e-05
+      ],
+      "signed_separation_m": -0.04298708121631262
+    },
+    {
+      "axis": [
+        -0.9999999991060364,
+        0.0,
+        4.228388742965719e-05
+      ],
+      "signed_separation_m": -0.042985701677149483
+    },
+    {
+      "axis": [
+        5.276633109151173e-10,
+        1.0,
+        -0.0
+      ],
+      "signed_separation_m": -0.0007164431754323039
+    },
+    {
+      "axis": [
+        1.0,
+        2.876130553871872e-10,
+        -0.0
+      ],
+      "signed_separation_m": -0.04298783314720006
+    },
+    {
+      "axis": [
+        0.41489176385705534,
+        -0.909870773397839,
+        0.0
+      ],
+      "signed_separation_m": -0.03720058424741651
+    }
+  ],
+  "all_axes_overlap": true,
+  "least_overlap_m": 0.0007154712416966138,
+  "conclusion": "Static nominal green3 path includes finger/wall intersection even at the closed mechanical limit. Not proof an actual Gazebo collision occurred. Gate physical validation until reviewed; no geometry/threshold/path modification authorized."
+}

@@ -1,0 +1,132 @@
+[
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/TASK_SPEC.md",
+    "bytes": 15504,
+    "sha256": "9aa65dcf82f8c040547de6cda88c753bcf5a3e30680397363db3e2a0580930a3"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/adapter-tests.log",
+    "bytes": 98,
+    "sha256": "9324d7f9c3371c89ada765dc1a020c1a71c806c73430afb70866285c94b13b80"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/all-tests.log",
+    "bytes": 8123,
+    "sha256": "ca4ce59765b1369c9ac0a6c15f16e61350df264c2127a9a03881b7bf3867a2c3"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/build-final.log",
+    "bytes": 278,
+    "sha256": "b9e390ba87f3cbd34e3901773d2e6385753d90388e58e6c69d91d348a3823e62"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/build.log",
+    "bytes": 1318,
+    "sha256": "0f2b6af20bbf1fafca961c4b92e796a97efaedafc062aa7b2f709f5d14d357fc"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/docs2-inventory.json",
+    "bytes": 5435,
+    "sha256": "c9eb4e72ee2966be426a22bd367807a36437db97966dc4d856e305fef17d10fb"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/final-tests.log",
+    "bytes": 8073,
+    "sha256": "f0fc122e0d0b4c38d3b79d4ade653b9fc6d5cb53b0fd5c959f01dadc1e16cc96"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/first-integration-tests.log",
+    "bytes": 9728,
+    "sha256": "d0d3a7ec9cff004d0b5f8d555ea3be7e17d586aedbefa99c10af43eeceb9a5f0"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/green-third-static.json",
+    "bytes": 2495,
+    "sha256": "b50edada95380a16c0e34d0a58fcf57d5b5b35db2c5afc167ba0f90d6f9b9f13"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/green3-independent-sat.json",
+    "bytes": 3279,
+    "sha256": "913414e5cde40f4b2ac4db34d376b60395b32af323095fb76f0593af3f2f30bb"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/initial.json",
+    "bytes": 407,
+    "sha256": "4815c71ffc3789def06c31e899e29ba0c0974a2a21330cbf28490e025fdee437"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/mesh-build.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/mesh-cases.json",
+    "bytes": 33573,
+    "sha256": "747c1a8569c8bc1ac13755fd6ab803582095620ed4e28a0a06abd26e817308d9"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/mesh-queries.txt",
+    "bytes": 1143960,
+    "sha256": "efb9c542282c80a7d1a60a3b354ff4e74730f381554187a43ea72a687718db31"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/mesh-results.csv",
+    "bytes": 1564072,
+    "sha256": "e82d8abb1cbfa67162f2a9d1c506ac94e2d31d1e6ff63a3156d678ccfe8d37b5"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/mesh-summary.json",
+    "bytes": 20089,
+    "sha256": "e6ff7d5b651e7281327d2f286a8874e9265324155526c3c6abd346d2dc2fd968"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/real-speech-validated.json",
+    "bytes": 813,
+    "sha256": "9f1b3b66d50f7d7e724266804cb06baa2ba863c5566c5fbbaf5267b600c8df5c"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/robot-static.urdf",
+    "bytes": 62570,
+    "sha256": "4b03835ed16d404105ab06dd61fb5532a2488317031fb4650660e02dc84f808b"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/ros-transport-smoke.log",
+    "bytes": 2411,
+    "sha256": "4cfd6260d0eb9928e9f1197e01d10503ce354f448fb23466b11143f8b415b343"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/source-hashes.json",
+    "bytes": 862,
+    "sha256": "d2f7a5b6582b5de2e6fab6b9d52df8857979b0316280a36ed66d68a915a86e42"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/stage2-offline-tests.log",
+    "bytes": 99,
+    "sha256": "3d8658404dba2c0adb9a8fe1b0096e3c42082f65a2a02a5c11b8bb9af69352cf"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audit/stage2-source-hashes.json",
+    "bytes": 862,
+    "sha256": "d2f7a5b6582b5de2e6fab6b9d52df8857979b0316280a36ed66d68a915a86e42"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audio/voice-primary/microphone.wav",
+    "bytes": 256044,
+    "sha256": "4ee995cf59df5898db89eb27edb60e91df81e9fc199c7ebbfbf38391be2ffa02"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audio/voice-primary/asr.json",
+    "bytes": 420,
+    "sha256": "d3170418dc817389cd432a9b59ec2420cfaa47d63ce6ab4e5425d3136cbadf40"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audio/voice-primary/llm-parse-asr.json",
+    "bytes": 758,
+    "sha256": "1689e1815e1c831c52a79e07c3449214b89e4d6cef405d13e58ee1bd322f86bf"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/cloud/text-primary/llm-text.json",
+    "bytes": 1120,
+    "sha256": "5c886b8784e9674a3ea7655f02fe0f46555c94933d8349e836d09919cb799cae"
+  }
+]

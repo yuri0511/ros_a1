@@ -1,0 +1,8 @@
+{
+  "path": "/home/yu/yuri_gazebo_performance/voice_batch_aliyun/audio/voice-primary/microphone.wav",
+  "sha256": "4ee995cf59df5898db89eb27edb60e91df81e9fc199c7ebbfbf38391be2ffa02",
+  "peak": 32768,
+  "rms": 2056.4239254806052,
+  "samples": 128000,
+  "normalization_applied": false
+}

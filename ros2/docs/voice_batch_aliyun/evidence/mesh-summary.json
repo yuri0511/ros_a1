@@ -1,0 +1,851 @@
+{
+  "cases": 153,
+  "collision_rows": 38,
+  "collision_rows_by_slot": {
+    "1": 14,
+    "3": 24
+  },
+  "min_noncolliding_distance_by_slot": {
+    "1": 2.42486700093907e-06,
+    "2": 0.00662150312437068,
+    "3": 6.66967334737076e-06
+  },
+  "collisions": [
+    {
+      "case": "13",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00294913818831811",
+      "distance_m": "-1",
+      "config": {
+        "index": 13,
+        "slot": 1,
+        "path_sample": 4,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.5461,
+          -1.9865,
+          1.5017,
+          -1.086,
+          -1.5708,
+          -1.5461
+        ]
+      }
+    },
+    {
+      "case": "16",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.0029516819482402",
+      "distance_m": "-1",
+      "config": {
+        "index": 16,
+        "slot": 1,
+        "path_sample": 5,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.5461,
+          -1.998875,
+          1.540425,
+          -1.11235,
+          -1.5708,
+          -1.5461
+        ]
+      }
+    },
+    {
+      "case": "19",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00295958826880505",
+      "distance_m": "-1",
+      "config": {
+        "index": 19,
+        "slot": 1,
+        "path_sample": 6,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.5461,
+          -2.01125,
+          1.57915,
+          -1.1387,
+          -1.5708,
+          -1.5461
+        ]
+      }
+    },
+    {
+      "case": "22",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00297291541739609",
+      "distance_m": "-1",
+      "config": {
+        "index": 22,
+        "slot": 1,
+        "path_sample": 7,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.5461,
+          -2.023625,
+          1.6178750000000002,
+          -1.16505,
+          -1.5708,
+          -1.5461
+        ]
+      }
+    },
+    {
+      "case": "25",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00299171752701084",
+      "distance_m": "-1",
+      "config": {
+        "index": 25,
+        "slot": 1,
+        "path_sample": 8,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.5461,
+          -2.036,
+          1.6566,
+          -1.1914,
+          -1.5708,
+          -1.5461
+        ]
+      }
+    },
+    {
+      "case": "28",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00298986216425369",
+      "distance_m": "-1",
+      "config": {
+        "index": 28,
+        "slot": 1,
+        "path_sample": 9,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.546105,
+          -2.03954375,
+          1.6704287500000001,
+          -1.201685,
+          -1.5708,
+          -1.546105
+        ]
+      }
+    },
+    {
+      "case": "31",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00298890367050343",
+      "distance_m": "-1",
+      "config": {
+        "index": 31,
+        "slot": 1,
+        "path_sample": 10,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.54611,
+          -2.0430875,
+          1.6842575000000002,
+          -1.21197,
+          -1.5708,
+          -1.54611
+        ]
+      }
+    },
+    {
+      "case": "34",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.0029888448343164",
+      "distance_m": "-1",
+      "config": {
+        "index": 34,
+        "slot": 1,
+        "path_sample": 11,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.5461150000000001,
+          -2.04663125,
+          1.69808625,
+          -1.222255,
+          -1.5708,
+          -1.5461150000000001
+        ]
+      }
+    },
+    {
+      "case": "37",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00298968834091624",
+      "distance_m": "-1",
+      "config": {
+        "index": 37,
+        "slot": 1,
+        "path_sample": 12,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.5461200000000002,
+          -2.0501750000000003,
+          1.711915,
+          -1.23254,
+          -1.5708,
+          -1.5461200000000002
+        ]
+      }
+    },
+    {
+      "case": "40",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00299143677191561",
+      "distance_m": "-1",
+      "config": {
+        "index": 40,
+        "slot": 1,
+        "path_sample": 13,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.546125,
+          -2.0537187500000003,
+          1.7257437500000001,
+          -1.2428249999999998,
+          -1.5708,
+          -1.546125
+        ]
+      }
+    },
+    {
+      "case": "43",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00299409260504918",
+      "distance_m": "-1",
+      "config": {
+        "index": 43,
+        "slot": 1,
+        "path_sample": 14,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.54613,
+          -2.0572625,
+          1.7395725,
+          -1.25311,
+          -1.5708,
+          -1.54613
+        ]
+      }
+    },
+    {
+      "case": "46",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00299765821391688",
+      "distance_m": "-1",
+      "config": {
+        "index": 46,
+        "slot": 1,
+        "path_sample": 15,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.546135,
+          -2.06080625,
+          1.75340125,
+          -1.263395,
+          -1.5708,
+          -1.546135
+        ]
+      }
+    },
+    {
+      "case": "48",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "2.13586775912964e-06",
+      "distance_m": "-1",
+      "config": {
+        "index": 48,
+        "slot": 1,
+        "path_sample": 16,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.54614,
+          -2.06435,
+          1.76723,
+          -1.27368,
+          -1.5708,
+          -1.54614
+        ]
+      }
+    },
+    {
+      "case": "49",
+      "object1": "green_wall_y_neg_collision",
+      "object2": "arm2_gripper_finger_left_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00300213586773987",
+      "distance_m": "-1",
+      "config": {
+        "index": 49,
+        "slot": 1,
+        "path_sample": 16,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.54614,
+          -2.06435,
+          1.76723,
+          -1.27368,
+          -1.5708,
+          -1.54614
+        ]
+      }
+    },
+    {
+      "case": "114",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.000715471241696615",
+      "distance_m": "-1",
+      "config": {
+        "index": 114,
+        "slot": 3,
+        "path_sample": 4,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.8531,
+          1.42355,
+          -1.1412,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "115",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00371547124169662",
+      "distance_m": "-1",
+      "config": {
+        "index": 115,
+        "slot": 3,
+        "path_sample": 4,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.8531,
+          1.42355,
+          -1.1412,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "117",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.000671972734254993",
+      "distance_m": "-1",
+      "config": {
+        "index": 117,
+        "slot": 3,
+        "path_sample": 5,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.86425,
+          1.4626125,
+          -1.1691,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "118",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00367197273425498",
+      "distance_m": "-1",
+      "config": {
+        "index": 118,
+        "slot": 3,
+        "path_sample": 5,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.86425,
+          1.4626125,
+          -1.1691,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "120",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.000537708794647737",
+      "distance_m": "-1",
+      "config": {
+        "index": 120,
+        "slot": 3,
+        "path_sample": 6,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.8754,
+          1.501675,
+          -1.197,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "121",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00353770879464772",
+      "distance_m": "-1",
+      "config": {
+        "index": 121,
+        "slot": 3,
+        "path_sample": 6,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.8754,
+          1.501675,
+          -1.197,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "123",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.000311772125487592",
+      "distance_m": "-1",
+      "config": {
+        "index": 123,
+        "slot": 3,
+        "path_sample": 7,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.88655,
+          1.5407375,
+          -1.2248999999999999,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "124",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00331177212548759",
+      "distance_m": "-1",
+      "config": {
+        "index": 124,
+        "slot": 3,
+        "path_sample": 7,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.88655,
+          1.5407375,
+          -1.2248999999999999,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "127",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.0029933303321789",
+      "distance_m": "-1",
+      "config": {
+        "index": 127,
+        "slot": 3,
+        "path_sample": 8,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.8977,
+          1.5798,
+          -1.2528,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "129",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "4.41897377276958e-05",
+      "distance_m": "-1",
+      "config": {
+        "index": 129,
+        "slot": 3,
+        "path_sample": 9,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.9005874999999999,
+          1.593525,
+          -1.26365,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "130",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00304418973618268",
+      "distance_m": "-1",
+      "config": {
+        "index": 130,
+        "slot": 3,
+        "path_sample": 9,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.9005874999999999,
+          1.593525,
+          -1.26365,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "132",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "8.02941206738076e-05",
+      "distance_m": "-1",
+      "config": {
+        "index": 132,
+        "slot": 3,
+        "path_sample": 10,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.903475,
+          1.60725,
+          -1.2745,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "133",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00308029411951263",
+      "distance_m": "-1",
+      "config": {
+        "index": 133,
+        "slot": 3,
+        "path_sample": 10,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.903475,
+          1.60725,
+          -1.2745,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "135",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.000101740573021935",
+      "distance_m": "-1",
+      "config": {
+        "index": 135,
+        "slot": 3,
+        "path_sample": 11,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.9063625,
+          1.620975,
+          -1.28535,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "136",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00310174057218988",
+      "distance_m": "-1",
+      "config": {
+        "index": 136,
+        "slot": 3,
+        "path_sample": 11,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.9063625,
+          1.620975,
+          -1.28535,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "138",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.000108483491158645",
+      "distance_m": "-1",
+      "config": {
+        "index": 138,
+        "slot": 3,
+        "path_sample": 12,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.9092500000000001,
+          1.6347,
+          -1.2961999999999998,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "139",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00310848349060101",
+      "distance_m": "-1",
+      "config": {
+        "index": 139,
+        "slot": 3,
+        "path_sample": 12,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.9092500000000001,
+          1.6347,
+          -1.2961999999999998,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "141",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.000100479041906379",
+      "distance_m": "-1",
+      "config": {
+        "index": 141,
+        "slot": 3,
+        "path_sample": 13,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.9121375,
+          1.648425,
+          -1.3070499999999998,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "142",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00310047904156843",
+      "distance_m": "-1",
+      "config": {
+        "index": 142,
+        "slot": 3,
+        "path_sample": 13,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.9121375,
+          1.648425,
+          -1.3070499999999998,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "144",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "7.76851680313164e-05",
+      "distance_m": "-1",
+      "config": {
+        "index": 144,
+        "slot": 3,
+        "path_sample": 14,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.915025,
+          1.66215,
+          -1.3178999999999998,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "145",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00307768516785832",
+      "distance_m": "-1",
+      "config": {
+        "index": 145,
+        "slot": 3,
+        "path_sample": 14,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.915025,
+          1.66215,
+          -1.3178999999999998,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "147",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "4.00615935430733e-05",
+      "distance_m": "-1",
+      "config": {
+        "index": 147,
+        "slot": 3,
+        "path_sample": 15,
+        "finger_position": -0.003,
+        "arm2_joints": [
+          -1.2221,
+          -1.9179125000000001,
+          1.675875,
+          -1.3287499999999999,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "148",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00304006159348032",
+      "distance_m": "-1",
+      "config": {
+        "index": 148,
+        "slot": 3,
+        "path_sample": 15,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.9179125000000001,
+          1.675875,
+          -1.3287499999999999,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    },
+    {
+      "case": "151",
+      "object1": "green_wall_y_pos_collision",
+      "object2": "arm2_gripper_finger_right_link__0",
+      "collision": "1",
+      "penetration_depth_m": "0.00298756982877694",
+      "distance_m": "-1",
+      "config": {
+        "index": 151,
+        "slot": 3,
+        "path_sample": 16,
+        "finger_position": 0.0,
+        "arm2_joints": [
+          -1.2221,
+          -1.9208,
+          1.6896,
+          -1.3396,
+          -1.5708,
+          -1.2221
+        ]
+      }
+    }
+  ]
+}

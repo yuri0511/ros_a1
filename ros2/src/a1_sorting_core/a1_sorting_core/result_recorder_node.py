@@ -77,6 +77,11 @@ class ResultRecorderNode(Node):
         # /world/<world>/remove 删除该工件实体,腾出料区格位;0=关闭
         # (legacy 一轮 3 件用不到)。不回收 FAILED/OUTSIDE:失败件留在
         # 现场供复盘。删除后 a1_vision 侧靠 stale_timeout 自动剔除跟踪。
+        self.declare_parameter('voice_batch_mode', False)
+        self._voice_mode=bool(self.get_parameter('voice_batch_mode').value)
+        if self._voice_mode:
+            from std_msgs.msg import String
+            self._voice_recycled_pub=self.create_publisher(String,'/voice_batch/recycle',10)
         self.declare_parameter('recycle_delay', 0.0)
         self.declare_parameter('world_name', 'sorting_cell')
         # 相机安装位姿(与 a1_vision/config/vision_params.yaml 一致)
@@ -260,6 +265,9 @@ class ResultRecorderNode(Node):
             ok = bool(resp and resp.success)
             if ok:
                 self.get_logger().info(f'{part_id} 回收完成(已从世界删除)')
+                if self._voice_mode:
+                    from std_msgs.msg import String
+                    message=String();message.data=json.dumps({'part_id':part_id,'deleted':True,'sim_time':self.get_clock().now().nanoseconds/1e9});self._voice_recycled_pub.publish(message)
             else:
                 self.get_logger().warn(f'{part_id} 回收失败(gz 拒绝)')
 

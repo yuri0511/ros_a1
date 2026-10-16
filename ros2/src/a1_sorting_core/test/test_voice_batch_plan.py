@@ -6,7 +6,7 @@ DEMO=dict(schema_version=1,action='sort_batch',counts=dict(blue=0,yellow=1,red=1
 
 def valid(obj=DEMO):return validate_candidate(json.dumps(obj))
 
-@pytest.mark.parametrize('text',['开始分拣。三个绿色，一个红色，一个黄的。先分拣黄色。','请帮我分拣3件绿色工件、1件红色工件、1件黄色工件，黄色优先。'])
+@pytest.mark.parametrize('text',['开始分拣。三个绿色，一个红色，一个黄的。先分拣黄色。','开始分拣，三个绿色，一个红色，一个黄色的，先分拣黄色。','请帮我分拣3件绿色工件、1件红色工件、1件黄色工件，黄色优先。'])
 def test_original_and_alternative_language_audit(text):
     p=valid();assert p.counts==(0,1,1,3) and p.total==5 and p.order[0]=='yellow';assert audit_utterance(text,p)
 

@@ -1,0 +1,16 @@
+{
+  "transcript": "开始分拣，三个绿色，一个红色，一个黄色的，先分拣黄色。",
+  "api": {
+    "model": "qwen3-asr-flash",
+    "request_number": 2,
+    "wall": 1792191795.55162,
+    "success": true,
+    "usage": {
+      "completion_tokens": 26,
+      "prompt_tokens": 203,
+      "seconds": 8,
+      "total_tokens": 229
+    },
+    "request_id": "chatcmpl-e291daab-a8ff-9681-9ee3-31a88e052eb9"
+  }
+}
