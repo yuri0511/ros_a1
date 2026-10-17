@@ -1,0 +1,45 @@
+{
+  "valid": false,
+  "contacts": [
+    {
+      "header": {
+        "stamp": {
+          "sec": 1792204145,
+          "nanosec": 545987523
+        },
+        "frame_id": "world"
+      },
+      "position": {
+        "x": 0.27000000000093716,
+        "y": -0.2599962697010173,
+        "z": 0.7199999742346321
+      },
+      "normal": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 1.0
+      },
+      "depth": 5.1530735825991436e-08,
+      "contact_body_1": "tabletop_floor_red",
+      "body_type_1": 1,
+      "contact_body_2": "retained_calibration_red4",
+      "body_type_2": 2
+    }
+  ],
+  "cost_sources": [
+    {
+      "cost_density": 1.0,
+      "aabb_min": {
+        "x": 0.2699999999977314,
+        "y": -0.25999637055537883,
+        "z": 0.7199999484692642
+      },
+      "aabb_max": {
+        "x": 0.3200000000021461,
+        "y": -0.209996269701119,
+        "z": 0.72
+      }
+    }
+  ],
+  "constraint_result": []
+}

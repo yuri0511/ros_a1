@@ -1,0 +1,2712 @@
+[
+  {
+    "run": "A-20261017T100028-e95779",
+    "outcome": "bounded_static_observation",
+    "fault": null,
+    "phases": [],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.28917484800331295,
+    "paused_stats": 51
+  },
+  {
+    "run": "A-20261017T100131-d03a18",
+    "outcome": "bounded_static_observation",
+    "fault": null,
+    "phases": [],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.29095217199937906,
+    "paused_stats": 51
+  },
+  {
+    "run": "B-20261017T100338-24d8ff",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "'dict' object has no attribute 'publisher_gid'",
+      "wall": 1792202643.4991488
+    },
+    "phases": [
+      {
+        "wall": 1792202643.4985075,
+        "phase": "release",
+        "arm": "arm1"
+      }
+    ],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.30904250299499836,
+    "paused_stats": 52
+  },
+  {
+    "run": "B-20261017T100432-76980b",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "missing_feedback",
+      "wall": 1792202696.7503128
+    },
+    "phases": [
+      {
+        "wall": 1792202696.7499177,
+        "phase": "release",
+        "arm": "arm1"
+      }
+    ],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2889932850084733,
+    "paused_stats": 52
+  },
+  {
+    "run": "B-20261017T100520-7577d5",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "opening_envelope_exceeded",
+      "wall": 1792202742.9294562
+    },
+    "phases": [
+      {
+        "wall": 1792202742.9289923,
+        "phase": "release",
+        "arm": "arm1"
+      }
+    ],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.29031709000992123,
+    "paused_stats": 52
+  },
+  {
+    "run": "B-20261017T100618-48bab8",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "opening_envelope_exceeded",
+      "wall": 1792202805.00393
+    },
+    "phases": [
+      {
+        "wall": 1792202803.4361808,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792202803.7358682,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0018162105227004567,
+          0.002447674823077997
+        ]
+      },
+      {
+        "wall": 1792202803.8230028,
+        "phase": "zero_effort_hold",
+        "q": [
+          0.010260547553111758,
+          0.011021337917904116
+        ],
+        "sim": 20.462
+      },
+      {
+        "wall": 1792202804.2911067,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011126523757096978,
+          0.013088695047251865
+        ],
+        "sim": 20.964
+      },
+      {
+        "wall": 1792202804.2911458,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792202804.8269644,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.002496678992171262,
+          0.0017021091463127402
+        ]
+      },
+      {
+        "wall": 1792202804.9241345,
+        "phase": "zero_effort_hold",
+        "q": [
+          0.01247751295072455,
+          0.01114718303075978
+        ],
+        "sim": 21.648
+      }
+    ],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.29211349300749134,
+    "paused_stats": 52
+  },
+  {
+    "run": "B-20261017T100735-f3235e",
+    "outcome": "unloaded_fingers_pass",
+    "fault": null,
+    "phases": [
+      {
+        "wall": 1792202877.8936632,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792202878.1486664,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0017891102882976026,
+          0.002470546673037414
+        ]
+      },
+      {
+        "wall": 1792202878.300201,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.01010045431187539,
+          0.010420537869481983
+        ],
+        "sim": 19.034
+      },
+      {
+        "wall": 1792202878.7521646,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011878549581942587,
+          0.012117905988301507
+        ],
+        "sim": 19.534
+      },
+      {
+        "wall": 1792202878.7522085,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792202879.2839801,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.0024954841141231355,
+          0.0017026166348399056
+        ]
+      },
+      {
+        "wall": 1792202879.4144506,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010638943831472947,
+          0.01000204896154113
+        ],
+        "sim": 20.294
+      },
+      {
+        "wall": 1792202879.8703625,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012295008676385074,
+          0.0117016780176798
+        ],
+        "sim": 20.794
+      }
+    ],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.28716201000497676,
+    "paused_stats": 50
+  },
+  {
+    "run": "B-20261017T100914-f9a9f2",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "Value '\u0000' is expected to be a dictionary but is a str",
+      "wall": 1792202978.3994977
+    },
+    "phases": [
+      {
+        "wall": 1792202976.3681211,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792202976.625184,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.001773465618096569,
+          0.0024184361859245548
+        ]
+      },
+      {
+        "wall": 1792202976.7338727,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.01000085604549249,
+          0.010314006167738476
+        ],
+        "sim": 18.286
+      },
+      {
+        "wall": 1792202977.1992087,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011878632885237012,
+          0.01211797587199522
+        ],
+        "sim": 18.792
+      },
+      {
+        "wall": 1792202977.1992633,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792202977.721761,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.0024748001603143647,
+          0.001702459521313389
+        ]
+      },
+      {
+        "wall": 1792202977.88545,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010998722927176574,
+          0.010367950732667188
+        ],
+        "sim": 19.55
+      },
+      {
+        "wall": 1792202978.3560283,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012295691627917346,
+          0.011702378308645222
+        ],
+        "sim": 20.068
+      }
+    ],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2905516839964548,
+    "paused_stats": 57
+  },
+  {
+    "run": "B-20261017T101002-4dc0a2",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "previous_arm_hold:observation_gap",
+      "wall": 1792203027.4926994
+    },
+    "phases": [
+      {
+        "wall": 1792203024.908193,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203025.1547077,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0017095153284345935,
+          0.0024867558685042076
+        ]
+      },
+      {
+        "wall": 1792203025.2954023,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010030297560879578,
+          0.010358139938109768
+        ],
+        "sim": 18.596
+      },
+      {
+        "wall": 1792203025.7731135,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011878455551223804,
+          0.012117820431139147
+        ],
+        "sim": 19.096
+      },
+      {
+        "wall": 1792203025.773166,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203026.3058095,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.002464831770886571,
+          0.0017025350818159564
+        ]
+      },
+      {
+        "wall": 1792203026.4600263,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010709477674309088,
+          0.010072064332799993
+        ],
+        "sim": 19.84
+      },
+      {
+        "wall": 1792203026.942268,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012295305110479693,
+          0.01170198104375801
+        ],
+        "sim": 20.351
+      }
+    ],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.29241548500431236,
+    "paused_stats": 57
+  },
+  {
+    "run": "B-20261017T101103-61ba40",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "probe_action_rejected",
+      "wall": 1792203091.2591255
+    },
+    "phases": [
+      {
+        "wall": 1792203088.6135402,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203089.3185134,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0020727629568702095,
+          0.0015502911987161376
+        ]
+      },
+      {
+        "wall": 1792203089.4712243,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010269679756391138,
+          0.010390972748388076
+        ],
+        "sim": 20.948
+      },
+      {
+        "wall": 1792203089.9361475,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011877701614296016,
+          0.012116799461877327
+        ],
+        "sim": 21.462
+      },
+      {
+        "wall": 1792203089.9362013,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203090.4918554,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.0024697209109879998,
+          0.0017012100169284475
+        ]
+      },
+      {
+        "wall": 1792203090.6693647,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010926683840441402,
+          0.010300445194519453
+        ],
+        "sim": 22.262
+      },
+      {
+        "wall": 1792203091.133232,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012293961576462101,
+          0.01170060655875079
+        ],
+        "sim": 22.764
+      }
+    ],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2956397859961726,
+    "paused_stats": 57
+  },
+  {
+    "run": "B-20261017T101259-0668d3",
+    "outcome": "unloaded_fingers_pass",
+    "fault": null,
+    "phases": [
+      {
+        "wall": 1792203201.6695273,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203201.9988432,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0017974393225642744,
+          0.0024438578069938847
+        ]
+      },
+      {
+        "wall": 1792203202.126032,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010300379195968361,
+          0.010608264448091397
+        ],
+        "sim": 18.9
+      },
+      {
+        "wall": 1792203202.5772612,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011877251621196233,
+          0.012116661102986355
+        ],
+        "sim": 19.4
+      },
+      {
+        "wall": 1792203202.5772996,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203203.0838423,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.0024502973226107135,
+          0.0016980858537224705
+        ]
+      },
+      {
+        "wall": 1792203203.2488139,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010981272395757474,
+          0.010349426625557257
+        ],
+        "sim": 20.13
+      },
+      {
+        "wall": 1792203203.7148483,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012294439604884588,
+          0.011701086175455518
+        ],
+        "sim": 20.649
+      },
+      {
+        "wall": 1792203205.0196047,
+        "phase": "arm_probe_pass",
+        "arm": "arm1",
+        "stage": "out"
+      },
+      {
+        "wall": 1792203205.5242143,
+        "phase": "arm_probe_pass",
+        "arm": "arm1",
+        "stage": "return"
+      },
+      {
+        "wall": 1792203206.0244155,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "out"
+      },
+      {
+        "wall": 1792203206.5514336,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "return"
+      }
+    ],
+    "actions": [
+      {
+        "arm": "arm1",
+        "stage": "out",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm1",
+        "stage": "return",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "out",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "return",
+        "status": 4,
+        "error_code": 0
+      }
+    ],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.29202483499830123,
+    "paused_stats": 55
+  },
+  {
+    "run": "C-20261017T101441-a5db81",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "stale_or_future_object",
+      "wall": 1792203311.4266639
+    },
+    "phases": [
+      {
+        "wall": 1792203305.161079,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203305.477338,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0018014149656987793,
+          0.0024218032312712627
+        ]
+      },
+      {
+        "wall": 1792203305.5963392,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010344180124696104,
+          0.010648899056715101
+        ],
+        "sim": 19.7
+      },
+      {
+        "wall": 1792203306.0490608,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.01187703881627356,
+          0.012116455138636873
+        ],
+        "sim": 20.2
+      },
+      {
+        "wall": 1792203306.0490983,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203306.6280942,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.002490283204270441,
+          0.0017005715363374657
+        ]
+      },
+      {
+        "wall": 1792203306.755182,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.01113488390576303,
+          0.010498312069833156
+        ],
+        "sim": 20.988
+      },
+      {
+        "wall": 1792203307.2210898,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012294534280665601,
+          0.011701168030305692
+        ],
+        "sim": 21.498
+      },
+      {
+        "wall": 1792203307.286051,
+        "phase": "fixture_scene_ack",
+        "stage": "carry",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450293705998874
+          ],
+          "quaternion": [
+            6.334710991360369e-18,
+            0.0,
+            -1.7637994794901227e-18,
+            1.0
+          ],
+          "stamp": 21.5
+        }
+      },
+      {
+        "wall": 1792203309.059902,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "carry"
+      },
+      {
+        "wall": 1792203309.082453,
+        "phase": "fixture_scene_ack",
+        "stage": "top",
+        "observation": {
+          "position": [
+            0.29500000000000004,
+            -0.235,
+            0.7450293705999989
+          ],
+          "quaternion": [
+            5.0623404963213735e-18,
+            0.0,
+            6.208428906730163e-19,
+            1.0
+          ],
+          "stamp": 23.4
+        }
+      },
+      {
+        "wall": 1792203310.5030146,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "top"
+      },
+      {
+        "wall": 1792203310.5249264,
+        "phase": "fixture_scene_ack",
+        "stage": "bottom",
+        "observation": {
+          "position": [
+            0.29500000000000004,
+            -0.235,
+            0.7450293705999989
+          ],
+          "quaternion": [
+            9.720038583979852e-19,
+            0.0,
+            5.170150818886464e-18,
+            1.0
+          ],
+          "stamp": 24.9
+        }
+      },
+      {
+        "wall": 1792203311.4241853,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "bottom"
+      }
+    ],
+    "actions": [
+      {
+        "arm": "arm2_",
+        "stage": "carry",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "top",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "bottom",
+        "status": 4,
+        "error_code": 0
+      }
+    ],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2863716919964645,
+    "paused_stats": 57
+  },
+  {
+    "run": "C-20261017T101544-6e23d5",
+    "outcome": "unloaded_fingers_pass",
+    "fault": null,
+    "phases": [
+      {
+        "wall": 1792203366.9020648,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203367.16717,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.001728863164514502,
+          0.002495618383440309
+        ]
+      },
+      {
+        "wall": 1792203367.3199878,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010273598666128831,
+          0.010606300154809198
+        ],
+        "sim": 19.116
+      },
+      {
+        "wall": 1792203367.771273,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011877298713187075,
+          0.012116748912297852
+        ],
+        "sim": 19.62
+      },
+      {
+        "wall": 1792203367.771327,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203368.3275163,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.002463363928685453,
+          0.0017007820850952452
+        ]
+      },
+      {
+        "wall": 1792203368.492862,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.011045474960514058,
+          0.010411721085052639
+        ],
+        "sim": 20.432
+      },
+      {
+        "wall": 1792203368.9418585,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012294678656361661,
+          0.011701327211979336
+        ],
+        "sim": 20.949
+      },
+      {
+        "wall": 1792203369.761991,
+        "phase": "fixture_scene_input",
+        "stage": "carry",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705998657
+            ],
+            "quaternion": [
+              6.7269250279675906e-18,
+              0.0,
+              -1.6399130448333714e-18,
+              1.0
+            ],
+            "stamp": 21.8
+          }
+        },
+        "now": 21.852
+      },
+      {
+        "wall": 1792203369.783872,
+        "phase": "fixture_scene_ack",
+        "stage": "carry",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705998657
+          ],
+          "quaternion": [
+            6.7269250279675906e-18,
+            0.0,
+            -1.6399130448333714e-18,
+            1.0
+          ],
+          "stamp": 21.8
+        }
+      },
+      {
+        "wall": 1792203371.5071313,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "carry"
+      },
+      {
+        "wall": 1792203371.5083423,
+        "phase": "fixture_scene_input",
+        "stage": "top",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              5.412321842304327e-18,
+              0.0,
+              4.216000841766002e-19,
+              1.0
+            ],
+            "stamp": 23.7
+          }
+        },
+        "now": 23.76
+      },
+      {
+        "wall": 1792203371.5292554,
+        "phase": "fixture_scene_ack",
+        "stage": "top",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            4.943900768755361e-18,
+            0.0,
+            7.151624076732801e-19,
+            1.0
+          ],
+          "stamp": 23.8
+        }
+      },
+      {
+        "wall": 1792203372.9142992,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "top"
+      },
+      {
+        "wall": 1792203372.9155462,
+        "phase": "fixture_scene_input",
+        "stage": "bottom",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              1.0621815516925473e-18,
+              0.0,
+              4.960687328438499e-18,
+              1.0
+            ],
+            "stamp": 25.2
+          }
+        },
+        "now": 25.254
+      },
+      {
+        "wall": 1792203372.937698,
+        "phase": "fixture_scene_ack",
+        "stage": "bottom",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            1.0225932483574476e-18,
+            0.0,
+            5.2686856124850436e-18,
+            1.0
+          ],
+          "stamp": 25.3
+        }
+      },
+      {
+        "wall": 1792203373.8603485,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "bottom"
+      },
+      {
+        "wall": 1792203373.862029,
+        "phase": "fixture_scene_input",
+        "stage": "rise",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              -2.2426580424904686e-18,
+              0.0,
+              8.09053407711521e-18,
+              1.0
+            ],
+            "stamp": 26.2
+          }
+        },
+        "now": 26.228
+      },
+      {
+        "wall": 1792203373.8989685,
+        "phase": "fixture_scene_ack",
+        "stage": "rise",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            -2.2426580424904686e-18,
+            0.0,
+            8.09053407711521e-18,
+            1.0
+          ],
+          "stamp": 26.2
+        }
+      },
+      {
+        "wall": 1792203375.3679233,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "rise"
+      },
+      {
+        "wall": 1792203375.3697631,
+        "phase": "fixture_scene_input",
+        "stage": "return",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              -8.351580180211273e-18,
+              0.0,
+              1.264311388633852e-17,
+              1.0
+            ],
+            "stamp": 27.6
+          }
+        },
+        "now": 27.661
+      },
+      {
+        "wall": 1792203375.3926227,
+        "phase": "fixture_scene_ack",
+        "stage": "return",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            -8.812766607042308e-18,
+            0.0,
+            1.298035312587085e-17,
+            1.0
+          ],
+          "stamp": 27.7
+        }
+      },
+      {
+        "wall": 1792203377.1620202,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "return"
+      }
+    ],
+    "actions": [
+      {
+        "arm": "arm2_",
+        "stage": "carry",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "top",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "bottom",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "rise",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "return",
+        "status": 4,
+        "error_code": 0
+      }
+    ],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2897509899921715,
+    "paused_stats": 55
+  },
+  {
+    "run": "C-20261017T101741-567970",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "No module named 'task_io'",
+      "wall": 1792203489.6178973
+    },
+    "phases": [
+      {
+        "wall": 1792203483.441959,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203483.744615,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0018060182013160246,
+          0.0024141704912496974
+        ]
+      },
+      {
+        "wall": 1792203483.8733022,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.01029115250033708,
+          0.01059276655267306
+        ],
+        "sim": 18.9
+      },
+      {
+        "wall": 1792203484.3114665,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011877052174656148,
+          0.012116457293811648
+        ],
+        "sim": 19.4
+      },
+      {
+        "wall": 1792203484.3115075,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203484.8797095,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.0024999341461760787,
+          0.0017014407925795797
+        ]
+      },
+      {
+        "wall": 1792203484.9952288,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010729513820786457,
+          0.010079511738363429
+        ],
+        "sim": 20.163
+      },
+      {
+        "wall": 1792203485.4632275,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012293991105793281,
+          0.011700606107132541
+        ],
+        "sim": 20.681
+      },
+      {
+        "wall": 1792203485.5102842,
+        "phase": "fixture_scene_input",
+        "stage": "carry",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000004,
+              -0.235,
+              0.7450195705988607
+            ],
+            "quaternion": [
+              6.848246991167364e-18,
+              0.0,
+              -1.5591496661763028e-18,
+              1.0
+            ],
+            "stamp": 20.7
+          }
+        },
+        "now": 20.706
+      },
+      {
+        "wall": 1792203485.5315714,
+        "phase": "fixture_scene_ack",
+        "stage": "carry",
+        "observation": {
+          "position": [
+            0.29500000000000004,
+            -0.235,
+            0.7450195705988607
+          ],
+          "quaternion": [
+            6.848246991167364e-18,
+            0.0,
+            -1.5591496661763028e-18,
+            1.0
+          ],
+          "stamp": 20.7
+        }
+      },
+      {
+        "wall": 1792203487.2726617,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "carry"
+      },
+      {
+        "wall": 1792203487.2745104,
+        "phase": "fixture_scene_input",
+        "stage": "top",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.745019570599994
+            ],
+            "quaternion": [
+              6.58019024904463e-18,
+              0.0,
+              -1.844853785756742e-18,
+              1.0
+            ],
+            "stamp": 22.6
+          }
+        },
+        "now": 22.655
+      },
+      {
+        "wall": 1792203487.2960083,
+        "phase": "fixture_scene_ack",
+        "stage": "top",
+        "observation": {
+          "position": [
+            0.29500000000000004,
+            -0.235,
+            0.7450195705999969
+          ],
+          "quaternion": [
+            7.095326178538375e-18,
+            0.0,
+            -1.7497314272686404e-18,
+            1.0
+          ],
+          "stamp": 22.7
+        }
+      },
+      {
+        "wall": 1792203488.6703305,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "top"
+      },
+      {
+        "wall": 1792203488.6716626,
+        "phase": "fixture_scene_input",
+        "stage": "bottom",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              3.748544771901316e-18,
+              0.0,
+              2.3854194146662394e-18,
+              1.0
+            ],
+            "stamp": 24.1
+          }
+        },
+        "now": 24.158
+      },
+      {
+        "wall": 1792203488.7003524,
+        "phase": "fixture_scene_ack",
+        "stage": "bottom",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            3.748544771901316e-18,
+            0.0,
+            2.3854194146662394e-18,
+            1.0
+          ],
+          "stamp": 24.1
+        }
+      }
+    ],
+    "actions": [
+      {
+        "arm": "arm2_",
+        "stage": "carry",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "top",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "bottom",
+        "status": 4,
+        "error_code": 0
+      }
+    ],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2894144000019878,
+    "paused_stats": 57
+  },
+  {
+    "run": "C-20261017T101832-5bd846",
+    "outcome": "unloaded_fingers_pass",
+    "fault": null,
+    "phases": [
+      {
+        "wall": 1792203534.899266,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203535.1931274,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0017523927259198904,
+          0.002484622524370909
+        ]
+      },
+      {
+        "wall": 1792203535.3607967,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.01024017005087669,
+          0.010565246247067662
+        ],
+        "sim": 18.356
+      },
+      {
+        "wall": 1792203535.8245606,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011877124913229217,
+          0.012116567342438243
+        ],
+        "sim": 18.864
+      },
+      {
+        "wall": 1792203535.824764,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203536.3796847,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.002483026735761106,
+          0.0017010628933269536
+        ]
+      },
+      {
+        "wall": 1792203536.5449162,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010731859560230204,
+          0.010096388481573269
+        ],
+        "sim": 19.642
+      },
+      {
+        "wall": 1792203536.9989479,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012293369198566086,
+          0.011699989332899135
+        ],
+        "sim": 20.145
+      },
+      {
+        "wall": 1792203537.0670247,
+        "phase": "fixture_scene_input",
+        "stage": "carry",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450293705981337
+            ],
+            "quaternion": [
+              6.8213363272244526e-18,
+              0.0,
+              -1.5856644991889585e-18,
+              1.0
+            ],
+            "stamp": 20.2
+          }
+        },
+        "now": 20.2
+      },
+      {
+        "wall": 1792203537.0891025,
+        "phase": "fixture_scene_ack",
+        "stage": "carry",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450293705981337
+          ],
+          "quaternion": [
+            6.8213363272244526e-18,
+            0.0,
+            -1.5856644991889585e-18,
+            1.0
+          ],
+          "stamp": 20.2
+        }
+      },
+      {
+        "wall": 1792203538.962836,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "carry"
+      },
+      {
+        "wall": 1792203538.9642763,
+        "phase": "fixture_scene_input",
+        "stage": "top",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450293705999886
+            ],
+            "quaternion": [
+              5.85177209400021e-18,
+              0.0,
+              -1.8959842656192635e-18,
+              1.0
+            ],
+            "stamp": 22.1
+          }
+        },
+        "now": 22.114
+      },
+      {
+        "wall": 1792203538.995703,
+        "phase": "fixture_scene_ack",
+        "stage": "top",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450293705999886
+          ],
+          "quaternion": [
+            5.85177209400021e-18,
+            0.0,
+            -1.8959842656192635e-18,
+            1.0
+          ],
+          "stamp": 22.1
+        }
+      },
+      {
+        "wall": 1792203540.4607334,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "top"
+      },
+      {
+        "wall": 1792203540.461935,
+        "phase": "fixture_scene_input",
+        "stage": "bottom",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000004,
+              -0.235,
+              0.7450293705999989
+            ],
+            "quaternion": [
+              4.056482667279428e-18,
+              0.0,
+              1.797353819383959e-18,
+              1.0
+            ],
+            "stamp": 23.6
+          }
+        },
+        "now": 23.626
+      },
+      {
+        "wall": 1792203540.4836643,
+        "phase": "fixture_scene_ack",
+        "stage": "bottom",
+        "observation": {
+          "position": [
+            0.29500000000000004,
+            -0.235,
+            0.7450293705999989
+          ],
+          "quaternion": [
+            4.056482667279428e-18,
+            0.0,
+            1.797353819383959e-18,
+            1.0
+          ],
+          "stamp": 23.6
+        }
+      },
+      {
+        "wall": 1792203541.4506829,
+        "phase": "fixture_gentle_grasp",
+        "force_N": -1.5
+      },
+      {
+        "wall": 1792203541.5773005,
+        "phase": "fixture_bilateral_contact",
+        "q": [
+          -0.001005411761554615,
+          -0.0010809064943514916
+        ],
+        "contacts": {
+          "right": {
+            "sim": 24.754,
+            "wall": 1792203541.573999,
+            "depth": 5.374983354822921e-05
+          },
+          "left": {
+            "sim": 24.754,
+            "wall": 1792203541.576714,
+            "depth": 5.831598294891039e-05
+          }
+        }
+      },
+      {
+        "wall": 1792203542.075483,
+        "phase": "fixture_release_pass",
+        "observation": {
+          "position": [
+            0.2949999999997768,
+            -0.23503068180054626,
+            0.7450243535252818
+          ],
+          "quaternion": [
+            2.8364324583478654e-05,
+            -1.1080025785759062e-13,
+            -6.594471874422632e-12,
+            0.9999999995977326
+          ],
+          "stamp": 25.2
+        },
+        "last_contacts": {
+          "right": {
+            "sim": 24.772,
+            "wall": 1792203541.6155796,
+            "depth": 1.8863285664260515e-05
+          },
+          "left": {
+            "sim": 24.772,
+            "wall": 1792203541.6159203,
+            "depth": 1.4009763907537644e-05
+          }
+        },
+        "sim": 25.27
+      },
+      {
+        "wall": 1792203542.081305,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "bottom"
+      },
+      {
+        "wall": 1792203542.0824647,
+        "phase": "fixture_scene_input",
+        "stage": "rise",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.2949999999997768,
+              -0.23503068180054626,
+              0.7450243535252818
+            ],
+            "quaternion": [
+              2.8364324583478654e-05,
+              -1.1080025785759062e-13,
+              -6.594471874422632e-12,
+              0.9999999995977326
+            ],
+            "stamp": 25.2
+          }
+        },
+        "now": 25.282
+      },
+      {
+        "wall": 1792203542.1034663,
+        "phase": "fixture_scene_ack",
+        "stage": "rise",
+        "observation": {
+          "position": [
+            0.2949999999997781,
+            -0.23503036671106237,
+            0.7450254682092909
+          ],
+          "quaternion": [
+            2.2062472945102067e-05,
+            -8.62088178621434e-14,
+            -6.594472330126357e-12,
+            0.9999999997566238
+          ],
+          "stamp": 25.3
+        }
+      },
+      {
+        "wall": 1792203543.5113065,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "rise"
+      },
+      {
+        "wall": 1792203543.5129974,
+        "phase": "fixture_scene_input",
+        "stage": "return",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29499999999978055,
+              -0.23502929632975766,
+              0.7450292548125359
+            ],
+            "quaternion": [
+              6.54633714838567e-07,
+              -2.4980018054066022e-15,
+              -6.594474658408171e-12,
+              0.9999999999997857
+            ],
+            "stamp": 26.7
+          }
+        },
+        "now": 26.714
+      },
+      {
+        "wall": 1792203543.534269,
+        "phase": "fixture_scene_ack",
+        "stage": "return",
+        "observation": {
+          "position": [
+            0.29499999999978055,
+            -0.23502929632975766,
+            0.7450292548125359
+          ],
+          "quaternion": [
+            6.54633714838567e-07,
+            -2.4980018054066022e-15,
+            -6.594474658408171e-12,
+            0.9999999999997857
+          ],
+          "stamp": 26.7
+        }
+      },
+      {
+        "wall": 1792203545.3151016,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "return"
+      }
+    ],
+    "actions": [
+      {
+        "arm": "arm2_",
+        "stage": "carry",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "top",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "bottom",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "rise",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "return",
+        "status": 4,
+        "error_code": 0
+      }
+    ],
+    "contact_points": 168,
+    "collision_pairs": [
+      [
+        "ur::arm2_gripper_finger_left_link::arm2_gripper_finger_left_link_fixed_joint_lump__arm2_gripper_finger_left_collision_collision",
+        "calibration_red4::link::collision"
+      ],
+      [
+        "ur::arm2_gripper_finger_right_link::arm2_gripper_finger_right_link_fixed_joint_lump__arm2_gripper_finger_right_collision_collision",
+        "calibration_red4::link::collision"
+      ]
+    ],
+    "max_recorded_depth_m": 5.890461791112876e-05,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2865859760058811,
+    "paused_stats": 55
+  },
+  {
+    "run": "C-20261017T102048-dbeb01",
+    "outcome": "interrupted",
+    "fault": null,
+    "phases": [],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.29367822800122667,
+    "paused_stats": 55
+  },
+  {
+    "run": "C-20261017T102232-6dd695",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "held_bilateral_contact_lost",
+      "wall": 1792203784.082748
+    },
+    "phases": [
+      {
+        "wall": 1792203777.441889,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203777.7214665,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0017730874415214646,
+          0.002434426437198398
+        ]
+      },
+      {
+        "wall": 1792203777.8737676,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010020575928674462,
+          0.010340926439844609
+        ],
+        "sim": 21.332
+      },
+      {
+        "wall": 1792203778.3398116,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.01187745206957394,
+          0.01211685358547865
+        ],
+        "sim": 21.854
+      },
+      {
+        "wall": 1792203778.3398604,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203778.8848803,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.0024942963994998408,
+          0.001700878543953482
+        ]
+      },
+      {
+        "wall": 1792203779.0384119,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010823211461080338,
+          0.010181918354037471
+        ],
+        "sim": 22.642
+      },
+      {
+        "wall": 1792203779.502871,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012294477740124057,
+          0.011701118833442966
+        ],
+        "sim": 23.162
+      },
+      {
+        "wall": 1792203779.5570686,
+        "phase": "fixture_scene_input",
+        "stage": "carry",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              6.2734131646720846e-18,
+              0.0,
+              -5.549474809635079e-19,
+              1.0
+            ],
+            "stamp": 23.2
+          }
+        },
+        "now": 23.2
+      },
+      {
+        "wall": 1792203779.5798993,
+        "phase": "fixture_scene_ack",
+        "stage": "carry",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            6.2734131646720846e-18,
+            0.0,
+            -5.549474809635079e-19,
+            1.0
+          ],
+          "stamp": 23.2
+        }
+      },
+      {
+        "wall": 1792203781.332318,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "carry"
+      },
+      {
+        "wall": 1792203781.334109,
+        "phase": "fixture_scene_input",
+        "stage": "top",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              9.726522578163883e-19,
+              0.0,
+              5.15782827207844e-18,
+              1.0
+            ],
+            "stamp": 25.1
+          }
+        },
+        "now": 25.124
+      },
+      {
+        "wall": 1792203781.3557851,
+        "phase": "fixture_scene_ack",
+        "stage": "top",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            9.726522578163883e-19,
+            0.0,
+            5.15782827207844e-18,
+            1.0
+          ],
+          "stamp": 25.1
+        }
+      },
+      {
+        "wall": 1792203782.7892206,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "top"
+      },
+      {
+        "wall": 1792203782.7905252,
+        "phase": "fixture_scene_input",
+        "stage": "bottom",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              -4.4185268251381065e-18,
+              0.0,
+              9.886199170998209e-18,
+              1.0
+            ],
+            "stamp": 26.6
+          }
+        },
+        "now": 26.622
+      },
+      {
+        "wall": 1792203782.8242397,
+        "phase": "fixture_scene_ack",
+        "stage": "bottom",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            -4.4185268251381065e-18,
+            0.0,
+            9.886199170998209e-18,
+            1.0
+          ],
+          "stamp": 26.6
+        }
+      },
+      {
+        "wall": 1792203783.744955,
+        "phase": "fixture_gentle_grasp",
+        "force_N": -1.5
+      },
+      {
+        "wall": 1792203783.8721988,
+        "phase": "fixture_bilateral_contact",
+        "q": [
+          -0.0009408742990074797,
+          -0.0011460070320730657
+        ],
+        "contacts": {
+          "right": {
+            "sim": 27.759,
+            "wall": 1792203783.8704066,
+            "depth": 5.239181183985461e-05
+          },
+          "left": {
+            "sim": 27.759,
+            "wall": 1792203783.871604,
+            "depth": 4.969093343265216e-05
+          }
+        }
+      }
+    ],
+    "actions": [
+      {
+        "arm": "arm2_",
+        "stage": "carry",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "top",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "bottom",
+        "status": 4,
+        "error_code": 0
+      }
+    ],
+    "contact_points": 2095,
+    "collision_pairs": [
+      [
+        "ur::arm2_gripper_finger_left_link::arm2_gripper_finger_left_link_fixed_joint_lump__arm2_gripper_finger_left_collision_collision",
+        "calibration_red4::link::collision"
+      ],
+      [
+        "ur::arm2_gripper_finger_right_link::arm2_gripper_finger_right_link_fixed_joint_lump__arm2_gripper_finger_right_collision_collision",
+        "calibration_red4::link::collision"
+      ]
+    ],
+    "max_recorded_depth_m": 5.47640534147055e-05,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2935545549989911,
+    "paused_stats": 57
+  },
+  {
+    "run": "C-20261017T102408-e3a13f",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "observation_gap",
+      "wall": 1792203873.7153265
+    },
+    "phases": [
+      {
+        "wall": 1792203871.710616,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203872.027724,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.001791679336640456,
+          0.002436428175003751
+        ]
+      },
+      {
+        "wall": 1792203872.1557114,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010388531461116584,
+          0.01069416214570198
+        ],
+        "sim": 20.1
+      },
+      {
+        "wall": 1792203872.6447687,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011878042014110737,
+          0.012117419971468176
+        ],
+        "sim": 20.619
+      },
+      {
+        "wall": 1792203872.644811,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203873.1978886,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.0024599106672293664,
+          0.0017012238207869468
+        ]
+      },
+      {
+        "wall": 1792203873.3753293,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.011037472909547806,
+          0.010409201518802752
+        ],
+        "sim": 21.434
+      }
+    ],
+    "actions": [],
+    "contact_points": 0,
+    "collision_pairs": [],
+    "max_recorded_depth_m": 0,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2893898089969298,
+    "paused_stats": 57
+  },
+  {
+    "run": "C-20261017T102555-806663",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "held_bilateral_contact_lost",
+      "wall": 1792203986.9045296
+    },
+    "phases": [
+      {
+        "wall": 1792203979.9378777,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792203980.1807113,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0017285313678565937,
+          0.0024045238649550906
+        ]
+      },
+      {
+        "wall": 1792203980.3336415,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010121712715790258,
+          0.010439348981539313
+        ],
+        "sim": 21.44
+      },
+      {
+        "wall": 1792203980.7883253,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011877624194611514,
+          0.012117020779647015
+        ],
+        "sim": 21.962
+      },
+      {
+        "wall": 1792203980.7883646,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792203981.341482,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.0024821697987753265,
+          0.0017010623131333287
+        ]
+      },
+      {
+        "wall": 1792203981.5092056,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.011012601131017543,
+          0.010383452749780689
+        ],
+        "sim": 22.758
+      },
+      {
+        "wall": 1792203981.9793625,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012294419985233965,
+          0.011701068886316933
+        ],
+        "sim": 23.274
+      },
+      {
+        "wall": 1792203982.0369825,
+        "phase": "fixture_scene_input",
+        "stage": "carry",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              6.450090524054055e-18,
+              0.0,
+              -7.511104182120689e-19,
+              1.0
+            ],
+            "stamp": 23.3
+          }
+        },
+        "now": 23.31
+      },
+      {
+        "wall": 1792203982.059236,
+        "phase": "fixture_scene_ack",
+        "stage": "carry",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            6.450090524054055e-18,
+            0.0,
+            -7.511104182120689e-19,
+            1.0
+          ],
+          "stamp": 23.3
+        }
+      },
+      {
+        "wall": 1792203983.7907743,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "carry"
+      },
+      {
+        "wall": 1792203983.792317,
+        "phase": "fixture_scene_input",
+        "stage": "top",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              1.0832481982838965e-18,
+              0.0,
+              4.948343887640979e-18,
+              1.0
+            ],
+            "stamp": 25.2
+          }
+        },
+        "now": 25.254
+      },
+      {
+        "wall": 1792203983.8134027,
+        "phase": "fixture_scene_ack",
+        "stage": "top",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            1.0832481982838965e-18,
+            0.0,
+            4.948343887640979e-18,
+            1.0
+          ],
+          "stamp": 25.2
+        }
+      },
+      {
+        "wall": 1792203985.1964924,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "top"
+      },
+      {
+        "wall": 1792203985.1980588,
+        "phase": "fixture_scene_input",
+        "stage": "bottom",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450195705999989
+            ],
+            "quaternion": [
+              -4.162937205096593e-18,
+              0.0,
+              9.668477897763151e-18,
+              1.0
+            ],
+            "stamp": 26.7
+          }
+        },
+        "now": 26.745
+      },
+      {
+        "wall": 1792203985.2194347,
+        "phase": "fixture_scene_ack",
+        "stage": "bottom",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450195705999989
+          ],
+          "quaternion": [
+            -4.162937205096593e-18,
+            0.0,
+            9.668477897763151e-18,
+            1.0
+          ],
+          "stamp": 26.7
+        }
+      },
+      {
+        "wall": 1792203986.0990086,
+        "phase": "fixture_gentle_grasp",
+        "force_N": -1.5
+      },
+      {
+        "wall": 1792203986.2797358,
+        "phase": "fixture_bilateral_contact",
+        "q": [
+          -0.00100365850440631,
+          -0.0010826328348919468
+        ],
+        "contacts": {
+          "right": {
+            "sim": 27.836,
+            "wall": 1792203986.2764661,
+            "depth": 5.5667831428622694e-05
+          },
+          "left": {
+            "sim": 27.835,
+            "wall": 1792203986.275609,
+            "depth": 5.69318633427459e-05
+          }
+        }
+      },
+      {
+        "wall": 1792203986.2993577,
+        "phase": "fixture_original_lock",
+        "force_N": -8.0
+      }
+    ],
+    "actions": [
+      {
+        "arm": "arm2_",
+        "stage": "carry",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "top",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "bottom",
+        "status": 4,
+        "error_code": 0
+      }
+    ],
+    "contact_points": 5602,
+    "collision_pairs": [
+      [
+        "ur::arm2_gripper_finger_left_link::arm2_gripper_finger_left_link_fixed_joint_lump__arm2_gripper_finger_left_collision_collision",
+        "calibration_red4::link::collision"
+      ],
+      [
+        "ur::arm2_gripper_finger_right_link::arm2_gripper_finger_right_link_fixed_joint_lump__arm2_gripper_finger_right_collision_collision",
+        "calibration_red4::link::collision"
+      ]
+    ],
+    "max_recorded_depth_m": 5.7596427799361076e-05,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.30535459698876366,
+    "paused_stats": 57
+  },
+  {
+    "run": "C-20261017T102733-3d3e3a",
+    "outcome": "guard_fault",
+    "fault": {
+      "kind": "finger_calibration",
+      "reason": "held_plan_failed",
+      "wall": 1792204083.6846533
+    },
+    "phases": [
+      {
+        "wall": 1792204076.6550865,
+        "phase": "precondition",
+        "arm": "arm1"
+      },
+      {
+        "wall": 1792204076.9648805,
+        "phase": "release",
+        "arm": "arm1",
+        "q": [
+          0.0018000093618300134,
+          0.0023963576137329755
+        ]
+      },
+      {
+        "wall": 1792204077.0945737,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010271677993471706,
+          0.010575088408023983
+        ],
+        "sim": 19.9
+      },
+      {
+        "wall": 1792204077.5619788,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.011876693518331807,
+          0.012116115024318216
+        ],
+        "sim": 20.4
+      },
+      {
+        "wall": 1792204077.5620222,
+        "phase": "precondition",
+        "arm": "arm2_"
+      },
+      {
+        "wall": 1792204078.1362348,
+        "phase": "release",
+        "arm": "arm2_",
+        "q": [
+          0.002475787609141977,
+          0.0017011845153029868
+        ]
+      },
+      {
+        "wall": 1792204078.25464,
+        "phase": "feedback_effort_hold",
+        "q": [
+          0.010727648348068818,
+          0.010076386171726653
+        ],
+        "sim": 21.178
+      },
+      {
+        "wall": 1792204078.700711,
+        "phase": "unloaded_response_pass",
+        "q": [
+          0.012294283534857736,
+          0.011700907973725574
+        ],
+        "sim": 21.7
+      },
+      {
+        "wall": 1792204078.7606373,
+        "phase": "fixture_scene_input",
+        "stage": "carry",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000015,
+              -0.235,
+              0.7450293705998887
+            ],
+            "quaternion": [
+              6.262666687296276e-18,
+              0.0,
+              -1.770603432733536e-18,
+              1.0
+            ],
+            "stamp": 21.7
+          }
+        },
+        "now": 21.729
+      },
+      {
+        "wall": 1792204078.7832894,
+        "phase": "fixture_scene_ack",
+        "stage": "carry",
+        "observation": {
+          "position": [
+            0.29500000000000015,
+            -0.235,
+            0.7450293705998887
+          ],
+          "quaternion": [
+            6.262666687296276e-18,
+            0.0,
+            -1.770603432733536e-18,
+            1.0
+          ],
+          "stamp": 21.7
+        }
+      },
+      {
+        "wall": 1792204080.5412765,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "carry"
+      },
+      {
+        "wall": 1792204080.5434437,
+        "phase": "fixture_scene_input",
+        "stage": "top",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000004,
+              -0.235,
+              0.7450293705999989
+            ],
+            "quaternion": [
+              5.072067989846608e-18,
+              0.0,
+              6.326127721481912e-19,
+              1.0
+            ],
+            "stamp": 23.6
+          }
+        },
+        "now": 23.657
+      },
+      {
+        "wall": 1792204080.566834,
+        "phase": "fixture_scene_ack",
+        "stage": "top",
+        "observation": {
+          "position": [
+            0.29500000000000004,
+            -0.235,
+            0.7450293705999989
+          ],
+          "quaternion": [
+            4.8174539490187055e-18,
+            0.0,
+            9.274803728988374e-19,
+            1.0
+          ],
+          "stamp": 23.7
+        }
+      },
+      {
+        "wall": 1792204081.96096,
+        "phase": "arm_probe_pass",
+        "arm": "arm2_",
+        "stage": "top"
+      },
+      {
+        "wall": 1792204081.9646962,
+        "phase": "fixture_scene_input",
+        "stage": "bottom",
+        "observations": {
+          "calibration_red4": {
+            "position": [
+              0.29500000000000004,
+              -0.235,
+              0.7450293705999989
+            ],
+            "quaternion": [
+              9.395897208190795e-19,
+              0.0,
+              5.1824685480030465e-18,
+              1.0
+            ],
+            "stamp": 25.1
+          }
+        },
+        "now": 25.161
+      },
+      {
+        "wall": 1792204081.986521,
+        "phase": "fixture_scene_ack",
+        "stage": "bottom",
+        "observation": {
+          "position": [
+            0.29500000000000004,
+            -0.235,
+            0.7450293705999989
+          ],
+          "quaternion": [
+            7.586780761579711e-19,
+            0.0,
+            5.490479025450084e-18,
+            1.0
+          ],
+          "stamp": 25.2
+        }
+      },
+      {
+        "wall": 1792204082.9065804,
+        "phase": "fixture_gentle_grasp",
+        "force_N": -1.5
+      },
+      {
+        "wall": 1792204083.0507095,
+        "phase": "fixture_bilateral_contact",
+        "q": [
+          -0.0010116026295262368,
+          -0.0010359704707376314
+        ],
+        "contacts": {
+          "right": {
+            "sim": 26.277,
+            "wall": 1792204083.0495698,
+            "depth": 4.927719460802102e-05
+          },
+          "left": {
+            "sim": 26.276,
+            "wall": 1792204083.0463903,
+            "depth": 1.1658377560647137e-05
+          }
+        }
+      },
+      {
+        "wall": 1792204083.0670927,
+        "phase": "fixture_original_lock",
+        "force_N": -8.0
+      }
+    ],
+    "actions": [
+      {
+        "arm": "arm2_",
+        "stage": "carry",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "top",
+        "status": 4,
+        "error_code": 0
+      },
+      {
+        "arm": "arm2_",
+        "stage": "bottom",
+        "status": 4,
+        "error_code": 0
+      }
+    ],
+    "contact_points": 5642,
+    "collision_pairs": [
+      [
+        "ur::arm2_gripper_finger_left_link::arm2_gripper_finger_left_link_fixed_joint_lump__arm2_gripper_finger_left_collision_collision",
+        "calibration_red4::link::collision"
+      ],
+      [
+        "ur::arm2_gripper_finger_right_link::arm2_gripper_finger_right_link_fixed_joint_lump__arm2_gripper_finger_right_collision_collision",
+        "calibration_red4::link::collision"
+      ]
+    ],
+    "max_recorded_depth_m": 5.448437242308417e-05,
+    "observer_exit": 0,
+    "pause_ack": true,
+    "pause_duration_s": 0.2910307739948621,
+    "paused_stats": 57
+  }
+]

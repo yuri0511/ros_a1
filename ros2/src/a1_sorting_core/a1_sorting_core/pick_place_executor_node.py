@@ -26,6 +26,7 @@
 """
 import json
 import math
+from a1_sorting_core.four_slot_grip_control import opening_efforts
 import threading
 import time
 from a1_sorting_core.physical_ready import PhysicalReadyMonitor, publisher_identity
@@ -1523,8 +1524,17 @@ class PickPlaceExecutorNode(Node):
     def _four_slot_feedback_tick(self):
         monitor=getattr(self,'_release_evidence',None)
         if monitor is None or monitor.phase not in ('RELEASING','EXITING'):return
-        monitor.check(self.get_clock().now().nanoseconds*1e-9,time.monotonic())
+        fresh=monitor.check(self.get_clock().now().nanoseconds*1e-9,time.monotonic())
+        if fresh and getattr(self,'_four_slot_open_hold',False) and not self._arm_fault:
+            # Independent measured fingers: zero effort does not hold opening.
+            values=[self._joint_lookup(n) for n in self._finger_joint_keys()]
+            if any(v is None for v in values):monitor.fault='missing_feedback'
+            else:
+                msg=Float64MultiArray();msg.data=opening_efforts(values)
+                self._pub_gripper.publish(msg)
         if monitor.fault:
+            if getattr(self,'_four_slot_open_hold',False):
+                self._four_slot_open_hold=False;self._pub_gripper_cmd(0.0)
             self._arm_fault='release_feedback:'+monitor.fault
             if not self._release_fault_announced:
                 self._release_fault_announced=True
@@ -1554,23 +1564,28 @@ class PickPlaceExecutorNode(Node):
             return False
 
     def _four_slot_release(self,timeout=3.):
-        """New scene only: two individually observed fingers, no soft fallback.
+        """Candidate only: feedback effort persists until verified box exit.
 
-        q=10..14mm gives a 72..80mm inner opening; it remains well inside the
-        220mm inner bin. Unknown/asymmetric over-travel fails closed.
+        Isolated red-slot calibration passed release/exit; loaded full-pipeline
+        validation is still blocked. Do not remove the exit-clearance gate.
         """
-        jl,jr=self._finger_joint_keys();deadline=time.monotonic()+timeout
+        jl,jr=self._finger_joint_keys();deadline=time.monotonic()+timeout;success=False
+        self._four_slot_open_hold=True
         try:
             while time.monotonic()<deadline:
+                self._four_slot_feedback_tick()
                 left,right=self._joint_lookup(jl),self._joint_lookup(jr)
-                if left is None or right is None:return False
+                if left is None or right is None or self._arm_fault:return False
                 if max(left,right)>.014:return False
-                if self._arm_fault:return False
                 if min(left,right)>=.010:
-                    return self._release_evidence.begin_exit(self.get_clock().now().nanoseconds*1e-9,time.monotonic())
-                self._pub_gripper_cmd(1.5);time.sleep(.01)
+                    success=self._release_evidence.begin_exit(self.get_clock().now().nanoseconds*1e-9,time.monotonic())
+                    return success
+                time.sleep(.01)
             return False
-        finally:self._grip_hold_target=None;self._pub_gripper_cmd(0.0)
+        finally:
+            self._grip_hold_target=None
+            if not success:
+                self._four_slot_open_hold=False;self._pub_gripper_cmd(0.0)
 
     def _place_pose(self, bin_name: str):
         if getattr(self,'_slot_bank',None) is not None:
@@ -2066,6 +2081,7 @@ class PickPlaceExecutorNode(Node):
             value = self._gripper_closed if close else self._gripper_open
         else:
             value = force
+        self._four_slot_open_hold=False  # explicit next gripper action owns commands
         self._pub_gripper_cmd(value)               # 记入保持值并重发
         self._grip_hold_target = None   # 新命令接管,解除位置保持(观感②)
         state = String()
@@ -2141,6 +2157,7 @@ class PickPlaceExecutorNode(Node):
         """10Hz 保持器:重发最近夹爪命令(① 消灭丢包自由漂);
         _grip_hold_target 非 None 时改做释放小开的位置保持(②):
         低于目标发外推力、高于目标+容差发内收力、带内发 0N。"""
+        if getattr(self,'_four_slot',False) and getattr(self,'_four_slot_open_hold',False):return
         target = self._grip_hold_target
         if target is None:
             value = self._grip_hold

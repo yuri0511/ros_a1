@@ -32,3 +32,20 @@ def fk(link, values):
         elif j.get('type')=='prismatic':J[:3,3]=np.array(axis)*q
         cache[child]=M@J;return cache[child]
     return visit(link)
+
+
+def quaternion_matrix(q):
+    x,y,z,w=map(float,q)
+    if abs(x*x+y*y+z*z+w*w-1)>1e-6:raise ValueError('nonunit quaternion')
+    return np.array([[1-2*(y*y+z*z),2*(x*y-z*w),2*(x*z+y*w)],
+                     [2*(x*y+z*w),1-2*(x*x+z*z),2*(y*z-x*w)],
+                     [2*(x*z-y*w),2*(y*z+x*w),1-2*(x*x+y*y)]])
+
+def matrix_quaternion(R):
+    if not np.allclose(R.T@R,np.eye(3),atol=1e-10) or abs(np.linalg.det(R)-1)>1e-10:
+        raise ValueError('invalid rotation matrix')
+    a,b,c=R[0];d,e,f=R[1];g,h,i=R[2]
+    K=np.array([[a-e-i,b+d,c+g,h-f],[b+d,e-a-i,f+h,c-g],
+                [c+g,f+h,i-a-e,d-b],[h-f,c-g,d-b,a+e+i]])/3
+    _,V=np.linalg.eigh(K);q=V[:,-1]
+    return q if q[3]>=0 else -q

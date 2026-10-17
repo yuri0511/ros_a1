@@ -1,0 +1,26 @@
+{
+  "stage": 2,
+  "dynamic_execution_allowed": false,
+  "status": "BLOCKED",
+  "planning_success": 128,
+  "planning_total": 128,
+  "dense_samples": 127763,
+  "dense_hits": 0,
+  "minimum_sat_projection_gap_m": 0.0009611728852686116,
+  "runtime_scene_service_test": "PASS with synthetic observations, no Gazebo",
+  "blockers": [
+    "New release/opening physical response and complete exit clearance not calibrated; continuous evidence guard is not proof of safe stopping distance.",
+    "Held object actual 6D pose, deposited pose uncertainty, geometry error and sampling/tracking error lack certified bounds.",
+    "Historical carry_clear starts rounded to 0.0001 rad; new-world start distribution not measured.",
+    "Other arm standby only; no new-world simultaneous-arm or native camera pose validation.",
+    "Command spline sampling plus planner collision checks do not certify continuous physical trajectories."
+  ],
+  "gazebo_runs": 20,
+  "paid_api_calls": 0,
+  "controlled_calibration_allowed": true,
+  "formal_batch_allowed": false,
+  "calibration_report": "CALIBRATION_PROGRESS_CN.md",
+  "calibration_index": "calibration_runs/RUN_INDEX.json",
+  "current_blocker": "Measured attached cube contacts tabletop_floor_red; FCL start invalid. Support-contact planning semantics not approved/implemented.",
+  "full_pick_place_passed": false
+}
