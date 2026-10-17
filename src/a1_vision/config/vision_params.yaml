@@ -1,8 +1,0 @@
-# A1 视觉分类参数(ROS1 虚拟相机版;HSV 阈值在 color_classifier.DEFAULT_RANGES,与组长相同)
-vision_classifier:
-  sample_radius: 7
-  min_ratio: 0.20
-  stable_count: 3
-  noise_std: 8.0
-  feed_radius: 0.06
-  rate: 2.0

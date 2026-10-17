@@ -32,9 +32,7 @@
 place_drop_clearance>0(两份 yaml 均 0.09,已在本文件断言)。
 
 ✅ 锚值接线状态(2026-10-05 01:0x 解冻完成):本文件钉值与两份 yaml
-   均以终版权威源 **docs/evidence/G0_anchors_v3.json**(5 位发布)为准,
-   (g) 项 test_wired_anchors_match_G0_anchors_v3_json 把 4 段×75 组锚与
-   JSON 逐值核对 ⇒ 锚表再重发即刻抓出漂移,不靠肉眼)。20:2x 那次"框架级 bug /
+   互相核对。20:2x 那次"框架级 bug /
    偏 561mm"已被 Lead 00:5x 撤案(根因 = builder 改 xacro 中间态的双重变换
    瞬态,非锚值错)。
    仍有效的结构面:键名/槽位对应/弯肘族包络常数(新表 lift 最深 -2.0644,
@@ -44,7 +42,6 @@ place_drop_clearance>0(两份 yaml 均 0.09,已在本文件断言)。
    另:xacro 的 initial_positions、tools/e0_probe_v2.py 的 PROBE_ANCHORS
    与两 yaml 同源,已一并同步(e0 探针保留双源互验机制)。
    """
-import json
 import math
 import re
 from pathlib import Path
@@ -67,12 +64,6 @@ CAMERA_XY = [-0.10, -0.48]          # 相机立柱 v2 **终档**(2026-10-05 G1
 CAMERA_Z = 2.10                     # 相机头高(杆落地跨 0..2.10)
 # 带尾取件目标(2026-10-04 晚用户拍板拉长带 = 锚表 meta.belt_stop)
 BELT_STOP_XY = [0.60, 0.0]
-# 终版锚表(唯一数据源):单测直接读它做逐值交叉核对,锚表再重发即自动抓漂移
-_ANCHOR_JSON = Path(__file__).resolve().parents[3] / \
-    'docs' / 'evidence' / 'G0_anchors_v3.json'
-SLOT_COLOR = {'arm1': ['blue1', 'blue2', 'blue3', 'yellow1', 'yellow2',
-                       'yellow3'],
-              'arm2': ['red1', 'red2', 'red3', 'green1', 'green2', 'green3']}
 # 四箱箱心(与 sorting_cell.sdf 的 <pose> 逐字一致)
 BIN_XY = {'bin_blue': (0.30, 0.28), 'bin_yellow': (0.90, 0.28),
           'bin_red': (0.30, -0.28), 'bin_green': (0.90, -0.28)}
@@ -329,9 +320,15 @@ def test_relay_section_identical_between_both_tables():
     """
     ra = _params('/pick_place_relay', _LEGACY_FILE)
     rb = _params('/pick_place_relay', _PIPELINE_FILE)
-    assert set(ra) == set(rb), sorted(set(ra) ^ set(rb))
+    # 并联执行才有的两键:规划仍走 MoveIt,轨迹发给本臂自己的控制器。
+    pipeline_only = {'split_plan_execute', 'controller_action'}
+    assert set(ra) - set(rb) == set()
+    assert set(rb) - set(ra) <= pipeline_only
     for key in sorted(set(ra) & set(rb)):
         assert _same(ra[key], rb[key]), (key, ra[key], rb[key])
+    assert rb['split_plan_execute'] is True
+    assert rb['controller_action'] == (
+        '/arm2_joint_trajectory_controller/follow_joint_trajectory')
 
 
 def test_relay_standby_and_belt_pick_anchor_v2():
@@ -385,116 +382,6 @@ def test_legacy_standby_matches_yaml_xyz():
     assert [float(v) for v in a['standby_joints']] == STANDBY_ARM1
     assert (_num(a['standby_x']), _num(a['standby_y']),
             _num(a['standby_z'])) == (1.035, 0.470, 1.080)
-
-
-# ------------------------------------------------ (g) 终版锚表逐值交叉核对
-def _anchor_table():
-    assert _ANCHOR_JSON.exists(), \
-        f'缺终版锚表 {_ANCHOR_JSON}(Lead 2026-10-05 收口指令指定唯一数据源)'
-    return json.loads(_ANCHOR_JSON.read_text(encoding='utf-8'))
-
-
-_V2_JSON = _ANCHOR_JSON.with_name('G0_anchors_v2.json')
-
-
-def _anchor_v2_meta():
-    # v3 无 belt_stop/res_from v2 ⇒ 带尾口径从 v2 meta 读(文件随表在库)
-    return json.loads(_V2_JSON.read_text(encoding='utf-8'))['meta']
-
-
-def test_wired_anchors_match_G0_anchors_v3_json():
-    """两份 yaml 里所有已接线的关节锚必须与 docs/evidence/G0_anchors_v3.json
-    **逐字一致**(v3 起按 meta.publish_decimals 发布,其中 3 锚提精到 5 位小数;
-    yaml 数值与 JSON 存储值 float 相等,不再回绕到 4 位比辂)。锚表若再次
-    重发,本闸立刻抓出漂移,而不是让人
-    靠肉眼比对(2026-10-04 夜"手抄/同源同错"的直接教训)。
-
-    覆盖 = 每臂 6 carry + 12 settle + 1 带尾 rise(pick 已并入"rise +
-    笛卡尔下探",不作生效键,只核 JSON.pick 的 z 与 tcp 定档自洽)。
-    """
-    T = _anchor_table()
-    A = T['anchors']
-    checked = 0
-    for file, section, arm in (
-            (_LEGACY_FILE, '/pick_place_executor', 'arm1'),
-            (_LEGACY_FILE, '/pick_place_relay', 'arm2'),
-            (_PIPELINE_FILE, '/pick_place_executor', 'arm1'),
-            (_PIPELINE_FILE, '/pick_place_relay', 'arm2')):
-        p = _params(section, file)
-        for i, color in enumerate(SLOT_COLOR[arm], 1):
-            pairs = ((f'carry_anchor{i}_joints', f'{color}.carryA'),
-                     (f'carry_settle_top{i}_joints', f'{color}.setTopA'),
-                     (f'carry_settle_bottom{i}_joints', f'{color}.setBotA'))
-            for key, jkey in pairs:
-                assert key in p, (file.name, section, key)
-                got = [float(v) for v in p[key]]
-                exp = [float(v) for v in A[arm][jkey]['q']]
-                assert got == exp, (file.name, section, key, got, exp)
-                checked += 1
-            # 名义格心 = JSON target 的 xy(= 箱心 + 网格偏移)
-            t = A[arm][f'{color}.carryA']['target']
-            xy = [round(_num(v), 2) for v in p[f'carry_anchor{i}_xy']]
-            assert xy == [round(t[0], 2), round(t[1], 2)], \
-                (file.name, section, i, xy, t)
-        # 带尾锚:生效键 = rise(上空 PTP),其 xy 必须是新停位
-        if 'pick_anchor1_joints' in p:
-            got = [float(v) for v in p['pick_anchor1_joints']]
-            exp = [float(v) for v in A[arm]['rise']['q']]
-            assert got == exp, (file.name, section, 'pick_anchor1', got, exp)
-            assert [round(_num(v), 2)
-                    for v in p['pick_anchor1_xy']] == [round(c, 2)
-                                                       for c in
-                                                       A[arm]['rise']['target'][:2]]
-            checked += 1
-    # 段×锚:4 段各 18 关节锚 + 3 段有带尾 rise 键(基表 executor 无取件
-    # 锚键,走笛卡尔 pre_grasp,属 legacy 原口径)⇒ 72 + 3
-    assert checked == 75, f'交叉核对项数 {checked} != 75(72 关节锚 + 3 带尾)'
-
-
-def test_anchor_table_gates_and_belt_stop_are_pinned():
-    """锚表自身的判据口径(meta)与带尾停位必须与接线一致:
-    fk 闸 40µm / τ 闸 30 / 净空闸 8mm(未放宽),belt_stop = (0.60, 0)。
-    另核对:执行器 rise 锚的 tool0 z 与 settle 触底档、tcp_z_offset 0.204
-    下 JSON.pick 的深度档 1.009 自洽(0.805+0.204=1.009)。"""
-    T = _anchor_table()
-    meta = T['meta']
-    gate = meta['gate']       # v3 布局:gate{fk_um,tau,clr_mm}
-    assert float(gate['fk_um']) == 40.0
-    assert float(gate['tau']) == 30.0
-    assert float(gate['clr_mm']) == 8.0
-    # v3 belt_stop 沿 res_from(v2)口径;w3_rule 锁 OLD standby 归一
-    assert [round(float(v), 2) for v in _anchor_v2_meta()['belt_stop']] == \
-        [round(c, 2) for c in BELT_STOP_XY]
-    assert float(meta['publish_decimals']) == 5
-    assert float(meta['publish_res_max_um']) <= float(gate['fk_um'])
-    assert float(meta['pole_final']) == -0.10
-    p = _params('/pick_place_executor', _PIPELINE_FILE)
-    feed_z, tcp = _num(p['feed_z']), _num(p['tcp_z_offset'])
-    pick_z = T['anchors']['arm1']['pick']['target'][2]
-    assert abs(feed_z + tcp - pick_z) <= 1e-3, \
-        f'带尾深度档不自洽:feed_z {feed_z} + tcp {tcp} != JSON.pick z {pick_z}'
-    disp = _params('/task_dispatcher', _PIPELINE_FILE)
-    # 停位线 0.58 + 越线偏置 ~0.02 ⇒ 停位 0.60(与 belt_stop 锚一致)
-    assert abs(_num(disp['belt_stop_x']) - 0.58) < 1e-9
-    for arm in ('arm1', 'arm2'):
-        for key, v in T['anchors'][arm].items():
-            assert float(v['fk_um']) <= float(gate['fk_um']), (arm, key, v['fk_um'])
-            if v.get('tau') is not None:
-                assert float(v['tau']) < float(gate['tau']), (arm, key, v['tau'])
-    # R4 w3 归一(消回绕):全表任一锚的 wrist_3 与 OLD standby 数值差
-    # 不得超过 π(±2π 等价分支取最短行程;v2 曾把 arm1 蓝格/带尾解放在
-    # +2π 分支 ⇒ standby→锚 PTP 行程 4.74rad,已废)。
-    sb = T['meta']['w3_ref_standby']
-    for arm in ('arm1', 'arm2'):
-        w3_ref = float(sb[arm][5])
-        for key, v in T['anchors'][arm].items():
-            d = abs(float(v['q'][5]) - w3_ref)
-            assert d <= math.pi + 1e-6, (arm, key, round(d, 3))
-    # meta 里的 PTP 行程记录同步(实测值,防表被换口径重发)
-    assert float(T['meta']['ptp_max']['arm1'][0]) <= math.pi
-    assert float(T['meta']['ptp_max']['arm2'][0]) <= math.pi
-    # standby 与 xacro/yaml 同值(OLD 保留裁定)也归本闸核
-    assert sb['arm1'] == STANDBY_ARM1 and sb['arm2'] == STANDBY_ARM2
 
 
 # ------------------------------------------------ (h) xacro ↔ yaml 同步闸

@@ -9,18 +9,11 @@ from a1_sorting_core.q_feed import (
 
 
 def _policy_paths():
-    try:
-        return resolve_q_paths(
-            'codex_rl',
-            'codex_rl/config/timing.gazebo-v1.json',
-            'codex_rl/artifacts/gazebo-v1/q_table.json',
-            anchors=[Path(__file__).resolve()])
-    except FileNotFoundError:
-        legacy = Path('/home/yuri/lead_ws/ai-collaboration/codex_rl')
-        return resolve_q_paths(
-            str(legacy),
-            str(legacy / 'config' / 'timing.gazebo-v1.json'),
-            str(legacy / 'artifacts' / 'gazebo-v1' / 'q_table.json'))
+    return resolve_q_paths(
+        'codex_rl_v2',
+        'codex_rl_v2/config/timing.v2.json',
+        'codex_rl_v2/artifacts/v2/q-v2-general.json',
+        anchors=[Path(__file__).resolve()])
 
 
 PACKAGE, CONFIG, TABLE = _policy_paths()
@@ -40,8 +33,8 @@ def test_load_messages_name_the_two_outcomes():
 
 
 def test_empty_q_paths_mean_the_idle_rule():
-    assert resolve_q_paths('codex_rl', '', '') == ('', '', '')
-    assert resolve_q_paths('', 'codex_rl/config/timing.gazebo-v1.json', '') == (
+    assert resolve_q_paths('codex_rl_v2', '', '') == ('', '', '')
+    assert resolve_q_paths('', 'codex_rl_v2/config/timing.v2.json', '') == (
         '', '', '')
 
 
@@ -49,20 +42,20 @@ def test_relative_paths_find_the_bundled_table_when_present():
     here = Path(__file__).resolve()
     bundled = None
     for parent in here.parents:
-        candidate = parent / 'codex_rl' / 'artifacts' / 'gazebo-v1' / 'q_table.json'
+        candidate = parent / 'codex_rl_v2' / 'artifacts' / 'v2' / 'q-v2-general.json'
         if candidate.is_file():
             bundled = parent
             break
     if bundled is None:
-        pytest.skip('this tree does not carry ros2/codex_rl')
+        pytest.skip('this tree does not carry ros2/codex_rl_v2')
     package, config, table = resolve_q_paths(
-        'codex_rl',
-        'codex_rl/config/timing.gazebo-v1.json',
-        'codex_rl/artifacts/gazebo-v1/q_table.json',
+        'codex_rl_v2',
+        'codex_rl_v2/config/timing.v2.json',
+        'codex_rl_v2/artifacts/v2/q-v2-general.json',
         anchors=[here])
     assert Path(package, 'dual_arm_rl', '__init__.py').is_file()
-    assert Path(config) == bundled / 'codex_rl' / 'config' / 'timing.gazebo-v1.json'
-    assert Path(table) == bundled / 'codex_rl' / 'artifacts' / 'gazebo-v1' / 'q_table.json'
+    assert Path(config) == bundled / 'codex_rl_v2' / 'config' / 'timing.v2.json'
+    assert Path(table) == bundled / 'codex_rl_v2' / 'artifacts' / 'v2' / 'q-v2-general.json'
     loaded_config, loaded_table = load_q_policy(package, config, table)
     assert loaded_config['overlap_validated'] is False
     assert loaded_table['overlap_validated'] is False

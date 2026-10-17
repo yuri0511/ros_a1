@@ -1,6 +1,0 @@
-#!/bin/bash
-# Experimental Gazebo-only flag wrapper; never changes the shared environment.
-if [[ "$1" == /home/yu/ros_a1/ros2/.pixi/envs/default/bin/gz && "$2" == sim && "${PERF_EGL:-0}" == 1 ]]; then
-    exec /home/yu/ros_a1/ros2/.pixi/envs/default/bin/ruby "$@" --headless-rendering
-fi
-exec /home/yu/ros_a1/ros2/.pixi/envs/default/bin/ruby "$@"

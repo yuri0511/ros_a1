@@ -1,7 +1,0 @@
-# ROS1 移植新增:代替 Gazebo 的 /world/<world>/create + remove 服务。
-# 清空所有 part_* 后,按颜色序列在来料槽重新生成工件(规划场景中的碰撞体)
-# colors: 逗号分隔,如 "red,green,red";空串 = 用 spawn_parts 节点的 part_colors 参数
-string colors
----
-bool success
-string message

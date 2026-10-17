@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420">
-<rect width="100%" height="100%" fill="white"/>
-<text x="24" y="32" font-size="18">对比平均耗时</text>
-<text x="16" y="72" font-size="12">秒</text><rect x="98.0" y="114.1" width="84.0" height="265.9" fill="#3b6ea5"/><text x="140.0" y="404" font-size="12" text-anchor="middle">frozen</text><text x="140.0" y="108.1" font-size="12" text-anchor="middle">17.6</text><rect x="238.0" y="100.0" width="84.0" height="280.0" fill="#3b6ea5"/><text x="280.0" y="404" font-size="12" text-anchor="middle">slow</text><text x="280.0" y="94.0" font-size="12" text-anchor="middle">18.5</text><rect x="378.0" y="127.4" width="84.0" height="252.6" fill="#3b6ea5"/><text x="420.0" y="404" font-size="12" text-anchor="middle">mid</text><text x="420.0" y="121.4" font-size="12" text-anchor="middle">16.7</text><rect x="518.0" y="139.3" width="84.0" height="240.7" fill="#3b6ea5"/><text x="560.0" y="404" font-size="12" text-anchor="middle">fast</text><text x="560.0" y="133.3" font-size="12" text-anchor="middle">15.9</text></svg>

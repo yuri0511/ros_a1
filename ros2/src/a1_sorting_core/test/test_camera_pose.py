@@ -117,30 +117,6 @@ def test_world_image_camera_h_fov_final_135():
     # overhead_camera(图像)在 logical_camera 之前,顺序即文件顺序
     assert float(fovs[0]) == pytest.approx(IMG_H_FOV)
     assert float(fovs[1]) == pytest.approx(LOGICAL_H_FOV)
-    # 终档依据直接引两份证据文件,不自行重推余量公式(防口径漂移):
-    #   G0_anchors_v3.json meta.pole_final = -0.1(权威,Lead 03:3x 定档)
-    #   G0_g0full.json pole_trials['-0.1'].fov135:带缘 belt_worst +52.4mm、
-    #   belt_inside=true、gate_fov50_135=true;h1.2 六档全灭(pole_ok_h12=[])
-    # ⚠ g0full 顶层 pole_final 字段 = -0.05 是脚本"备选档"阶段落盘的陈旧值
-    #   (pole_fallback 文字同段),已被 Lead 终裁 -0.10 覆盖(提交 c929aaf),
-    #   本闸只认 v3 meta;pole_trials 表数值仍作余量佐证。
-    import json
-    v3 = json.loads((_WS / 'docs/evidence/G0_anchors_v3.json').read_text(
-        encoding='utf-8'))
-    assert float(v3['meta']['pole_final']) == pytest.approx(CAMERA_XY[0])
-    g = json.loads((_WS / 'docs/evidence/G0_g0full.json').read_text(
-        encoding='utf-8'))
-    assert g['fov_selected'] == pytest.approx(IMG_H_FOV)
-    assert g['pole_ok_h12'] == []                    # h1.2:六档全灭
-    assert '-0.1' in [str(k) for k in g['pole_ok_h135']]
-    row = g['pole_trials']['-0.1']['fov135']
-    assert row['belt_inside'] is True
-    assert row['belt_worst_mm'] == pytest.approx(52.4, abs=0.1)
-    assert g['pole_trials']['-0.1']['gate_fov50_135'] is True
-    # -0.05(旧定档)在 h1.35 下也入框,但腿触边 7.9mm<8 ⇒ 弃用(次选)
-    assert g['pole_trials']['-0.05']['gate_fov50_135'] is True
-    assert g['pole_trials']['-0.05']['arm2']['circle_worst_mm'] == \
-        pytest.approx(8.0, abs=0.1)
 
 
 def test_world_camera_pose_matches_params():

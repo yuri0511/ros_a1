@@ -21,7 +21,7 @@
 demo_parts 默认 8(0=无限持续)。pipeline:=true 时追加加载
 config/sorting_params_pipeline.yaml(后加载覆盖同名参数;legacy 默认值
 不动),并把 spawn 模式切为 service(按需单件来料)。
-feed_policy 默认 q:读仓库里的 ros2/codex_rl。feed_policy:=rule 清空
+feed_policy 默认 q:读仓库里的 ros2/codex_rl_v2。feed_policy:=rule 清空
 Q 表路径,来料改回谁闲推谁,不用手改 yaml。
 """
 from launch import LaunchDescription
@@ -170,7 +170,7 @@ def launch_setup(context, *args, **kwargs):
     parallel_on = dual_on and bool(arm2_colors)
     if parallel_on:
         dispatcher_overrides['arm2_colors'] = arm2_colors
-    # q:用 yaml 里的相对路径,节点启动时解析到 ros2/codex_rl。
+    # q:用 yaml 里的相对路径,节点启动时解析到 ros2/codex_rl_v2。
     # rule:盖成空路径,调度器打印「退回谁闲推谁」。
     feed_mode = perform_substitutions(context, [feed_policy]).strip().lower()
     if feed_mode == 'q':
@@ -292,7 +292,7 @@ def generate_launch_description():
         DeclareLaunchArgument('fast_sim_waits', default_value='false'),
         DeclareLaunchArgument('gazebo_gui', default_value='false'),
         DeclareLaunchArgument('launch_rviz', default_value='false'),
-        DeclareLaunchArgument('result_csv', default_value='/tmp/yuri_performance_results.csv'),
+        DeclareLaunchArgument('result_csv', default_value='/tmp/a1_sorting_results.csv'),
         DeclareLaunchArgument('ur_type', default_value='ur5e'),
         DeclareLaunchArgument('part_colors', default_value='red,green,red'),
         DeclareLaunchArgument(
@@ -314,7 +314,7 @@ def generate_launch_description():
                               description='Optional local experiment ROS parameter overlay'),
         DeclareLaunchArgument(
             'feed_policy', default_value='q',
-            description='来料算法。q(默认)=读 ros2/codex_rl 里的 Q 表;'
+            description='来料算法。q(默认)=读 ros2/codex_rl_v2 里的 Q 表;'
                         'rule=谁闲推谁。不用改 sorting_params_pipeline.yaml'),
         DeclareLaunchArgument(
             'demo_parts', default_value='8',

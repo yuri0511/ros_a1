@@ -24,7 +24,7 @@ def describe_q_load(loaded, detail):
 def resolve_q_paths(package_dir, config_path, table_path, anchors=None):
     """把相对路径变成绝对路径。配置或表有一个空着，就三个都返回空字符串。
 
-    相对路径从 anchors、本文件和当前目录向上找，直到碰上仓库里的 codex_rl。
+    相对路径从 anchors、本文件和当前目录向上找，直到碰上仓库里的 codex_rl_v2。
     绝对路径原样使用，但仍要确认文件或包在那里。
     """
     config_text = str(config_path or '').strip()

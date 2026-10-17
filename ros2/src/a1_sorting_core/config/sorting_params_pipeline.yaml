@@ -38,13 +38,13 @@
     demand_color: random         # random=随机四色池(spawn_parts.RANDOM_COLORS);
                                  # 可强制同色压测三格。并联且下面 Q 表路径
                                  # 非空时,这个字段不决定下一件颜色。
-    # 2026-10-16 接入已训好的 Q 表。路径相对仓库里的 ros2/codex_rl，启动时再解析。
+    # Q 表在仓库的 ros2/codex_rl_v2。下面是相对路径，启动时再解析成绝对路径。
     # 两份 JSON 只读:里面的 overlap_validated 仍是 false,和表一致,这里不改文件。
     # 批次是蓝、黄、红、绿各 2 件,加起来等于演示的 8 件。忙着的臂不预送。
     # 想改回谁闲推谁,启动加 feed_policy:=rule,不用改这三行。
-    q_package_dir: codex_rl
-    q_config_path: codex_rl/config/timing.gazebo-v1.json
-    q_table_path: codex_rl/artifacts/gazebo-v1/q_table.json
+    q_package_dir: codex_rl_v2
+    q_config_path: codex_rl_v2/config/timing.v2.json
+    q_table_path: codex_rl_v2/artifacts/v2/q-v2-general.json
     q_batch: [2, 2, 2, 2]
     spawn_topic: /parts/request_spawn
     camera_xy: [-0.10, -0.48]   # 问题①定罪修复(2026-10-06):v2 柱终档
