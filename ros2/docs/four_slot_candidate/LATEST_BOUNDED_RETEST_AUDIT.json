@@ -1,0 +1,88 @@
+{
+  "run": "/home/yu/yuri_gazebo_performance/voice_batch_four/bin_capacity_v1/calibration_runs/C-20261017T112317-54decb",
+  "runtime_commit": "06326edad1b6d3424fb9875a9c99c8ee90da745e",
+  "first_monitor_fault": {
+    "wall": 1792207422.5711274,
+    "monitor_fault": "observation_gap",
+    "previous": [
+      17.816,
+      89634.177581011,
+      [
+        0.011880361822857283,
+        0.01211963817711184
+      ]
+    ],
+    "current_stamp": 17.874,
+    "clock": 18.068
+  },
+  "consumer_gaps": [
+    {
+      "before": 17.816,
+      "after": 17.874,
+      "gap": 0.05799999999999983,
+      "receipt_gap": 0.0006919809966348112
+    }
+  ],
+  "independent_observer_gaps": [],
+  "independent_samples_inside_consumer_gap": 26,
+  "contact_pairs": {
+    "calibration_red4::link::collision | tabletop::link::floor_red": 8548
+  },
+  "held_cycle_executed": false,
+  "arm_probe_executed": false,
+  "second_experiment_started": false,
+  "summary": {
+    "outcome": "guard_fault",
+    "observer_exit": 0,
+    "scene_exit": 0,
+    "stop": [
+      {
+        "attempt": 89634211083084,
+        "evidence": "89634211083084-pause.log",
+        "step": "pause_world",
+        "start_wall": 1792207422.6039522,
+        "command": [
+          "gz",
+          "service",
+          "-s",
+          "/world/sorting_cell/control",
+          "--reqtype",
+          "gz.msgs.WorldControl",
+          "--reptype",
+          "gz.msgs.Boolean",
+          "--timeout",
+          "2000",
+          "--req",
+          "pause: true"
+        ],
+        "timeout_s": 4,
+        "returncode": 0,
+        "acknowledged": true,
+        "end_wall": 1792207422.902923,
+        "duration_monotonic_s": 0.298996278012055
+      },
+      {
+        "attempt": 89634211083084,
+        "evidence": "89634211083084-stop-service.log",
+        "step": "halt_new_feed",
+        "start_wall": 1792207422.9030545,
+        "command": [
+          "ros2",
+          "service",
+          "call",
+          "/voice_batch/stop",
+          "std_srvs/srv/Trigger",
+          "{}"
+        ],
+        "timeout_s": 3,
+        "error": "Command '['ros2', 'service', 'call', '/voice_batch/stop', 'std_srvs/srv/Trigger', '{}']' timed out after 3 seconds",
+        "acknowledged": false,
+        "end_wall": 1792207425.9098198,
+        "duration_monotonic_s": 3.0068120770010864
+      }
+    ],
+    "task_sent": false,
+    "arm_goals_enabled": true,
+    "gate2": "BLOCKED"
+  }
+}
