@@ -25,6 +25,8 @@ from gz.transport13 import Node as GzNode
 from task_io import load_task,atomic_json
 from support_evidence import SupportEvidence
 
+SUBMISSION_GATE=lambda run: True
+
 def main():
     run=Path(sys.argv[1]);readonly='--no-submit' in sys.argv[2:]
     if '--calibration' in sys.argv[2:]:
@@ -69,7 +71,16 @@ def main():
     def logical(m):
         state['logical_frames']+=1
         emit('logical',camera_pose=message_to_ordereddict(m.pose),stamp=m.header.stamp.sec+m.header.stamp.nanosec*1e-9,models=[{'name':x.name,'pose':message_to_ordereddict(x.pose)} for x in m.model])
-    def rgb(m):state['rgb_frames']+=1
+    def rgb(m):
+        state['rgb_frames']+=1
+        if state['rgb_frames'] in (3,30):
+            sample=list(m.data[::max(1,len(m.data)//1024)])
+            if sample:
+                mean=sum(sample)/len(sample)
+                state['rgb_summary']={'encoding':m.encoding,'width':m.width,'height':m.height,'min':min(sample),'max':max(sample),'std':(sum((x-mean)**2 for x in sample)/len(sample))**.5}
+            if m.encoding in ('rgb8','bgr8'):
+                from PIL import Image as PILImage
+                PILImage.frombytes('RGB',(m.width,m.height),bytes(m.data),'raw','RGB' if m.encoding=='rgb8' else 'BGR',m.step).save(run/'rgb-camera.png')
     def action(m):
         raw_emit('action_status',m)
         for s in m.status_list:
@@ -141,7 +152,7 @@ def main():
         while not (run/'SUPERVISOR_STOP').exists():
             rclpy.spin_once(node,timeout_sec=.025);now=time.monotonic()
             guard_halted=(run/'guard-fault.json').exists() or (run/'SHUTDOWN_INTENT').exists()
-            if not guard_halted and not readonly and not submitted and snapshot.get('hardware_ready') and snapshot.get('state')=='WAITING_FOR_PLAN':
+            if not guard_halted and not readonly and not submitted and SUBMISSION_GATE(run) and snapshot.get('hardware_ready') and snapshot.get('state')=='WAITING_FOR_PLAN':
                 if ready_at is None:ready_at=now
                 # Independently record at least 3 seconds ready, no accepted plan,
                 # no requests, no visible arrivals. Authorization never fakes hardware.

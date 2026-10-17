@@ -205,6 +205,8 @@ def launch_setup(context, *args, **kwargs):
          'sorting_params_pipeline.yaml'])
     core_params_list = [core_params] + ([pipeline_params_path]
                                         if pipeline_on else [])
+    experiment_params=LaunchConfiguration('experiment_params').perform(context).strip()
+    if experiment_params:core_params_list.append(experiment_params)
     # relay_overlay:arm2(/pick_place_relay)专用单变量覆盖 yaml 的**绝对路径**。
     # 空=不覆盖(D1 之前的 64cd236 基线档)。z 阶梯各档写一份只含
     # /pick_place_relay 段的 yaml,由 run_experiment.py --relay-overlay 传入,
@@ -256,7 +258,7 @@ def launch_setup(context, *args, **kwargs):
         package='a1_sorting_core', executable='scene_publisher_node',
         name='scene_publisher', output='screen',
         condition=IfCondition(pipeline),
-        parameters=[{'use_sim_time': True}])
+        parameters=([experiment_params] if experiment_params else [])+[{'use_sim_time': True}])
     recorder = Node(
         package='a1_sorting_core', executable='result_recorder_node',
         name='result_recorder', output='screen',
@@ -318,6 +320,7 @@ def generate_launch_description():
             description='流水线模式:传送带逐件来料+真实包夹+触底放置。'
                         '2026-10-03 起为默认演示路径;pipeline:=false 回'
                         'legacy 一次性 batch 三件(验收回归基线用)'),
+        DeclareLaunchArgument('experiment_params',default_value='',description='Isolated experiment overlay; empty preserves standard entry'),
         DeclareLaunchArgument('policy_params', default_value='',
                               description='Optional local experiment ROS parameter overlay'),
         DeclareLaunchArgument(

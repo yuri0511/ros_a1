@@ -25,6 +25,7 @@ def main():
     for flag in ('fingers','arm-probe','empty-slot','release-fixture','lift-fixture'):
         parser.add_argument('--'+flag,action='store_true')
     parser.add_argument('--approval-file',type=Path)
+    parser.add_argument('--gui-precheck',action='store_true')
     args=parser.parse_args()
     stage='B' if '--fingers' in sys.argv else 'A'
     arm_probe='--arm-probe' in sys.argv
@@ -53,8 +54,8 @@ def main():
     env=os.environ.copy()
     for k in ('__NV_PRIME_RENDER_OFFLOAD','__NV_PRIME_RENDER_OFFLOAD_PROVIDER','__GLX_VENDOR_LIBRARY_NAME','DRI_PRIME','WAYLAND_DISPLAY'):env.pop(k,None)
     env.update(HOME=str(run/'home'),ROS_DOMAIN_ID='95',GZ_PARTITION=run.name,ROS_LOG_DIR=str(run/'ros'),LIBGL_ALWAYS_SOFTWARE='1',GALLIUM_DRIVER='llvmpipe',LP_NUM_THREADS='2',QT_QPA_PLATFORM='xcb',PYTHONUNBUFFERED='1',ROS_AUTOMATIC_DISCOVERY_RANGE='LOCALHOST')
-    cmd=['ros2','launch','a1_cell_sim','cell_bringup.launch.py','dual:=true','spawn_mode:=service','gazebo_gui:=false','gpu_offload:=false','world_file:=four_slot_1ms.sdf','controllers_file:=ur5e_cell_controllers_stability_gain1.yaml','fast_sim_waits:=true']
-    files=[HERE/'joint_receiver.py',HERE/'lock_window.py',HERE/'support_contact.py',HERE/'live_support_cycle.py',HERE.parent/'voice_four/support_evidence.py',HERE/'arm_probe.py',WS/'src/a1_sorting_core/a1_sorting_core/four_slot_grip_control.py',HERE/'calibrate_fingers.py',HERE/'geometry.py',WS/'src/a1_cell_sim/worlds/four_slot_1ms.sdf',WS/'src/a1_cell_sim/config/ur5e_cell_controllers_stability_gain1.yaml',Path(__file__),HERE.parent/'voice_four/observe_four.py']
+    cmd=['ros2','launch','a1_cell_sim','cell_bringup.launch.py','dual:=true','spawn_mode:=service',('gazebo_gui:=true' if args.gui_precheck else 'gazebo_gui:=false'),'gpu_offload:=false','world_file:=four_slot_1ms.sdf','controllers_file:=ur5e_cell_controllers_stability_gain1.yaml','fast_sim_waits:=true']
+    files=[HERE/'gui_evidence.py',HERE/'joint_receiver.py',HERE/'lock_window.py',HERE/'support_contact.py',HERE/'live_support_cycle.py',HERE.parent/'voice_four/support_evidence.py',HERE/'arm_probe.py',WS/'src/a1_sorting_core/a1_sorting_core/four_slot_grip_control.py',HERE/'calibrate_fingers.py',HERE/'geometry.py',WS/'src/a1_cell_sim/worlds/four_slot_1ms.sdf',WS/'src/a1_cell_sim/config/ur5e_cell_controllers_stability_gain1.yaml',Path(__file__),HERE.parent/'voice_four/observe_four.py']
     atomic_json(run/'metadata.json',dict(stage=stage,scope='isolated_calibration',fingers=(stage!='A'),arm_probe=arm_probe,fixture=empty_slot,release_fixture=release_fixture,lift_fixture=lift_fixture,gate2='BLOCKED',task_authorized=False,reference_task_only=False,command=cmd,environment={k:env[k] for k in ('ROS_DOMAIN_ID','GZ_PARTITION','DISPLAY','LP_NUM_THREADS','LIBGL_ALWAYS_SOFTWARE')},sha256={str(p.relative_to(WS)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files},commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=WS,text=True).strip()))
     if approval is not None:atomic_json(run/'human-approval.json',approval)
     (run/'source_snapshot').mkdir()
@@ -88,6 +89,11 @@ def main():
                 atomic_json(run/'fixture-spawn.json',dict(command=command,stdout=response.stdout,stderr=response.stderr,returncode=response.returncode,purpose='50mm 0.2kg calibration fixture; not fed, grasped or sorted'))
                 if response.returncode or 'data: true' not in response.stdout:raise RuntimeError('fixture_spawn_failed')
                 fixture=True
+            if args.gui_precheck and finger is None and time.monotonic()-begin>15:
+                from gui_evidence import confirm
+                if not confirm(run,env['GZ_PARTITION']):
+                    if time.monotonic()-begin>45:raise RuntimeError('GUI_camera_precheck_failed_no_motion')
+                    time.sleep(.1);continue
             if stage in ('B','C') and time.monotonic()-begin>22 and finger is None:
                 finger=start('fingers',[sys.executable,str(HERE/'calibrate_fingers.py'),str(run)]+(['--arm-probe'] if arm_probe else [])+(['--empty-slot'] if empty_slot else [])+(['--release-fixture'] if '--release-fixture' in sys.argv else [])+(['--lift-fixture'] if '--lift-fixture' in sys.argv else []))
             if finger is not None and finger.poll() is not None:

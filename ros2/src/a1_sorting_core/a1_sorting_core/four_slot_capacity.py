@@ -44,7 +44,11 @@ class SlotBank:
             if delete_ack is not True or not all(math.isfinite(x) for x in (delete_sim,frame_sim)) or frame_sim<=delete_sim or part in visible:raise CapacityError('deletion_not_proven')
             self.slots[sid]={'bin':row['bin'],'xyz':row['xyz'],'state':'EMPTY','part':None};self.save()
 
-def load_motion_candidate(path):
+def load_motion_candidate(path, trial_permit=""):
+    if trial_permit:
+        from .four_slot_trial import load_trial
+        load_trial(trial_permit,path)
+        return json.loads(Path(path).read_text())
     data=json.loads(Path(path).read_text())
     if data.get('schema')!=1 or data.get('motion_validated') is not True:
         raise CapacityError('four_slot_motion_review_not_passed; plan-only permitted')

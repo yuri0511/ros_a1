@@ -325,7 +325,7 @@ class MotionClient:
 
     def move_to_joints(self, joint_names, values, label: str = '',
                        timeout: float = 60.0,
-                       settle_check: bool = True) -> bool:
+                       settle_check: bool = True, planner_id: str = 'PTP') -> bool:
         """关节空间 PTP(目标 = JointConstraint,规划器不做 IK)。
 
         settle_check(默认开)启用**关节到位闸兜底**:lift goal 容差收紧
@@ -341,7 +341,7 @@ class MotionClient:
         for busy in range(1 if label == "return_standby" or getattr(self._node,'_four_slot',False) else 4):
             ok = self._move_to_joints_once(joint_names, values, label,
                                            timeout, log,
-                                           settle_check=settle_check)
+                                           settle_check=settle_check, **({'planner_id':planner_id} if planner_id!='PTP' else {}))
             if ok:
                 return True
             if self._wedge_detect and self.session_dead:
@@ -374,7 +374,7 @@ class MotionClient:
 
     def _move_to_joints_once(self, joint_names, values, label: str,
                              timeout: float, log,
-                             settle_check: bool = False):
+                             settle_check: bool = False, planner_id: str = 'PTP'):
         goal = MoveGroup.Goal()
         req = goal.request
         req.group_name = self._group
@@ -383,7 +383,7 @@ class MotionClient:
         req.max_velocity_scaling_factor = self._vel
         req.max_acceleration_scaling_factor = self._acc
         req.pipeline_id = 'pilz_industrial_motion_planner'
-        req.planner_id = 'PTP'
+        req.planner_id = planner_id
         req.start_state = RobotState()
 
         constraints = Constraints()

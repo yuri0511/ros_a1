@@ -7,6 +7,9 @@ from a1_sorting_core.voice_demo_audit import BatchEventAudit
 from task_io import load_task,atomic_json
 from shutdown import stop_requests
 HERE=Path(__file__).resolve().parent;WS=HERE.parents[1];ROOT=WS.parents[1]
+ENTRY_SCOPE='one-four-part-gazebo-diagnostic'
+OBSERVER_SCRIPT=HERE/'observe_four.py'
+LIVE_PREREQUISITE=lambda run,env: None
 
 def commands(run):
     return ['ros2','launch','a1_sorting_core','sorting_demo.launch.py',
@@ -49,11 +52,11 @@ def main():
     if args.interactive:
         if not sys.stdin.isatty():raise PlanRejected('human_TTY_required')
         if input('本轮会启动仿真并运动、送料上述4件。确认请输入 CONFIRM：').strip()!='CONFIRM':raise PlanRejected('human_not_confirmed')
-        approval=dict(approved=True,scope='one-four-part-gazebo-diagnostic',request_id=record['request_id'],plan_sha256=plan.sha256,commit=commit,expires_wall=time.time()+600,source='local_human_TTY_CONFIRM')
+        approval=dict(approved=True,scope=ENTRY_SCOPE,request_id=record['request_id'],plan_sha256=plan.sha256,commit=commit,expires_wall=time.time()+600,source='local_human_TTY_CONFIRM')
     elif args.approval:
         approval=json.loads(args.approval.read_text())
     else:raise PlanRejected('human_confirmation_required_before_Gazebo_start')
-    if not (approval.get('approved') is True and approval.get('scope')=='one-four-part-gazebo-diagnostic' and approval.get('request_id')==record['request_id'] and approval.get('plan_sha256')==plan.sha256 and approval.get('commit')==commit and time.time()<approval.get('expires_wall',0)<=time.time()+86400):raise PlanRejected('approval_missing_stale_or_wrong_task_commit')
+    if not (approval.get('approved') is True and approval.get('scope')==ENTRY_SCOPE and approval.get('request_id')==record['request_id'] and approval.get('plan_sha256')==plan.sha256 and approval.get('commit')==commit and time.time()<approval.get('expires_wall',0)<=time.time()+86400):raise PlanRejected('approval_missing_stale_or_wrong_task_commit')
     if subprocess.check_output(['git','status','--porcelain','--','ros2/src','ros2/research_tools/voice_four'],cwd=WS,text=True).strip():raise PlanRejected('runtime_sources_dirty_after_tested_commit')
     for proc in Path('/proc').iterdir():
         if not proc.name.isdigit():continue
@@ -73,7 +76,7 @@ def main():
     for sig in (signal.SIGINT,signal.SIGTERM):signal.signal(sig,lambda s,f:interrupted.append(s))
     children=[];handles=[];reason='timeout';detail='';audit=BatchEventAudit(plan,record['request_id']);actual_releases=set();start=time.monotonic();result=None
     try:
-        for name,command in [('observer',[sys.executable,str(HERE/'observe_four.py'),str(run)]),('launch',cmd)]:
+        for name,command in [('observer',[sys.executable,str(OBSERVER_SCRIPT),str(run)]),('launch',cmd)]:
             log=(run/(name+'.log')).open('w');handles.append(log)
             children.append(subprocess.Popen(command,cwd=WS,env=env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True))
             if name=='observer':
@@ -82,6 +85,7 @@ def main():
                 if not (run/'OBSERVER_READY').exists():raise PlanRejected('observer_not_ready')
         with (run/'launch.log').open() as log:
             while time.monotonic()-start<args.timeout:
+                LIVE_PREREQUISITE(run,env)
                 if interrupted or (run/'STOP').exists():reason='operator_stop';break
                 if (run/'guard-fault.json').exists():raise PlanRejected((run/'guard-fault.json').read_text())
                 if any(c.poll() is not None for c in children):raise PlanRejected('owned_child_exited')

@@ -41,6 +41,7 @@ class ScenePublisherNode(Node):
 
     def __init__(self):
         super().__init__('scene_publisher')
+        self.declare_parameter('four_slot_trial_permit','')
         self.declare_parameter('four_slot_mode',False)
         self.declare_parameter('four_slot_world','')
         self._four_slot_objects=[]

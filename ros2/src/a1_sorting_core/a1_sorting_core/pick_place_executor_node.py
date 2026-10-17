@@ -24,6 +24,7 @@
   attach(现状)。verified_only 下即使 pose_from_camera=false 也订阅
   逻辑相机(无条件缓存采样)。
 """
+from pathlib import Path
 import json
 import math
 from a1_sorting_core.four_slot_grip_control import opening_efforts
@@ -443,6 +444,7 @@ class PickPlaceExecutorNode(Node):
             self.declare_parameter(f'{name}.z', 0.75)
         self.declare_parameter('four_slot_mode', False)
         self.declare_parameter('four_slot_config', '')
+        self.declare_parameter('four_slot_trial_permit', '')
         self.declare_parameter('four_slot_inventory', '')
         self.declare_parameter('bin_grid_offsets.x', [-0.05, 0.05, -0.05, 0.05])
         self.declare_parameter('bin_grid_offsets.y', [-0.035, -0.035, 0.035, 0.035])
@@ -635,7 +637,13 @@ class PickPlaceExecutorNode(Node):
         self._four_slot = bool(gp('four_slot_mode'));self._slot_bank=None;self._active_slot=None
         if self._four_slot:
             from .four_slot_capacity import SlotBank,load_motion_candidate
-            cfg=load_motion_candidate(str(gp('four_slot_config')))
+            self._trial_permit=str(gp('four_slot_trial_permit'))
+            cfg=load_motion_candidate(str(gp('four_slot_config')),self._trial_permit)
+            self._trial_used=False
+            if self._trial_permit:
+                from .four_slot_trial import load_trial
+                self._trial=load_trial(self._trial_permit,str(gp('four_slot_config')))
+                self._trial_urdf=Path(self._trial['urdf_path']).read_text()
             inventory=str(gp('four_slot_inventory'))
             if not inventory:raise ValueError('four_slot_inventory must be independent and persistent')
             own={b:e for b,e in cfg['bins'].items() if b in self._bins}
@@ -851,7 +859,11 @@ class PickPlaceExecutorNode(Node):
         try:
             if getattr(self,'_slot_bank',None) is not None:
                 target=self._bin_for(part.category,getattr(part,'target_bin_override',''))
+                if getattr(self,'_trial_permit',''):
+                    if self._trial_used or self._arm_name!='arm1' or part.category!='yellow' or target!='bin_yellow':raise FatalGraspError('single_yellow_trial_scope_violation')
+                    self._trial_used=True
                 self._active_slot=self._slot_bank.reserve(target,part.part_id)
+                if getattr(self,'_trial_permit','') and self._active_slot!=self._trial['slot']:raise FatalGraspError('single_yellow_trial_slot_changed')
                 self.get_logger().info('BIN_SLOT_RESERVED '+json.dumps({'part':part.part_id,'slot':self._active_slot}))
             self._run_task_impl(part)
         except Exception as e:
@@ -1302,10 +1314,14 @@ class PickPlaceExecutorNode(Node):
                     # 崩溃时重试只会拖时间,2026-10-03 实证)
                     try:
                         if getattr(self,'_slot_bank',None) is not None:
-                            self._plan_execute(self._down_pose(place[:2],1.08),'four_slot_rise',linear=True)
-                            # No calibrated link-envelope/world-clearance proof exists yet.
-                            # Action SUCCESS cannot permit full opening inside a possible wall.
-                            raise FatalGraspError('four_slot_exit_clearance_not_calibrated')
+                            if not getattr(self,'_trial_permit',''):
+                                raise FatalGraspError('four_slot_exit_clearance_not_calibrated')
+                            # Exact candidate reverse-rise anchor, not an unrelated Cartesian height.
+                            target=self._slot_defs[self._active_slot]['waypoints']['carry']
+                            if not self._four_slot_before_plan() or not self._motion.move_to_joints(self._joint_names,target,'four_slot_rise',planner_id='LIN',settle_check=False):
+                                raise FatalGraspError('four_slot_rise_failed')
+                            self._four_slot_verify_exit(target)
+                            rise_ok=True
                         else:rise_ok=self._motion.move_to_joints(self._joint_names,carry_anchor[1],'settle_rise')
                         if not rise_ok:
                             raise GraspError('settle_rise_failed')
@@ -1562,6 +1578,28 @@ class PickPlaceExecutorNode(Node):
         except Exception as exc:
             self._arm_fault='retained_scene_unconfirmed:'+str(exc)
             return False
+
+    def _four_slot_verify_exit(self,target):
+        from .four_slot_trial import gripper_bottoms,load_trial
+        load_trial(self._trial_permit,str(self.get_parameter('four_slot_config').value))
+        deadline=time.monotonic()+3.;samples=[];last_stamp=None
+        while time.monotonic()<deadline:
+            self._four_slot_feedback_tick()
+            if self._arm_fault or not self._release_evidence.check(self.get_clock().now().nanoseconds*1e-9,time.monotonic()):raise FatalGraspError('four_slot_exit_feedback_invalid')
+            observation=self._release_evidence.last;stamp=observation[0]
+            if stamp==last_stamp:time.sleep(.002);continue
+            if last_stamp is not None and stamp-last_stamp>.05:raise FatalGraspError('four_slot_exit_gap')
+            last_stamp=stamp
+            joints=dict(self._joints_now);velocities=dict(self._joint_vels)
+            stable=all(n in joints and n in velocities and abs(joints[n]-q)<=.01 and abs(velocities[n])<=.3 for n,q in zip(self._joint_names,target))
+            bottoms=gripper_bottoms(self._trial_urdf,joints)
+            if not stable or min(bottoms.values())<=.815:samples=[]
+            else:samples.append({'sim':stamp,'bottoms':bottoms})
+            if len(samples)>=50 and samples[-1]['sim']-samples[0]['sim']>=.25:
+                if not self._release_evidence.finish(self.get_clock().now().nanoseconds*1e-9,time.monotonic(),geometry_clearance_verified=True):raise FatalGraspError('four_slot_exit_clearance_not_calibrated')
+                self.get_logger().info('FOUR_SLOT_EXIT_EVIDENCE '+json.dumps(samples));return
+            time.sleep(.002)
+        raise FatalGraspError('four_slot_exit_clearance_not_calibrated')
 
     def _four_slot_release(self,timeout=3.):
         """Candidate only: feedback effort persists until verified box exit.
@@ -1983,7 +2021,7 @@ class PickPlaceExecutorNode(Node):
             (round(carry_anchor[0][0], 3), round(carry_anchor[0][1], 3)))
         if getattr(self,'_four_slot',False):
             for label,joints in [('four_slot_settle_top',top),('four_slot_settle_bottom',bot)]:
-                if not self._motion.move_to_joints(self._joint_names,joints,label,timeout=25.,settle_check=False):
+                if not self._motion.move_to_joints(self._joint_names,joints,label,timeout=25.,settle_check=False,planner_id='LIN'):
                     raise FatalGraspError(label+'_controller_failed')
             return self._tool_z_now()
         z = None

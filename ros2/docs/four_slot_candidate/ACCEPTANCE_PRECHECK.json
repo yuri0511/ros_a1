@@ -1,0 +1,13 @@
+{
+  "no_execution": true,
+  "stage1": "one red4 loaded calibration, max180s",
+  "stage2": "fresh world, yellow-only; conditional",
+  "state": "BLOCKED",
+  "yellow_blockers": [
+    "yellow pickup-to-carry: runtime MoveIt held-payload scene is not synchronized; carry-clear-to-bin review cannot cover initial lift",
+    "A_loaded_lift_release_exit_not_yet_proven"
+  ],
+  "stage_A_prepared": true,
+  "global_motion_validated": false,
+  "scope": "one simulation diagnostic, not production validation"
+}
