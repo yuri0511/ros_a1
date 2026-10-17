@@ -120,6 +120,7 @@ class TaskDispatcherNode(Node):
         if self._four_slot:
             from .four_slot_capacity import load_motion_candidate
             load_motion_candidate(self.get_parameter('four_slot_config').value,self._trial_permit)
+            self._trial_counts=tuple(json.loads(Path(self._trial_permit).read_text()).get('counts',(0,1,0,0))) if self._trial_permit else None
         self.declare_parameter('voice_batch_mode', False)
         self._voice_mode = bool(self.get_parameter('voice_batch_mode').value)
         self.declare_parameter('auto_start', False)   # 来料后是否自动开始分拣
@@ -1219,7 +1220,7 @@ class TaskDispatcherNode(Node):
         from a1_sorting_core.voice_batch_plan import validate_candidate,PlanRejected
         try:
             plan=validate_candidate(json.dumps({'schema_version':1,'action':'sort_batch','counts':dict(zip(('blue','yellow','red','green'),(request.blue,request.yellow,request.red,request.green))),'priority_first':request.priority_first,'proposed_order':list(request.proposed_order)}),max_per_color=4 if self._four_slot else 3)
-            if self._trial_permit and (plan.counts!=(0,1,0,0) or plan.order!=('yellow',)):raise PlanRejected('single_yellow_trial_only')
+            if self._trial_permit and (plan.counts!=getattr(self,'_trial_counts',(0,1,0,0)) or plan.order!=(('yellow',) if plan.total==1 else ('yellow','red','green','green','green'))):raise PlanRejected('single_yellow_trial_only')
             from a1_sorting_core.voice_batch_safety import ensure_geometry_review
             if not self._four_slot:ensure_geometry_review(plan)
             with self._lock:

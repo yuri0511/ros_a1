@@ -57,9 +57,11 @@ def test_one_yellow_completed_never_requests_second():
     s.status('MOCK_ONLY_ID','arm1','ARM_READY',claim);s.release('MOCK_ONLY_ID','arm1',4)
     assert s.state=='COMPLETED' and s.reserve(5,True) is None and s.issued==['yellow']
 
-def test_payload_review_gap_keeps_B_blocked():
-    from concentrated_acceptance import yellow_preflight
-    assert any('payload' in s for s in yellow_preflight())
+def test_real_held_placement_failure_keeps_all_dynamic_stages_blocked():
+    from concentrated_acceptance import yellow_preflight,path_review
+    with pytest.raises(ValueError,match='placement path review FAILED'):
+        path_review()
+    assert 'real-held-object placement path review FAILED; no dynamic start' in yellow_preflight()
 
 def test_gui_child_failure_cannot_crash_supervisor(tmp_path,monkeypatch):
     from types import SimpleNamespace
@@ -86,3 +88,23 @@ def test_motion_request_preserves_explicit_planner_without_executing(planner):
     log=N(error=lambda *a:None)
     assert not m._move_to_joints_once(['j'],[0.],'test-only',1,log,planner_id=planner)
     assert seen[0].request.planner_id==planner and seen[0].planning_options.plan_only
+
+def test_real_saved_five_task_reused_without_cloud():
+    from acceptance_task import five_record,load_task
+    import tempfile
+    d=five_record();assert d['plan']['counts']==dict(blue=0,yellow=1,red=1,green=3)
+    with tempfile.TemporaryDirectory() as root:
+        p=Path(root)/'five.json';p.write_text(json.dumps(d));_,plan=load_task(p)
+        assert plan.order==('yellow','red','green','green','green')
+
+def test_C_overlay_two_arms_isolated_inventory(tmp_path):
+    import yaml
+    cmd=commands(tmp_path,Path('/not-real-permit'),'C');p=yaml.safe_load((tmp_path/'single_overlay.yaml').read_text())
+    assert 'demo_parts:=5' in cmd and p['/pick_place_relay']['ros__parameters']['four_slot_mode']
+    assert p['/pick_place_executor']['ros__parameters']['four_slot_inventory']!=p['/pick_place_relay']['ros__parameters']['four_slot_inventory']
+
+def test_baseline_GUI_has_no_server_or_motion_command(tmp_path):
+    from baseline_gui import command
+    m={'command':['feed_policy:=rule','demo_parts:=8','controllers_file:=ur5e_cell_controllers_stability_gain1.yaml','world_file:=fast_sim_1ms.sdf'],'environment':dict(GZ_PARTITION='unique',ROS_DOMAIN_ID='82',LP_NUM_THREADS='2',DISPLAY=':0',LIBGL_ALWAYS_SOFTWARE='1',GALLIUM_DRIVER='llvmpipe')}
+    (tmp_path/'metadata.json').write_text(json.dumps(m));cmd,env=command(tmp_path)
+    assert cmd==['gz','sim','-g'] and env['GZ_PARTITION']=='unique'

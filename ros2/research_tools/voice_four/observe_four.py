@@ -39,6 +39,7 @@ def main():
     contactfile=(run/'contacts.csv').open('w',newline='');cw=csv.writer(contactfile);cw.writerow(['wall','sim_sec','topic','collision1','collision2','x','y','z','depth'])
     state={'ready_parts':[],'placed_parts':[],'spawn_requests':[],'arrivals':[],'latest_clock':0.,'logical_frames':0,'rgb_frames':0,'joint_messages':0,'controller_messages':0,'contact_points':0,'contact_messages':{},'stats_messages':0}
     snapshot={};start=time.monotonic();lastflush=0.;lastcontactflush=0.;submit_future=None;submitted=False;ready_at=None;submit_at=None;stopping=threading.Event()
+    payload_contacts={};payload_native={}
     readyset=set();placedset=set();subscriptions=[];seen_actions=set();support_evidence=SupportEvidence();support_permit={};finger_permit={}
     def emit(kind,**data):
         with lock:events.write(json.dumps(dict(kind=kind,wall=time.time(),clock=state['latest_clock'],**data),ensure_ascii=False)+'\n')
@@ -105,6 +106,13 @@ def main():
                 state['contact_messages'][topic]=state['contact_messages'].get(topic,0)+1
                 for c in m.contact:
                     a=c.collision1.name;b=c.collision2.name
+                    part=next((v.split('::')[0] for v in (a,b) if v.startswith('part_')),None)
+                    if part:
+                        other=b if a.startswith(part+'::') else a
+                        entry=payload_contacts.setdefault(part,{})
+                        key=('left' if 'gripper_finger_left' in other else ('right' if 'gripper_finger_right' in other else other))
+                        entry[key]={'sim':t,'wall':time.time(),'collision':other,'depth':max(c.depth) if c.depth else 0.,'normals':[(v.x,v.y,v.z) for v in c.normal]}
+
                     support_fault=support_evidence.contact(a,b,list(c.depth),[(n.x,n.y,n.z) for n in c.normal],t,time.time(),support_permit)
                     if support_fault:fault(support_fault,sim=t,a=a,b=b)
                     def arm(x):
@@ -130,6 +138,8 @@ def main():
         with lock:
             if not stopping.is_set():
                 for p in m.pose:
+                    if p.name.startswith('part_'):
+                        payload_native[p.name]={'sim':m.header.stamp.sec+m.header.stamp.nsec*1e-9,'wall':time.time(),'position':[p.position.x,p.position.y,p.position.z],'quaternion':[p.orientation.x,p.orientation.y,p.orientation.z,p.orientation.w]}
                     if p.name=='calibration_red4':
                         stamp=m.header.stamp.sec+m.header.stamp.nsec*1e-9
                         try:
@@ -144,6 +154,8 @@ def main():
     for link in links:
         topic='/a1_contact/'+link;cb=on_contact(topic);callbacks.append(cb)
         if not gz.subscribe(Contacts,topic,cb):raise RuntimeError('contact subscription failed:'+topic)
+    payload_cb=on_contact('/a1_payload/contacts');callbacks.append(payload_cb)
+    if not gz.subscribe(Contacts,'/a1_payload/contacts',payload_cb):raise RuntimeError('payload_contact_subscription_failed')
     fixture_cb=on_contact('/a1_calibration/fixture_contacts');callbacks.append(fixture_cb)
     if not gz.subscribe(Contacts,'/a1_calibration/fixture_contacts',fixture_cb):raise RuntimeError('fixture_contact_subscription_failed')
     client=None if readonly else node.create_client(SubmitBatchPlan,'/voice_batch/submit')
@@ -181,6 +193,8 @@ def main():
                     contact_snapshot=dict(state.get('fixture_finger_contacts',{}))
                     support_snapshot=dict(support_evidence.support or {})
                     native_snapshot=dict(support_evidence.native or {})
+                with lock:payload_snapshot=dict(contacts={k:dict(v) for k,v in payload_contacts.items()},native=dict(payload_native),wall=time.time())
+                atomic_json(run/'payload-feedback.json',payload_snapshot)
                 if contact_snapshot:atomic_json(run/'fixture-contact-status.json',contact_snapshot)
                 if support_snapshot:atomic_json(run/'fixture-support-status.json',support_snapshot)
                 if native_snapshot:atomic_json(run/'fixture-native-status.json',native_snapshot)

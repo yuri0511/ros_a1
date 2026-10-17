@@ -15,7 +15,12 @@ def sha(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 def load_trial(path, candidate):
     d=json.loads(Path(path).read_text())
     if json.loads(Path(candidate).read_text()).get('schema')!=1:raise TrialError('candidate_schema_changed')
-    if d.get('scope')!='isolated-yellow-single' or d.get('slot')!='bin_yellow/slot_1' or d.get('arm')!='arm1' or d.get('maximum_parts')!=1:raise TrialError('trial_scope_invalid')
+    if d.get('scope') not in ('isolated-yellow-single','isolated-five-task') or d.get('maximum_parts')!=(1 if d['scope']=='isolated-yellow-single' else 5):raise TrialError('trial_scope_invalid')
+    if d['scope']=='isolated-five-task':
+        b=json.loads((Path(d['yellow_run'])/'summary.json').read_text())
+        if b.get('reason')!='completed' or not b.get('cleanup_ok') or b['result']['csv']['rows']!=1:raise TrialError('yellow_real_validation_missing')
+    expected_counts=[0,1,0,0] if d['scope']=='isolated-yellow-single' else [0,1,1,3]
+    if d.get('counts')!=expected_counts:raise TrialError('trial_count_scope_invalid')
     if not time.time()<d.get('expires_wall',0)<=time.time()+3600:raise TrialError('trial_expired')
     if d.get('candidate_sha256')!=sha(candidate):raise TrialError('trial_candidate_changed')
     for p,h in d.get('evidence_sha256',{}).items():
@@ -32,7 +37,7 @@ def load_trial(path, candidate):
     if json.loads((run/'support-contact-permit.json').read_text()).get('phase')!='normal':raise TrialError('support_constraints_not_restored')
     review=json.loads(Path(d['path_review']).read_text())
     if not review.get('pickup_to_carry_payload_scene_verified'):raise TrialError('pickup_payload_scene_not_verified')
-    if not review.get('no_gazebo') or not review.get('no_motion') or len(review.get('segments',[]))!=16:raise TrialError('path_review_missing')
+    if not review.get('no_gazebo') or not review.get('no_motion') or len(review.get('segments',[]))!=48:raise TrialError('path_review_missing')
     for r in review['segments']:
         if r['code']!=1 or r['samples']<1 or r['invalid'] or r.get('above_bin',True) is not True:raise TrialError('path_review_failed')
     for p,h in review['sha256'].items():

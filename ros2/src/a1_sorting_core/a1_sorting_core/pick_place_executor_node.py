@@ -445,6 +445,7 @@ class PickPlaceExecutorNode(Node):
         self.declare_parameter('four_slot_mode', False)
         self.declare_parameter('four_slot_config', '')
         self.declare_parameter('four_slot_trial_permit', '')
+        self.declare_parameter('four_slot_feedback_dir', '')
         self.declare_parameter('four_slot_inventory', '')
         self.declare_parameter('bin_grid_offsets.x', [-0.05, 0.05, -0.05, 0.05])
         self.declare_parameter('bin_grid_offsets.y', [-0.035, -0.035, 0.035, 0.035])
@@ -639,7 +640,7 @@ class PickPlaceExecutorNode(Node):
             from .four_slot_capacity import SlotBank,load_motion_candidate
             self._trial_permit=str(gp('four_slot_trial_permit'))
             cfg=load_motion_candidate(str(gp('four_slot_config')),self._trial_permit)
-            self._trial_used=False
+            self._trial_used={}
             if self._trial_permit:
                 from .four_slot_trial import load_trial
                 self._trial=load_trial(self._trial_permit,str(gp('four_slot_config')))
@@ -653,6 +654,12 @@ class PickPlaceExecutorNode(Node):
             self._retained_scene=RosRetainedSceneSync(self)
             from .four_slot_feedback import ReleaseEvidence
             self._release_evidence=ReleaseEvidence(self._finger_joint_keys())
+            from collections import deque
+            from .held_payload_scene import RosHeldPayloadScene
+            self._payload_samples=deque(maxlen=512)
+            self._payload=RosHeldPayloadScene(self,lambda **kw:self.get_logger().info('PAYLOAD_SCENE '+json.dumps(kw)))
+            self._payload_support=None
+            self._payload_plan_index=0
             self._release_fault_announced=False
             self.create_timer(.02,self._four_slot_feedback_tick)
         self._busy = False
@@ -676,6 +683,7 @@ class PickPlaceExecutorNode(Node):
         self._ready_monitor.observe(list(msg.name),list(msg.position),list(msg.velocity),
             msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic(),source=source)
         if getattr(self,'_four_slot',False):
+            self._payload_samples.append((msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic(),dict(zip(msg.name,msg.position))))
             self._release_evidence.observe(list(msg.name),list(msg.position),
                 msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic(),source)
             self._four_slot_feedback_tick()
@@ -860,10 +868,11 @@ class PickPlaceExecutorNode(Node):
             if getattr(self,'_slot_bank',None) is not None:
                 target=self._bin_for(part.category,getattr(part,'target_bin_override',''))
                 if getattr(self,'_trial_permit',''):
-                    if self._trial_used or self._arm_name!='arm1' or part.category!='yellow' or target!='bin_yellow':raise FatalGraspError('single_yellow_trial_scope_violation')
-                    self._trial_used=True
+                    limit=self._trial.get('limits',{'arm1':{'yellow':1}}).get(self._arm_name,{}).get(part.category,0)
+                    if self._trial_used.get(part.category,0)>=limit or target!='bin_'+part.category:raise FatalGraspError('trial_task_scope_violation')
+                    self._trial_used[part.category]=self._trial_used.get(part.category,0)+1
                 self._active_slot=self._slot_bank.reserve(target,part.part_id)
-                if getattr(self,'_trial_permit','') and self._active_slot!=self._trial['slot']:raise FatalGraspError('single_yellow_trial_slot_changed')
+                if getattr(self,'_trial_permit','') and self._active_slot not in self._trial.get('allowed_slots',[self._trial.get('slot')]):raise FatalGraspError('single_yellow_trial_slot_changed')
                 self.get_logger().info('BIN_SLOT_RESERVED '+json.dumps({'part':part.part_id,'slot':self._active_slot}))
             self._run_task_impl(part)
         except Exception as e:
@@ -1058,6 +1067,7 @@ class PickPlaceExecutorNode(Node):
                         # 不合拢补锁紧×2,再不合判失败走重试链。探针/验证
                         # /在场闸判据零改动,attach 兜底保留。
                         self._confirm_clamped('锁紧段')
+                        if getattr(self,'_four_slot',False):self._four_slot_begin_payload(part)
                         self._lift(center, center[2] + self._tcp_z)
                         self._verify_probe(center)
                         t_wait = time.monotonic(); sim_wait = self.get_clock().now().nanoseconds/1e9
@@ -1100,12 +1110,14 @@ class PickPlaceExecutorNode(Node):
                         attach_z = center[2] + self._lift_h
                     if not self._attach.attach(
                             part.part_id, self._attach_link,
-                            self._down_pose(center[:2], attach_z).pose):
+                            (self._four_slot_measured_pose(part) if getattr(self,'_four_slot',False) else self._down_pose(center[:2], attach_z).pose),
+                            **({'measured_world_pose':True} if getattr(self,'_four_slot',False) else {})):
                         raise GraspError('attach_failed')
                     attached_joint = part.part_id
                 else:
                     # always(默认):抓取即 attach(运动学跟随),旧行为
                     self._grip(close=True)
+                    if getattr(self,'_four_slot',False):self._four_slot_begin_payload(part)
                     if not self._attach.attach(part.part_id, self._attach_link,
                                                self._down_pose(center,
                                                                center[2]).pose):
@@ -1303,6 +1315,7 @@ class PickPlaceExecutorNode(Node):
                     if getattr(self,'_slot_bank',None) is not None:
                         if not self._four_slot_release():raise FatalGraspError('four_slot_release_gap_not_verified')
                         self._four_slot_released_part=part.part_id
+                        self._payload.release(self._four_slot_observations[part.part_id],self.get_clock().now().nanoseconds/1e9,gripper_released=True)
                     else:self._open_to_release_gap()
                     t_wait = time.monotonic()
                     time.sleep(0.4)  # retained: gap alone does not prove settled release
@@ -1561,6 +1574,9 @@ class PickPlaceExecutorNode(Node):
         if not getattr(self,'_four_slot',False):return True
         if self._arm_fault:return False
         try:
+            if getattr(self,'_payload',None) and self._payload.held is not None:
+                self._four_slot_payload_progress()
+                self._payload.assert_attached()
             observations=dict(self._four_slot_observations)
             inventory={sid:dict(row) for sid,row in self._slot_bank.slots.items()}
             if getattr(self,'_four_slot_released_part',None):
@@ -1579,6 +1595,106 @@ class PickPlaceExecutorNode(Node):
             self._arm_fault='retained_scene_unconfirmed:'+str(exc)
             return False
 
+    def _four_slot_measured_pose(self,part):
+        from .attach_helper import mat_to_pose
+        from .held_payload_scene import pose_to_mat
+        obs=self._four_slot_observations.get(part.part_id)
+        now=self.get_clock().now().nanoseconds/1e9
+        if obs is None or not 0<=now-obs['stamp']<=.2:raise FatalGraspError('payload_pose_stale')
+        from geometry_msgs.msg import Pose
+        p=Pose();p.position.x,p.position.y,p.position.z=obs['position'];p.orientation.x,p.orientation.y,p.orientation.z,p.orientation.w=obs['quaternion'];return p
+
+    def _four_slot_payload_feedback(self):
+        path=Path(str(self.get_parameter('four_slot_feedback_dir').value))/'payload-feedback.json'
+        d=json.loads(path.read_text());part=self._four_slot_current_part.part_id
+        native=d['native'][part];now=self.get_clock().now().nanoseconds/1e9
+        if time.time()-native['wall']>.5 or not 0<=now-native['sim']<=.2:raise FatalGraspError('payload_native_feedback_stale')
+        return native,d['contacts'].get(part,{})
+
+    def _four_slot_begin_payload(self,part):
+        try:
+            deadline=time.monotonic()+2.;names=self._finger_joint_keys()
+            while time.monotonic()<deadline:
+                now=self.get_clock().now().nanoseconds/1e9;rows=list(self._payload_samples)
+                unique={t:(w,q) for t,w,q in rows if 0<=now-t<=.12};ts=sorted(unique)
+                if len(ts)>=50 and ts[-1]-ts[0]>=.1 and all(b-a<=.05 for a,b in zip(ts,ts[1:])) and time.monotonic()-unique[ts[-1]][0]<=.5:
+                    pairs=[[unique[t][1][n] for n in names] for t in ts]
+                    if all(max(q[i] for q in pairs)-min(q[i] for q in pairs)<.002 for i in (0,1)) and all(-.0025<=x<=.002 for q in pairs for x in q):break
+                time.sleep(.002)
+            else:raise FatalGraspError('payload_lock_window_not_verified')
+            native,contacts=self._four_slot_payload_feedback()
+            for side in ('left','right'):
+                if side not in contacts or not 0<=now-contacts[side]['sim']<=.1:raise FatalGraspError('payload_bilateral_contact_not_verified')
+                if ('arm2_' in contacts[side]['collision'])!=(self._arm_name=='arm2'):raise FatalGraspError('payload_contact_wrong_arm')
+            obs=self._four_slot_observations[part.part_id]
+            tf=self._attach._tf.lookup_transform('world',self._attach_link,rclpy.time.Time(seconds=obs['stamp']))
+            from geometry_msgs.msg import Pose
+            p=Pose();p.position.x,p.position.y,p.position.z=tf.transform.translation.x,tf.transform.translation.y,tf.transform.translation.z;p.orientation=tf.transform.rotation
+            self._payload.attach(part.part_id,obs,p,tf.header.stamp.sec+tf.header.stamp.nanosec/1e9,now,self._attach_link,[self._finger_joint_keys()[0].replace('_joint','_link'),self._finger_joint_keys()[1].replace('_joint','_link')],clamp_verified=True)
+            # Exact native support contact only; unknown support is a hard refusal.
+            import xml.etree.ElementTree as ET
+            world=ET.parse(self._trial['world_path']);candidates=[]
+            for collision,record in contacts.items():
+                if collision in ('left','right') or not 0<=now-record['sim']<=.1 or record['depth']<=0:continue
+                model=collision.split('::')[0];colname=collision.split('::')[-1]
+                if model not in ('belt','tabletop'):raise FatalGraspError('unexpected_payload_support')
+                element=world.find(f".//model[@name='{model}']/link/collision[@name='{colname}']")
+                if element is None or element.find('geometry/box') is None:raise FatalGraspError('support_geometry_not_resolved')
+                m=world.find(f".//model[@name='{model}']");mp=[float(x) for x in (m.findtext('pose') or '0 0 0 0 0 0').split()];cp=[float(x) for x in (element.findtext('pose') or '0 0 0 0 0 0').split()];size=list(map(float,element.findtext('geometry/box/size').split()))
+                if any(abs(x)>1e-14 for x in mp[3:]+cp[3:]):raise FatalGraspError('support_rotation_requires_review')
+                if not record['normals'] or any(abs(abs(v[2])-1)>64*2.220446049250313e-16 for v in record['normals']):raise FatalGraspError('support_normal_not_vertical')
+                candidates.append(dict(id=model+'_'+colname,top=mp[2]+cp[2]+size[2]/2,depth=record['depth']))
+            if len(candidates)!=1:raise FatalGraspError('single_support_contact_not_proven')
+            self._payload_support=candidates[0]
+            self._payload_support['initial_bottom']=self._four_slot_payload_bottom(native)
+            self._payload_support['planned_initial_bottom']=self._four_slot_payload_bottom(obs)
+            self._payload.permit_support(self._payload_support['id'],contact_verified=True,clamp_verified=True,direction='depart')
+        except Exception as e:
+            self._payload.fault(str(e));raise FatalGraspError('payload_attach:'+str(e)) from e
+
+    @staticmethod
+    def _four_slot_payload_bottom(pose):
+        from .attach_helper import pose_to_mat
+        from geometry_msgs.msg import Pose
+        import numpy as np
+        p=Pose();p.position.x,p.position.y,p.position.z=pose['position'];p.orientation.x,p.orientation.y,p.orientation.z,p.orientation.w=pose['quaternion'];M=pose_to_mat(p)
+        return float(M[2,3]-abs(M[2,:3])@np.array([.025]*3))
+
+    def _four_slot_payload_progress(self):
+        if self._payload.held is None:return
+        try:
+            native,contacts=self._four_slot_payload_feedback();s=self._payload_support
+            if self._payload.base is not None:
+                bottom=self._four_slot_payload_bottom(native)
+                if bottom<s['initial_bottom']-64*2.220446049250313e-16:raise FatalGraspError('support_penetration_grew')
+                obs=self._four_slot_observations[self._four_slot_current_part.part_id]
+                if bottom>s['top'] and self._four_slot_payload_bottom(obs)>s['top']:self._payload.restore_support(separation_verified=True)
+            if self._payload.state!='ATTACHED':raise FatalGraspError('payload_scene_fault_latched')
+        except Exception as e:
+            self._arm_fault='payload_progress:'+str(e);raise FatalGraspError(self._arm_fault) from e
+
+    def _four_slot_audit_payload_trajectory(self,traj,label):
+        if not getattr(self,'_payload',None) or self._payload.held is None:return
+        from .attach_helper import pose_to_mat
+        from moveit_msgs.srv import GetStateValidity
+        from rosidl_runtime_py.convert import message_to_ordereddict
+        import sys,copy,numpy as np
+        tools=str(Path(self._trial['tools_dir']));sys.path.insert(0,tools)
+        from support_contact import sample_trajectory
+        from geometry import fk
+        scene=self._payload.read();start=dict(zip(scene.robot_state.joint_state.name,scene.robot_state.joint_state.position));held=self._payload.held;client=self.create_client(GetStateValidity,'/check_state_validity');rows=[]
+        try:
+            self._payload.assert_attached()
+            for t,q in sample_trajectory(traj,start):
+                M=fk(held.link_name,q)@pose_to_mat(held.object.pose)@pose_to_mat(held.object.primitive_poses[0]);bottom=float(M[2,3]-abs(M[2,:3])@np.array([.025]*3))
+                if self._payload.base is not None and bottom<self._payload_support['planned_initial_bottom']-64*2.220446049250313e-16:raise FatalGraspError('planned_support_penetration_grows')
+                req=GetStateValidity.Request();req.robot_state=copy.deepcopy(scene.robot_state);req.robot_state.joint_state.position=[q[n] for n in req.robot_state.joint_state.name]
+                answer=self._payload._call(client,req);rows.append(dict(t=t,bottom=bottom,valid=answer.valid,contacts=[message_to_ordereddict(c) for c in answer.contacts]))
+                if not answer.valid:raise FatalGraspError('payload_full_trajectory_collision')
+        finally:
+            self._payload_plan_index+=1;path=Path(str(self.get_parameter('four_slot_feedback_dir').value))/f'payload-plan-{self._arm_name}-{self._payload_plan_index}.json';path.write_text(json.dumps(dict(label=label,trajectory=message_to_ordereddict(traj),samples=rows)))
+            self.destroy_client(client)
+
     def _four_slot_verify_exit(self,target):
         from .four_slot_trial import gripper_bottoms,load_trial
         load_trial(self._trial_permit,str(self.get_parameter('four_slot_config').value))
@@ -1592,7 +1708,7 @@ class PickPlaceExecutorNode(Node):
             last_stamp=stamp
             joints=dict(self._joints_now);velocities=dict(self._joint_vels)
             stable=all(n in joints and n in velocities and abs(joints[n]-q)<=.01 and abs(velocities[n])<=.3 for n,q in zip(self._joint_names,target))
-            bottoms=gripper_bottoms(self._trial_urdf,joints)
+            bottoms=gripper_bottoms(self._trial_urdf,joints,'' if self._arm_name=='arm1' else 'arm2_')
             if not stable or min(bottoms.values())<=.815:samples=[]
             else:samples.append({'sim':stamp,'bottoms':bottoms})
             if len(samples)>=50 and samples[-1]['sim']-samples[0]['sim']>=.25:
@@ -2222,6 +2338,11 @@ class PickPlaceExecutorNode(Node):
     # ================================================================ 失败恢复
     def _recover(self, attached_part):
         """安全恢复:松爪、停止跟随(若已附着),为重试腾出干净状态。"""
+        if getattr(self,'_four_slot',False) and getattr(self,'_payload',None) and self._payload.held is not None:
+            self._payload.fault('recovery_requires_owned_world_pause')
+            self._arm_fault='held_payload_fault_hold_for_pause'
+            self._emit_arm_event(self._four_slot_current_part,'ARM_FAULT',self._arm_fault)
+            return
         try:
             self._grip(close=False)
         except Exception:  # noqa: BLE001 恢复阶段不再抛错

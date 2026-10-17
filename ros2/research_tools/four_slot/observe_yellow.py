@@ -2,7 +2,7 @@
 import sys
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parent))
-from yellow_task import load_task
+from acceptance_task import load_task
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'voice_four'))
 import observe_four
 observe_four.load_task=load_task

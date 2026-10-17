@@ -152,7 +152,7 @@ class GzKinematicAttach:
 
     # ------------------------------------------------------------ 附着/释放
     def attach(self, entity_name: str, gripper_frame: str,
-               part_pose_world: Pose) -> bool:
+               part_pose_world: Pose, measured_world_pose: bool = False) -> bool:
         """开始让 entity 跟随 gripper_frame(以当前相对位姿刚性连接)。
 
         part_pose_world 的 xy 分量会被逻辑相机真值覆盖(若有缓存):
@@ -160,7 +160,7 @@ class GzKinematicAttach:
         工件钉在偏离夹爪中心处,与手指穿插挤压导致释放时弹飞。
         """
         true_xy = self._true_xy.get(entity_name)
-        if true_xy is not None:
+        if true_xy is not None and not measured_world_pose:
             part_pose_world = self._clone_with_xy(part_pose_world, true_xy)
             self._node.get_logger().info(
                 f'附着真值校正: {entity_name} -> '

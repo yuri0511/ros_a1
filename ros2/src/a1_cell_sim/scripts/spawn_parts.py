@@ -18,6 +18,7 @@ mode=service(pipeline 按需来料):常驻节点,订阅 /parts/request_spawn
 工件实体名 part_<n>,尺寸/质量(0.05 立方、0.2 kg)与颜色 RGB 表与契约 §3
 一致;坐标与 a1_cell_sim/worlds/sorting_cell.sdf 的带/箱几何对齐。
 """
+import os
 import random
 import time
 
@@ -80,7 +81,7 @@ def part_sdf(index: int, color: str) -> str:
     inertia = PART_MASS / 12 * (PART_SIZE ** 2 + PART_SIZE ** 2)
     # 注意:生成位置由 EntityFactory.pose 字段给出(gz-sim 会忽略
     # EntityFactory 提交的 SDF 内嵌 <pose>),这里只定义形状与外观。
-    return f"""<?xml version="1.0" ?>
+    sdf=f"""<?xml version="1.0" ?>
 <sdf version="1.11">
   <model name="part_{index}">
     <link name="link">
@@ -102,6 +103,11 @@ def part_sdf(index: int, color: str) -> str:
     </link>
   </model>
 </sdf>"""
+    if os.environ.get('A1_PAYLOAD_CONTACTS')=='1':
+        import xml.etree.ElementTree as ET
+        root=ET.fromstring(sdf);link=root.find('model/link');sensor=ET.SubElement(link,'sensor',name='payload_evidence',type='contact');ET.SubElement(sensor,'always_on').text='1';ET.SubElement(sensor,'update_rate').text='1000';contact=ET.SubElement(sensor,'contact');ET.SubElement(contact,'collision').text='collision';ET.SubElement(contact,'topic').text='/a1_payload/contacts';sdf=ET.tostring(root,encoding='unicode')
+    return sdf
+
 
 
 def make_spawn_request(index: int, color: str,

@@ -120,6 +120,7 @@ class MotionClient:
                 pass
 
     def _future_pause(self, future, seconds):
+        if getattr(getattr(self,'_node',None),'_four_slot',False) and getattr(self._node,'_payload',None) and self._node._payload.held is not None:self._node._four_slot_payload_progress()
         if not getattr(self, '_fast_waits', False):
             time.sleep(seconds)
             return
@@ -477,6 +478,8 @@ class MotionClient:
         if traj is None or not traj.points:
             log.error(f'{label}: 规划结果里没有关节轨迹')
             return False
+        if getattr(self._node,'_four_slot',False) and getattr(self._node,'_payload',None) and self._node._payload.held is not None:
+            self._node._four_slot_audit_payload_trajectory(traj,label)
         traj.header.stamp.sec = 0
         traj.header.stamp.nanosec = 0
         from control_msgs.action import FollowJointTrajectory
