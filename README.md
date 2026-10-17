@@ -6,15 +6,16 @@ Gazebo 里两台 UR5e 给蓝、黄、红、绿方块分拣。一次只推一件�
 
 ## 编译
 
-在 Ubuntu 24.04 上进入 `ros2/`。不需要用 apt 装 ROS。
+在 Ubuntu 24.04 上进入 `ros2/`。先安装 `curl`。不需要用 apt 装 ROS。
 
 ```bash
 curl -fsSL https://pixi.sh/install.sh | PIXI_VERSION=v0.82.0 bash
+export PATH="$HOME/.pixi/bin:$PATH"
 pixi install --locked
 pixi run bash -c 'colcon build --symlink-install'
 ```
 
-不要给这条命令加 `set -u`。`build/`、`install/`、`log/`、`.pixi/` 不要提交。
+`export` 只对当前终端有效。关掉这个终端再开一个，新终端也会找到 `pixi`。不要给这条命令加 `set -u`。`build/`、`install/`、`log/`、`.pixi/` 不要提交。
 
 ## 用 gain1 和规则跑 8 件
 
@@ -28,7 +29,7 @@ unset WAYLAND_DISPLAY
 pixi run bash -c 'source install/setup.bash && ros2 launch a1_sorting_core sorting_demo.launch.py gpu_offload:=false controllers_file:=ur5e_cell_controllers_stability_gain1.yaml feed_policy:=rule demo_parts:=8'
 ```
 
-`feed_policy:=rule` 是谁闲推谁。启动日志里会有 `退回谁闲推谁`。Gazebo 和 RViz 默认不打开窗口。结束时看最后一行 `本轮分拣结束`，四种颜色各 2、失败 0 才算这轮放对。
+`feed_policy:=rule` 是谁闲推谁。启动日志里会有 `退回谁闲推谁`。Gazebo 和 RViz 默认不打开窗口。结束时看最后一行 `本轮分拣结束`。这轮放对要同时满足：四种颜色各 2、失败 0、8 次 `ARM_READY`、任务槽全部释放、没有 `ARM_FAULT`。
 
 ## 切换到 Q 表
 
@@ -41,4 +42,6 @@ pixi run bash -c 'source install/setup.bash && ros2 launch a1_sorting_core sorti
 
 ## 主要结果
 
-离线模型里，Q 比规则快 3.3%。Gazebo 里 3 组配对：规则平均 184.6 秒，Q 平均 188.0 秒，两边都是 24/24 放对。模型上的这点优势，没有在这三组仿真里变成更快。
+历史结果：V1 模型里 Q 比规则快 3.3%（规则 126.49 秒，Q 122.32 秒）。Gazebo 里 `72ab6f2` 的 3 组配对是墙钟秒，规则平均 184.59 秒，Q 平均 187.96 秒，两边都是 24/24 放对。模型上的优势没有在这三组仿真里变成更快。
+
+当前 V2 模型：规则 168.49 秒，Q 164.02 秒，Q 大约快 2.65%。

@@ -190,8 +190,8 @@ def fingers_clamped(ql: float, qr: float, max_gap_m: float = 0.055) -> bool:
     由后续验证把关);而"一指卡全开限位"的钉死态间隙 89mm、预收
     口态 62mm 都被拒。
 
-    为什么停稳闸不够(481k 行 effort 实录定罪,HANDOFF-20261008
-    §十六):轻触段单指先行 41mm 撞上工件继续推,工件横滑楔到另一
+    为什么停稳闸不够(481k 行 effort 实录):轻触段单指先行 41mm
+    撞上工件继续推,工件横滑楔到另一
     指(该指卡全开限位 0.04,限位反力 -32.6N)——此刻**两指都静止**
     (一撞限位一被工件顶住),停稳闸被骗过放行抬臂,间隙 89mm 零夹
     持力,工件全靠 attach 兜底。夹持真伪必须量"合没合上",不能只
@@ -392,7 +392,7 @@ class PickPlaceExecutorNode(Node):
         self.declare_parameter('gripper_closed', 0.0)
         self.declare_parameter('gripper_joint_count', 2)
         self.declare_parameter('gripper_wait', 1.0)
-        # 预收口(用户拍板 2026-10-08 晚,HANDOFF-20261008 §十六):闭爪
+        # 预收口(用户拍板 2026-10-08 晚):闭爪
         # 前先把两指内缘间隙收到 0.052+2*gap,把单指空扫行程从 43mm 压
         # 到 gap+咬合量,消除"一侧指推着工件楔到另一侧指限位"的钉死构型。
         # 0 = 禁用(legacy 零行为差);pipeline 配 0.005(间隙 62mm,工件

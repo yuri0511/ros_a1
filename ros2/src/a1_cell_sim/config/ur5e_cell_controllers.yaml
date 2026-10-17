@@ -9,15 +9,6 @@
 # 终案 = 1.0 + 下垂前置补偿进 carry anchor 关节目标(稳定位姿=格子,
 # 见 sorting_params_pipeline.yaml)+ motion_client 关节到位闸容差 0.55。
 # 经 /** 通配节注入 gz_ros_control 插件节点与 controller_manager。
-# 2026-10-04 复验记录(Phase1 E2/E2b,两向皆负,gain 保持 2.0):
-# - gain 2.0:arm2 对 bin_C settle 梯级(τ_lift 37.5+ N·m,notes_arm2C §5)
-#   goal 永不完成→自完成路径 cancel 挂起目标触发 rcl_action 竞态→执行
-#   槽楔死→CONTROL_FAILED(-4) 级联(/tmp/e2_dual_yellow.log);
-# - gain 10.0:取件链破——两段闭爪后 -1.5N 轻触级微振把工件震脱/甩离
-#   停位(夹取验证 part_move_below_threshold,117 采样),后续 attempt
-#   追已位移工件规划失败耗尽(/tmp/e2b_dual_yellow_g10.log,6/6 FAILED)。
-# 两臂需求在 gain 维度互斥(2026-10-03 定论在并联链上复现),出路=
-# 浅折族重解 arm2 锚(降 τ 到 gain2 可保持域)或降级/回滚。
 /**:
   ros__parameters:
     position_proportional_gain: 2.0

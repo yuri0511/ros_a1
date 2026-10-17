@@ -251,9 +251,8 @@
     verify_sample_span: 1.5
     attach_follow: verified_only
     attach_rate_hz: 80.0        # 跟随提频(搬运失真修复 2026-10-09;默认 40=legacy)
-    # 预收口(2026-10-08 晚,HANDOFF-20261008 §十六;与 pipeline
-    # 表 relay 段逐键同源。relay 节点仅双臂启动,single-arm
-    # legacy 不加载 ⇒ legacy 零行为差红线不变)
+    # 预收口(2026-10-08 晚;与 pipeline 表 relay 段逐键同源。
+    # relay 节点仅双臂启动,single-arm legacy 不加载 ⇒ legacy 零行为差红线不变)
     gripper_pre_close_gap: 0.005
     gripper_pre_close_force: -1.5
     gripper_pre_close_wait: 0.5
