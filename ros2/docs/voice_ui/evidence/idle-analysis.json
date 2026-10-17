@@ -1,0 +1,137 @@
+[
+  {
+    "run": "/home/yu/yuri_gazebo_performance/voice_batch_four/ui_idle_runs/idle-20261017T083547-ae8ae3",
+    "metrics": {
+      "server_warmup": {
+        "sim_per_wall": 1.0342821214212243,
+        "samples": 112
+      },
+      "server_only": {
+        "sim_per_wall": 1.1451138751054406,
+        "samples": 85
+      },
+      "visible_gui": {
+        "sim_per_wall": 1.0598533091301565,
+        "samples": 215
+      }
+    },
+    "observer_exit": 0,
+    "pause_ack_seconds": 0.29292964935302734,
+    "first_native_paused_delay": 0.2904980182647705,
+    "paused_sim_values": [
+      55.1
+    ],
+    "paused_wall_span": 6.61237645149231,
+    "last_raw_wall": 1792197403.9372153,
+    "last_native_wall": 1792197410.6653724,
+    "raw_crc_valid": true,
+    "raw_counts": {
+      "joint_state": 26819,
+      "controller_state": 51623
+    },
+    "observed": {
+      "ready_parts": [],
+      "placed_parts": [],
+      "spawn_requests": [],
+      "arrivals": [],
+      "latest_clock": 55.1,
+      "logical_frames": 552,
+      "rgb_frames": 343,
+      "joint_messages": 26819,
+      "controller_messages": 51623,
+      "contact_points": 0,
+      "stats_messages": 538,
+      "clock_publishers": []
+    }
+  },
+  {
+    "run": "/home/yu/yuri_gazebo_performance/voice_batch_four/ui_idle_runs/idle-20261017T083716-a0c94c",
+    "metrics": {
+      "server_warmup": {
+        "sim_per_wall": 1.0380429097258779,
+        "samples": 112
+      },
+      "server_only": {
+        "sim_per_wall": 1.1424975936224788,
+        "samples": 84
+      },
+      "visible_gui": {
+        "sim_per_wall": 1.0705453909593763,
+        "samples": 214
+      }
+    },
+    "observer_exit": 0,
+    "pause_ack_seconds": 0.2933311462402344,
+    "first_native_paused_delay": 0.2912590503692627,
+    "paused_sim_values": [
+      55.273
+    ],
+    "paused_wall_span": 6.51548957824707,
+    "last_raw_wall": 1792197493.0214708,
+    "last_native_wall": 1792197499.6374137,
+    "raw_crc_valid": true,
+    "raw_counts": {
+      "joint_state": 27406,
+      "controller_state": 50676
+    },
+    "observed": {
+      "ready_parts": [],
+      "placed_parts": [],
+      "spawn_requests": [],
+      "arrivals": [],
+      "latest_clock": 55.273,
+      "logical_frames": 553,
+      "rgb_frames": 312,
+      "joint_messages": 27406,
+      "controller_messages": 50676,
+      "contact_points": 0,
+      "stats_messages": 535,
+      "clock_publishers": []
+    }
+  },
+  {
+    "run": "/home/yu/yuri_gazebo_performance/voice_batch_four/ui_idle_runs/idle-20261017T083902-04a4ec",
+    "metrics": {
+      "server_warmup": {
+        "sim_per_wall": 1.0419719389989648,
+        "samples": 114
+      },
+      "server_only": {
+        "sim_per_wall": 1.135794057884394,
+        "samples": 84
+      },
+      "visible_gui": {
+        "sim_per_wall": 1.0837312597417472,
+        "samples": 213
+      }
+    },
+    "observer_exit": 0,
+    "pause_ack_seconds": 0.302243709564209,
+    "first_native_paused_delay": 0.3010396957397461,
+    "paused_sim_values": [
+      57.405
+    ],
+    "paused_wall_span": 4.608980894088745,
+    "last_raw_wall": 1792197600.6211433,
+    "last_native_wall": 1792197605.3299067,
+    "raw_crc_valid": true,
+    "raw_counts": {
+      "controller_state": 53990,
+      "joint_state": 28116
+    },
+    "observed": {
+      "ready_parts": [],
+      "placed_parts": [],
+      "spawn_requests": [],
+      "arrivals": [],
+      "latest_clock": 57.405,
+      "logical_frames": 575,
+      "rgb_frames": 339,
+      "joint_messages": 28116,
+      "controller_messages": 53990,
+      "contact_points": 0,
+      "stats_messages": 536,
+      "clock_publishers": []
+    }
+  }
+]

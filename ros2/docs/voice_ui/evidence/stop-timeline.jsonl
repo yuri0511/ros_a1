@@ -1,0 +1,2 @@
+{"step": "pause_world", "start_wall": 1792197600.419886, "command": ["gz", "service", "-s", "/world/sorting_cell/control", "--reqtype", "gz.msgs.WorldControl", "--reptype", "gz.msgs.Boolean", "--timeout", "2000", "--req", "pause: true"], "timeout_s": 4, "returncode": 0, "acknowledged": true, "end_wall": 1792197600.7221298}
+{"step": "halt_new_feed", "start_wall": 1792197600.7221904, "command": ["ros2", "service", "call", "/voice_batch/stop", "std_srvs/srv/Trigger", "{}"], "timeout_s": 3, "returncode": 0, "acknowledged": true, "end_wall": 1792197601.3428175}

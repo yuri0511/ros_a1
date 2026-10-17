@@ -1,0 +1,19 @@
+[INFO] [1792197598.757936791] [task_dispatcher]: 退回谁闲推谁: 没有填写 Q 表路径
+[INFO] [1792197598.772607930] [task_dispatcher]: 调度器就绪(双臂并联分色(arm2 专收: ['blue', 'green'], 每臂一个执行槽, 取件区互斥, 来料=谁闲推谁)): /sort_task 服务可用 (start_batch/dispatch_single/dispatch_to)
+[INFO] [1792197598.773321288] [task_dispatcher]: 流水线: 按需来料 True(计划 语音动态计划待确认，未授权零送料, 话题 /parts/request_spawn), 推板控制 True(前进 0.1 m/s, 停推进线 x>=0.4, 回位后等推板回到 x<=0.14,仿真时间兜底 12s)
+[INFO] [1792197600.827442913] [task_dispatcher]: STARTUP_CHECK {"checks": {"world_clock_advances": false, "logical_fresh": true, "rgb_fresh": true, "pusher_at_home": false, "spawn_bridge_service": true, "spawn_subscriber": true, "pusher_bridge_subscriber": true, "pusher_transport_subscriber": true, "controllers_active": false, "move_group_ready": false}, "active": [], "controller_reply_age_s": null, "controller_rpc_timeouts": 0, "controller_error": "", "transport_error": ""}
+[INFO] [1792197601.207924936] [task_dispatcher]: VOICE_BATCH {"wall": 1792197601.207497, "sim": 57.405, "event": "HALTED", "reason": "operator_stop"}
+Traceback (most recent call last):
+  File "/home/yu/yuri_gazebo_performance/voice_batch_four/worktree/ros2/install/a1_sorting_core/lib/a1_sorting_core/task_dispatcher_node", line 33, in <module>
+    sys.exit(load_entry_point('a1-sorting-core', 'console_scripts', 'task_dispatcher_node')())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yu/yuri_gazebo_performance/voice_batch_four/worktree/ros2/build/a1_sorting_core/a1_sorting_core/task_dispatcher_node.py", line 1327, in main
+    rclpy.shutdown()
+  File "/home/yu/ros_a1/ros2/.pixi/envs/default/lib/python3.12/site-packages/rclpy/__init__.py", line 134, in shutdown
+    _shutdown(context=context)
+  File "/home/yu/ros_a1/ros2/.pixi/envs/default/lib/python3.12/site-packages/rclpy/utilities.py", line 82, in shutdown
+    context.shutdown()
+  File "/home/yu/ros_a1/ros2/.pixi/envs/default/lib/python3.12/site-packages/rclpy/context.py", line 129, in shutdown
+    self.__context.shutdown()
+rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at /home/runner/conda-bld/bld/rattler-build_ros2-rcl_1791433044/work/ros2-rcl/src/work/src/rcl/init.c:333
+[ros2run]: Process exited with failure 1

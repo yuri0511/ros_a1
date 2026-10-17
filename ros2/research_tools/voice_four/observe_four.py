@@ -133,7 +133,14 @@ def main():
             if now-start>590:fault('observer_wall_bound')
     except KeyboardInterrupt:pass
     finally:
-        with lock:stopping.set();raw.close();events.close();stats.close();contactfile.close()
+        # Detach native subscriptions while callbacks/files and Python are still alive.
+        # Avoid native transport destruction during interpreter finalization.
+        with lock:stopping.set()
+        for topic in list(gz.subscribed_topics()):gz.unsubscribe(topic)
+        del gz
+        import gc
+        gc.collect()
+        with lock:raw.close();events.close();stats.close();contactfile.close()
         node.destroy_node();rclpy.try_shutdown()
 
 if __name__=='__main__':main()

@@ -22,3 +22,12 @@ def test_unacknowledged_pause_is_recorded_and_ros_halt_still_attempted(tmp_path)
     records=stop_requests(tmp_path,{},runner)
     assert calls==['gz','ros2'] and not records[0]['acknowledged'] and records[1]['acknowledged']
     assert (tmp_path/'stop-timeline.jsonl').exists()
+
+def test_both_commands_missing_still_bounded_and_recorded(tmp_path):
+    calls=[]
+    def runner(cmd,**kwargs):
+        calls.append((cmd[0],kwargs['timeout']))
+        raise FileNotFoundError(cmd[0])
+    records=stop_requests(tmp_path,{},runner)
+    assert calls==[('gz',4),('ros2',3)]
+    assert len(records)==2 and not any(r['acknowledged'] for r in records)
