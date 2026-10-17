@@ -18,6 +18,10 @@ from a1_sorting_core.physical_ready import publisher_identity
 from a1_sorting_core.four_slot_grip_control import opening_efforts
 from geometry import ROBOT,fk,origin
 from lock_window import LockWindow
+from joint_receiver import JointReceiver
+# Load ROS motion message types before any live feedback/hold is active.
+from arm_probe import probe
+from live_support_cycle import LiveSupportCycle
 import numpy as np
 import xml.etree.ElementTree as ET
 
@@ -29,18 +33,17 @@ def main():
   try:
    with (run/'guard-fault.json').open('x') as f:json.dump(dict(kind='finger_calibration',reason=reason,wall=time.time()),f)
   except FileExistsError:pass
- def cb(m,info):
+ def cb(m,info,receipt,source):
   nonlocal last
   stamp=m.header.stamp.sec+m.header.stamp.nanosec*1e-9
-  last=(m,time.monotonic(),stamp)
-  consumer_samples.append(dict(stamp=stamp,receipt=time.monotonic(),clock=clock[0],q=dict(zip(m.name,m.position))))
+  last=(m,receipt,stamp)
+  consumer_samples.append(dict(stamp=stamp,receipt=receipt,clock=clock[0],q=dict(zip(m.name,m.position))))
   try:
-   source=publisher_identity(info,n.get_publishers_info_by_topic('/joint_states'))
    active_window=lock_window[0]
    if active_window is not None:active_window.observe(m.name,m.position,stamp,source)
    for mon in ([monitor] if monitor else [])+[h[2] for h in holds]:
     previous=mon.last
-    mon.observe(m.name,m.position,stamp,time.monotonic(),source)
+    mon.observe(m.name,m.position,stamp,receipt,source)
     if mon.fault:
      emit(monitor_fault=mon.fault,previous=previous,current_stamp=stamp,clock=clock[0]);fault(mon.fault)
   except Exception as e:fault('callback:'+str(e))
@@ -51,7 +54,7 @@ def main():
  camera=n.create_subscription(LogicalCameraImage,'/overhead_logical',logical,10)
  def on_clock(m):clock[:]=[m.clock.sec+m.clock.nanosec*1e-9,time.monotonic()]
  clock_sub=n.create_subscription(Clock,'/clock',on_clock,qos_profile_sensor_data)
- sub=n.create_subscription(JointState,'/joint_states',cb,QoSProfile(depth=100,reliability=ReliabilityPolicy.BEST_EFFORT))
+ receiver=JointReceiver(cb,fault,run/'joint-ingress.jsonl')
  pubs=[n.create_publisher(Float64MultiArray,p+'/commands',10) for p in ('/gripper_controller','/arm2_gripper_controller')]
  def send(pub,v):pub.publish(Float64MultiArray(data=[v,v] if isinstance(v,(int,float)) else v));emit(command_N=v,topic=pub.topic_name)
  def step():
@@ -201,7 +204,6 @@ def main():
    emit(phase='fixture_release_pass',observation=obs,last_contacts=contacts,sim=last[2])
   if '--arm-probe' in sys.argv:
 
-   from arm_probe import probe
    probe(n,run,step,lambda:last,emit,observations if '--empty-slot' in sys.argv else None,fixture_release if '--release-fixture' in sys.argv else None,support_context)
   (run/'FINGER_DONE').touch()
  except Exception as e:fault(str(e));emit(failure=str(e))
@@ -219,6 +221,7 @@ def main():
   monitor=None;holds.clear();timer.cancel()
   for p in pubs:send(p,0.)
   for _ in range(5):time.sleep(.01)
+  receiver.close()
   executor.shutdown(timeout_sec=2);thread.join(timeout=2);n.destroy_node();rclpy.try_shutdown();out.close()
   (run/'consumer-feedback.json').write_text(json.dumps(consumer_samples))
 if __name__=='__main__':main()

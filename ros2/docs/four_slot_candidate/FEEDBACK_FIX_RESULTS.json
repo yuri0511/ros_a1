@@ -1,0 +1,78 @@
+{
+  "stress-500-1000hz": {
+    "received": 10156,
+    "processed": 10156,
+    "overflow_drops": 0,
+    "queue_highwater": 3,
+    "max_callback_seconds": 0.00034145200334023684,
+    "max_processing_age_seconds": 0.0031260640098480508,
+    "fault": null,
+    "threads_stopped": true,
+    "dds_publication_sequence_gaps": 0,
+    "dds_unreceived_publications": 0,
+    "reference_count": 10156,
+    "consumer_count": 10156,
+    "missing_from_consumer_count": 0,
+    "source_gaps": [
+      {
+        "before": 11.999601418,
+        "after": 12.090748894,
+        "gap": 0.0911474760000015
+      }
+    ],
+    "release_monitor_fault": "observation_gap"
+  },
+  "stress-with-gil-load": {
+    "received": 10253,
+    "processed": 10253,
+    "overflow_drops": 0,
+    "queue_highwater": 14,
+    "max_callback_seconds": 0.0004508580022957176,
+    "max_processing_age_seconds": 0.012292455998249352,
+    "fault": null,
+    "threads_stopped": true,
+    "dds_publication_sequence_gaps": 0,
+    "dds_unreceived_publications": 0,
+    "reference_count": 10253,
+    "consumer_count": 10253,
+    "missing_from_consumer_count": 0,
+    "source_gaps": [
+      {
+        "before": 12.000006383,
+        "after": 12.090604173,
+        "gap": 0.09059778999999857
+      }
+    ],
+    "release_monitor_fault": "observation_gap"
+  },
+  "idle-20261017T114006-ce2309": {
+    "received": 9762,
+    "processed": 9762,
+    "overflow_drops": 0,
+    "queue_highwater": 3,
+    "max_callback_seconds": 0.001269967993721366,
+    "max_processing_age_seconds": 0.005443205998744816,
+    "fault": null,
+    "threads_stopped": true,
+    "dds_publication_sequence_gaps": 0,
+    "dds_unreceived_publications": 0,
+    "reference_count": 9777,
+    "consumer_count": 9762,
+    "missing_from_consumer_count": 0,
+    "source_gaps": [],
+    "release_monitor_fault": null,
+    "old_observer_comparison": {
+      "shared_stamp_bounds_ns": [
+        17402000000,
+        36969000000
+      ],
+      "observer_messages_in_shared_interval": 9630,
+      "consumer_messages_in_shared_interval": 9762,
+      "unique_missing_consumer": 0,
+      "unique_missing_observer": 129,
+      "max_source_gap_s": 0.008,
+      "median_source_gap_s": 0.002,
+      "effective_unique_source_rate_hz": 492.1551591966065
+    }
+  }
+}
