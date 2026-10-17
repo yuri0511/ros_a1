@@ -1,0 +1,28 @@
+{
+  "request_id": "b1badf735a9244a2b1d328fddd3b695c",
+  "session_id": "9d295be5e5344b90b2c373581fba783b",
+  "plan": {
+    "schema_version": 1,
+    "action": "sort_batch",
+    "counts": {
+      "blue": 0,
+      "yellow": 1,
+      "red": 1,
+      "green": 2
+    },
+    "priority_first": "yellow",
+    "proposed_order": [
+      "yellow",
+      "red",
+      "green",
+      "green"
+    ]
+  },
+  "plan_sha256": "b4dd1a60370d344c7aafc36fb9a98b7bffbd4b10383ceca7f1c5e91a7f879d8b",
+  "human_confirmed": true,
+  "ready_without_plan_seconds": 3.005014235008275,
+  "pre_submit_spawn_requests": [],
+  "outcome": "accepted",
+  "accepted": true,
+  "message": "confirmed plan accepted; feed remains readiness/slot/vision/recycle gated"
+}

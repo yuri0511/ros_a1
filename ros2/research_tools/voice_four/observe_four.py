@@ -36,7 +36,7 @@ def main():
     def emit(kind,**data):
         with lock:events.write(json.dumps(dict(kind=kind,wall=time.time(),clock=state['latest_clock'],**data),ensure_ascii=False)+'\n')
     def fault(kind,**data):
-        if (run/'SUPERVISOR_STOP').exists():return
+        if (run/'SUPERVISOR_STOP').exists() or (run/'SHUTDOWN_INTENT').exists():return
         try:
             with (run/'guard-fault.json').open('x') as f:json.dump(dict(kind=kind,wall=time.time(),**data),f)
         except FileExistsError:pass
@@ -110,8 +110,8 @@ def main():
     try:
         while not (run/'SUPERVISOR_STOP').exists():
             rclpy.spin_once(node,timeout_sec=.025);now=time.monotonic()
-            if (run/'guard-fault.json').exists():continue
-            if not readonly and not submitted and snapshot.get('hardware_ready') and snapshot.get('state')=='WAITING_FOR_PLAN':
+            guard_halted=(run/'guard-fault.json').exists() or (run/'SHUTDOWN_INTENT').exists()
+            if not guard_halted and not readonly and not submitted and snapshot.get('hardware_ready') and snapshot.get('state')=='WAITING_FOR_PLAN':
                 if ready_at is None:ready_at=now
                 # Independently record at least 3 seconds ready, no accepted plan,
                 # no requests, no visible arrivals. Authorization never fakes hardware.

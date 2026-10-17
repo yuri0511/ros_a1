@@ -1,0 +1,463 @@
+{
+  "csv_rows": [],
+  "voice_events": [
+    {
+      "wall": 1792196348.2398767,
+      "sim": 9.104,
+      "event": "VOICE_PLAN",
+      "request_id": "b1badf735a9244a2b1d328fddd3b695c",
+      "plan": {
+        "schema_version": 1,
+        "action": "sort_batch",
+        "counts": {
+          "blue": 0,
+          "yellow": 1,
+          "red": 1,
+          "green": 2
+        },
+        "priority_first": "yellow",
+        "proposed_order": [
+          "yellow",
+          "red",
+          "green",
+          "green"
+        ]
+      },
+      "plan_sha256": "b4dd1a60370d344c7aafc36fb9a98b7bffbd4b10383ceca7f1c5e91a7f879d8b"
+    },
+    {
+      "wall": 1792196348.2404175,
+      "sim": 9.104,
+      "event": "SPAWN_REQUEST",
+      "index": 1,
+      "color": "yellow"
+    },
+    {
+      "wall": 1792196348.8952677,
+      "sim": 9.612,
+      "event": "PartInfo",
+      "part": "part_1",
+      "color": "yellow",
+      "index": 1
+    },
+    {
+      "wall": 1792196371.7791734,
+      "sim": 32.2,
+      "event": "HALTED",
+      "reason": "operator_stop"
+    }
+  ],
+  "controller_results": [
+    {
+      "label": "standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true
+    }
+  ],
+  "controller_successes": 15,
+  "controller_failures": 0,
+  "retry_lines": [],
+  "grasp_verification": [
+    "[pick_place_executor_node-11] [INFO] [1792196365.591280475] [pick_place_executor]: 夹取验证通过: following(90 组采样, 夹爪阈值 0.03, 跟随阈值 0.02)"
+  ],
+  "slot_release_lines": [],
+  "gzip_crc_and_json_complete": true,
+  "raw_counts": {
+    "controller_state": 26838,
+    "joint_state": 14745,
+    "action_status": 27
+  },
+  "raw_joint_stamp_range": [
+    0.322,
+    30.123
+  ],
+  "raw_last_wall": 1792196369.7004027,
+  "contact_range_sim": [
+    21.162,
+    30.113
+  ],
+  "contact_pairs": [
+    {
+      "pair": [
+        "part_1::link::collision",
+        "ur::gripper_finger_left_link::gripper_finger_left_link_fixed_joint_lump__gripper_finger_left_collision_collision"
+      ],
+      "points": 25696,
+      "max_depth_m": 0.011459216841749022,
+      "first_sim": 21.162,
+      "last_sim": 30.113
+    },
+    {
+      "pair": [
+        "belt::belt_link::belt_collision",
+        "ur::gripper_finger_left_link::gripper_finger_left_link_fixed_joint_lump__gripper_finger_left_collision_collision"
+      ],
+      "points": 4,
+      "max_depth_m": 1.7312443111386355e-07,
+      "first_sim": 21.353,
+      "last_sim": 21.353
+    },
+    {
+      "pair": [
+        "belt::belt_link::belt_collision",
+        "ur::gripper_finger_right_link::gripper_finger_right_link_fixed_joint_lump__gripper_finger_right_collision_collision"
+      ],
+      "points": 272,
+      "max_depth_m": 1.8668487144005153e-07,
+      "first_sim": 21.353,
+      "last_sim": 21.62
+    },
+    {
+      "pair": [
+        "part_1::link::collision",
+        "ur::gripper_finger_right_link::gripper_finger_right_link_fixed_joint_lump__gripper_finger_right_collision_collision"
+      ],
+      "points": 23401,
+      "max_depth_m": 0.0034097216343598226,
+      "first_sim": 22.191,
+      "last_sim": 30.112
+    },
+    {
+      "pair": [
+        "bin_yellow::link::wall_y_neg_collision",
+        "ur::gripper_finger_left_link::gripper_finger_left_link_fixed_joint_lump__gripper_finger_left_collision_collision"
+      ],
+      "points": 75,
+      "max_depth_m": 5.5055852782190384e-05,
+      "first_sim": 30.045,
+      "last_sim": 30.113
+    }
+  ],
+  "native_stats_count": 299,
+  "native_stats_first": {
+    "wall": 1792196333.9860244,
+    "stats": {
+      "sim_time": {
+        "nsec": 1000000
+      },
+      "real_time": {
+        "sec": "1",
+        "nsec": 676561419
+      },
+      "iterations": "1",
+      "real_time_factor": 0.000596458912072818,
+      "step_size": {
+        "nsec": 1000000
+      }
+    }
+  },
+  "native_stats_last": {
+    "wall": 1792196369.6436577,
+    "stats": {
+      "sim_time": {
+        "sec": "30",
+        "nsec": 38000000
+      },
+      "real_time": {
+        "sec": "37",
+        "nsec": 310503168
+      },
+      "iterations": "30038",
+      "real_time_factor": 2.0939996440200606,
+      "step_size": {
+        "nsec": 1000000
+      }
+    }
+  },
+  "guard": {
+    "kind": "robot_bin_contact_requires_review",
+    "wall": 1792196369.6601949,
+    "sim": 30.045,
+    "a": "ur::gripper_finger_left_link::gripper_finger_left_link_fixed_joint_lump__gripper_finger_left_collision_collision",
+    "b": "bin_yellow::link::wall_y_neg_collision",
+    "max_depth": 5.5055852782190384e-05
+  },
+  "stop_halt_event": {
+    "wall": 1792196371.7791734,
+    "sim": 32.2,
+    "event": "HALTED",
+    "reason": "operator_stop"
+  },
+  "contact_to_dispatcher_halt_wall_s": 2.118978500366211,
+  "stop_evidence_limit": "Observer exited -6 after reporting terminate called without an active exception; gzip verifies through its last sample, but raw observation ended before final pause/cleanup. Do not infer later unrecorded dynamics.",
+  "yellow_wall_contact_unique_recorded_stamps": 69,
+  "yellow_wall_contact_wall_range": [
+    1792196369.6600518,
+    1792196369.7006507
+  ],
+  "row_count_note": "0 completed PLACED rows in an interrupted diagnostic, not an estimated sorting failure rate.",
+  "runtime_parameter_rpc": {
+    "gain_query": "Node not found\n",
+    "update_rate_query": "Wait for service timed out waiting for parameter services for node /controller_manager\n",
+    "limitation": "Gain RPC node lookup failed and update-rate query raced with shutdown; do not claim successful runtime parameter retrieval. Launch file/profile SHA and 0.002s controller period log are available."
+  },
+  "inherited_nonfatal_diagnostics": [
+    "[gazebo-5] [WARN] [1792196336.282147613] [gz_ros_control]:  Desired controller update period (0.002 s) is slower than the gazebo simulation period (0.001 s).",
+    "[gazebo-5] \u001b[1;31m[Err] [JointFeatures.cc:175] \u001b[0m\u001b[1;31mVelocity control does not respect positional limits of \u001b[0m\u001b[1;31mjoints if these joints do not have an effort limit. Please, \u001b[0m\u001b[1;31mset min and max effort for joint [\u001b[0m\u001b[1;31mpusher_slide\u001b[0m\u001b[1;31m] to values about -1e6 and 1e6 (or higher if working with \u001b[0m\u001b[1;31mheavy links).\u001b[0m\u001b[1;31m\u001b[0m",
+    "[move_group-16] [ERROR] [1792196354.684119476] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196354.684198091] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196354.684374590] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196355.107533391] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196355.107574092] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196355.107772194] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196358.483917978] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196358.483959464] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196358.484077842] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196358.898805148] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196358.898855049] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196358.898985464] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196359.610593651] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196359.610653153] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196359.610835012] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196360.282167629] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196360.282236391] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196360.282415818] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196361.080217961] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196361.080273743] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196361.080380376] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196363.615018361] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196363.615058480] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196363.615181594] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196364.312633719] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196364.312713624] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196364.312883333] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196364.948685129] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196364.948726852] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196364.948837185] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196365.605344812] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196365.605384535] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196365.605612440] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196366.077274802] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196366.077308789] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196366.077417978] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196367.037407754] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196367.037442009] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196367.037563087] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196369.138371430] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196369.138404985] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196369.138846029] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196370.274900275] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196370.274940315] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196370.275103088] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196371.985270121] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196371.985320176] [move_group.moveit.moveit.core.conversions]: Found empty JointState message",
+    "[move_group-16] [ERROR] [1792196371.985490108] [move_group.moveit.moveit.core.conversions]: Found empty JointState message"
+  ],
+  "controller_results_with_wall": [
+    {
+      "label": "standby",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196354.8348427
+    },
+    {
+      "label": "pick_anchor",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196358.2173018
+    },
+    {
+      "label": "pre_grasp",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196358.8924527
+    },
+    {
+      "label": "descend_1/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196359.6077585
+    },
+    {
+      "label": "descend_2/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196360.278421
+    },
+    {
+      "label": "descend_3/3",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196360.950671
+    },
+    {
+      "label": "close_lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196361.4139895
+    },
+    {
+      "label": "lift",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196364.3065624
+    },
+    {
+      "label": "verify_probe_out",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196364.9235299
+    },
+    {
+      "label": "verify_probe_back",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196365.5776007
+    },
+    {
+      "label": "carry_rise",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196366.0758612
+    },
+    {
+      "label": "carry_clear",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196367.025692
+    },
+    {
+      "label": "carry_anchor2",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196369.0324287
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196370.2687438
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196370.9629362
+    }
+  ],
+  "controller_results_after_guard": [
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196370.2687438
+    },
+    {
+      "label": "settle_down",
+      "status": 4,
+      "error_code": 0,
+      "success": true,
+      "wall": 1792196370.9629362
+    }
+  ],
+  "user_timezone": "Asia/Shanghai",
+  "guard_local_time": "2026-10-17T08:19:29.660195+08:00",
+  "run_seconds_including_startup_teardown": 42.11818675798713,
+  "executed_commit": "62987d07fbc5dd2b4518d81405aef01e904f573e",
+  "executed_source_status": "",
+  "gazebo_pause_ack": "data: true",
+  "feed_stop_ack": "waiting for service to become available...\nrequester: making request: std_srvs.srv.Trigger_Request()\n\nresponse:\nstd_srvs.srv.Trigger_Response(success=True, message='New feeding/dispatch halted; active motion requires supervised pause/cleanup, not an emergency stop guarantee')",
+  "new_cloud_calls": 0,
+  "formal_success_rate_measured": false
+}

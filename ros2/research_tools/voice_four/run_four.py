@@ -5,6 +5,7 @@ from a1_sorting_core.voice_batch_plan import PlanRejected
 from a1_sorting_core.voice_batch_results import validate_batch_results
 from a1_sorting_core.voice_demo_audit import BatchEventAudit
 from task_io import load_task,atomic_json
+from shutdown import stop_requests
 HERE=Path(__file__).resolve().parent;WS=HERE.parents[1];ROOT=WS.parents[1]
 
 def commands(run):
@@ -114,19 +115,19 @@ def main():
     except (PlanRejected,ValueError,OSError,KeyError) as exc:
         reason='safety_stop';detail=str(exc)
     finally:
+        (run/'SHUTDOWN_INTENT').touch()
+        # Keep evidence recording until after world pause and simulator teardown.
+        # In 62987d0 the ROS stop RPC ran first and the observer stopped too early.
+        stopping=stop_requests(run,env)
+        for child in reversed(children[1:]):stop_group(child)
         (run/'SUPERVISOR_STOP').touch()
-        # Block new feed, then pause this partition before interrupting its group.
-        try:
-            stop=subprocess.run(['ros2','service','call','/voice_batch/stop','std_srvs/srv/Trigger','{}'],env=env,capture_output=True,text=True,timeout=3)
-            (run/'stop-service.log').write_text(stop.stdout+stop.stderr)
-        except (OSError,subprocess.TimeoutExpired) as exc:(run/'stop-service.log').write_text(str(exc))
-        try:
-            pause=subprocess.run(['gz','service','-s','/world/sorting_cell/control','--reqtype','gz.msgs.WorldControl','--reptype','gz.msgs.Boolean','--timeout','2000','--req','pause: true'],env=env,capture_output=True,text=True,timeout=4)
-            (run/'pause.log').write_text(pause.stdout+pause.stderr)
-        except (OSError,subprocess.TimeoutExpired) as exc:(run/'pause.log').write_text(str(exc))
-        for child in reversed(children):stop_group(child)
+        if children:
+            try:children[0].wait(timeout=3)
+            except subprocess.TimeoutExpired:stop_group(children[0])
         for handle in handles:handle.close()
-        summary={'reason':reason,'detail':detail,'result':result,'end_wall':time.time(),'wall_seconds':time.monotonic()-start,'returncodes':[c.poll() for c in children],'simulation_test_only':True,'cloud_calls':0}
+        cleanup_ok=all(s['acknowledged'] for s in stopping) and all(c.poll()==0 for c in children)
+        if reason=='completed' and not cleanup_ok:reason='completed_with_cleanup_fault'
+        summary={'reason':reason,'detail':detail,'result':result,'end_wall':time.time(),'wall_seconds':time.monotonic()-start,'returncodes':[c.poll() for c in children],'stop_requests':stopping,'cleanup_ok':cleanup_ok,'simulation_test_only':True,'cloud_calls':0}
         atomic_json(run/'summary.json',summary);print(json.dumps(summary,ensure_ascii=False,indent=2),flush=True)
     return 0 if reason=='completed' else 1
 

@@ -1,0 +1,70 @@
+{
+  "task": {
+    "record_version": 1,
+    "source": "new_user_text_static_fixture_NOT_ASR_NOT_LLM",
+    "transcript_unmodified": "开始分拣，一个黄色、一个红色、两个绿色，先完成黄色。",
+    "request_id": "b1badf735a9244a2b1d328fddd3b695c",
+    "plan": {
+      "schema_version": 1,
+      "action": "sort_batch",
+      "counts": {
+        "blue": 0,
+        "yellow": 1,
+        "red": 1,
+        "green": 2
+      },
+      "priority_first": "yellow",
+      "proposed_order": [
+        "yellow",
+        "red",
+        "green",
+        "green"
+      ]
+    },
+    "plan_sha256": "b4dd1a60370d344c7aafc36fb9a98b7bffbd4b10383ceca7f1c5e91a7f879d8b",
+    "human_confirmed": false,
+    "created_local": "2026-10-17",
+    "cloud_calls": 0
+  },
+  "commit": "62987d07fbc5dd2b4518d81405aef01e904f573e",
+  "profile_sha256": {
+    "src/a1_cell_sim/config/ur5e_cell_controllers_stability_gain1.yaml": "c96a32325ac2d66b958cb4c75ac82b794e1fe64802e25394c717436121b9a5b9",
+    "src/a1_cell_sim/worlds/fast_sim_1ms.sdf": "04036414979a02627a3674cecb39dde997d12acd96ffcb377ba524defc37b81b"
+  },
+  "command": [
+    "ros2",
+    "launch",
+    "a1_sorting_core",
+    "sorting_demo.launch.py",
+    "gpu_offload:=false",
+    "gazebo_gui:=false",
+    "launch_rviz:=false",
+    "world_file:=fast_sim_1ms.sdf",
+    "controllers_file:=ur5e_cell_controllers_stability_gain1.yaml",
+    "pipeline:=true",
+    "dual_arm:=true",
+    "fast_sim_waits:=true",
+    "feed_policy:=rule",
+    "voice_batch_mode:=true",
+    "auto_start:=false",
+    "demo_parts:=4",
+    "result_csv:=/home/yu/yuri_gazebo_performance/voice_batch_four/runs/four-20261017T081850-4d18c0/results.csv"
+  ],
+  "contact_policy": "Any inter-arm or arm-body/bin contact stops. Any positive finger/bin contact pauses for review; no numeric penetration allowance.",
+  "no_api_calls": true,
+  "check_only": false,
+  "run": "/home/yu/yuri_gazebo_performance/voice_batch_four/runs/four-20261017T081850-4d18c0",
+  "start_wall": 1792196330.958179,
+  "environment": {
+    "HOME": "/home/yu/yuri_gazebo_performance/voice_batch_four/runs/four-20261017T081850-4d18c0/home",
+    "ROS_DOMAIN_ID": "88",
+    "GZ_PARTITION": "four-20261017T081850-4d18c0",
+    "ROS_LOG_DIR": "/home/yu/yuri_gazebo_performance/voice_batch_four/runs/four-20261017T081850-4d18c0/ros",
+    "DISPLAY": ":0",
+    "XAUTHORITY": "/run/user/1000/.mutter-Xwaylandauth.XTD9W3",
+    "LP_NUM_THREADS": "2",
+    "LIBGL_ALWAYS_SOFTWARE": "1",
+    "GALLIUM_DRIVER": "llvmpipe"
+  },
+  "source_status": ""
+}

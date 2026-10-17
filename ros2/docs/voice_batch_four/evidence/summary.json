@@ -1,0 +1,13 @@
+{
+  "reason": "safety_stop",
+  "detail": "{\"kind\": \"robot_bin_contact_requires_review\", \"wall\": 1792196369.6601949, \"sim\": 30.045, \"a\": \"ur::gripper_finger_left_link::gripper_finger_left_link_fixed_joint_lump__gripper_finger_left_collision_collision\", \"b\": \"bin_yellow::link::wall_y_neg_collision\", \"max_depth\": 5.5055852782190384e-05}",
+  "result": null,
+  "end_wall": 1792196373.0795739,
+  "wall_seconds": 42.11818675798713,
+  "returncodes": [
+    -6,
+    0
+  ],
+  "simulation_test_only": true,
+  "cloud_calls": 0
+}
