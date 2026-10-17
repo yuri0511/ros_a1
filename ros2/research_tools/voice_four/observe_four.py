@@ -23,6 +23,7 @@ from gz.msgs10.contacts_pb2 import Contacts
 from gz.msgs10.pose_v_pb2 import Pose_V
 from gz.transport13 import Node as GzNode
 from task_io import load_task,atomic_json
+from support_evidence import SupportEvidence
 
 def main():
     run=Path(sys.argv[1]);readonly='--no-submit' in sys.argv[2:]
@@ -36,7 +37,7 @@ def main():
     contactfile=(run/'contacts.csv').open('w',newline='');cw=csv.writer(contactfile);cw.writerow(['wall','sim_sec','topic','collision1','collision2','x','y','z','depth'])
     state={'ready_parts':[],'placed_parts':[],'spawn_requests':[],'arrivals':[],'latest_clock':0.,'logical_frames':0,'rgb_frames':0,'joint_messages':0,'controller_messages':0,'contact_points':0,'contact_messages':{},'stats_messages':0}
     snapshot={};start=time.monotonic();lastflush=0.;lastcontactflush=0.;submit_future=None;submitted=False;ready_at=None;submit_at=None;stopping=threading.Event()
-    readyset=set();placedset=set();subscriptions=[];seen_actions=set()
+    readyset=set();placedset=set();subscriptions=[];seen_actions=set();support_evidence=SupportEvidence();support_permit={};finger_permit={}
     def emit(kind,**data):
         with lock:events.write(json.dumps(dict(kind=kind,wall=time.time(),clock=state['latest_clock'],**data),ensure_ascii=False)+'\n')
     def fault(kind,**data):
@@ -93,6 +94,8 @@ def main():
                 state['contact_messages'][topic]=state['contact_messages'].get(topic,0)+1
                 for c in m.contact:
                     a=c.collision1.name;b=c.collision2.name
+                    support_fault=support_evidence.contact(a,b,list(c.depth),[(n.x,n.y,n.z) for n in c.normal],t,time.time(),support_permit)
+                    if support_fault:fault(support_fault,sim=t,a=a,b=b)
                     def arm(x):
                         if 'arm2_' in x:return 2
                         return 1 if x.startswith('ur::') else 0
@@ -103,9 +106,7 @@ def main():
                     if any(d>0 for d in c.depth):
                         if (aa and b.startswith('calibration_')) or (bb and a.startswith('calibration_')):
                             robot=a if aa else b;obj=b if aa else a
-                            permit={}
-                            try:permit=json.loads((run/'fixture-contact-permit.json').read_text())
-                            except (FileNotFoundError,ValueError):pass
+                            permit=finger_permit
                             side=next((s for s in ('left','right') if 'arm2_gripper_finger_'+s+'_link' in robot),None)
                             expected=(obj.startswith('calibration_red4::') and side and permit.get('phase') in ('gentle_grasp','release') and time.time()<permit.get('expires_wall',0))
                             if expected:
@@ -117,6 +118,13 @@ def main():
     def on_pose(m):
         with lock:
             if not stopping.is_set():
+                for p in m.pose:
+                    if p.name=='calibration_red4':
+                        stamp=m.header.stamp.sec+m.header.stamp.nsec*1e-9
+                        try:
+                            reason=support_evidence.pose([p.position.x,p.position.y,p.position.z],[p.orientation.x,p.orientation.y,p.orientation.z,p.orientation.w],stamp,time.time(),support_permit)
+                            if reason:fault(reason,sim=stamp)
+                        except ValueError as e:fault(str(e))
                 raw.write(json.dumps(dict(kind='native_pose',wall=time.time(),message=MessageToDict(m,preserving_proto_field_name=True)))+'\n')
     gz.subscribe(Pose_V,'/world/sorting_cell/pose/info',on_pose)
     gz.subscribe(WorldStatistics,'/world/sorting_cell/stats',on_stats)
@@ -125,6 +133,8 @@ def main():
     for link in links:
         topic='/a1_contact/'+link;cb=on_contact(topic);callbacks.append(cb)
         if not gz.subscribe(Contacts,topic,cb):raise RuntimeError('contact subscription failed:'+topic)
+    fixture_cb=on_contact('/a1_calibration/fixture_contacts');callbacks.append(fixture_cb)
+    if not gz.subscribe(Contacts,'/a1_calibration/fixture_contacts',fixture_cb):raise RuntimeError('fixture_contact_subscription_failed')
     client=None if readonly else node.create_client(SubmitBatchPlan,'/voice_batch/submit')
     (run/'OBSERVER_READY').touch()
     try:
@@ -147,10 +157,22 @@ def main():
             if submit_future is not None and now-submit_at>10:fault('submission_outcome_unknown_no_resend')
             # Do not synchronously replace a JSON file for every 1 kHz native
             # contact callback. All contact points remain in the buffered CSV.
-            if now-lastcontactflush>.02 and state.get('fixture_finger_contacts'):
+            if now-lastcontactflush>.02:
                 lastcontactflush=now
-                with lock:contact_snapshot=dict(state['fixture_finger_contacts'])
-                atomic_json(run/'fixture-contact-status.json',contact_snapshot)
+                try:new_permit=json.loads((run/'support-contact-permit.json').read_text())
+                except (FileNotFoundError,ValueError):new_permit={}
+                if new_permit and time.time()>new_permit.get('expires_wall',0):fault('support_permission_expired')
+                try:new_finger_permit=json.loads((run/'fixture-contact-permit.json').read_text())
+                except (FileNotFoundError,ValueError):new_finger_permit={}
+                with lock:
+                    finger_permit.clear();finger_permit.update(new_finger_permit)
+                    support_permit.clear();support_permit.update(new_permit)
+                    contact_snapshot=dict(state.get('fixture_finger_contacts',{}))
+                    support_snapshot=dict(support_evidence.support or {})
+                    native_snapshot=dict(support_evidence.native or {})
+                if contact_snapshot:atomic_json(run/'fixture-contact-status.json',contact_snapshot)
+                if support_snapshot:atomic_json(run/'fixture-support-status.json',support_snapshot)
+                if native_snapshot:atomic_json(run/'fixture-native-status.json',native_snapshot)
             if now-lastflush>.25:
                 lastflush=now
                 state['clock_publishers']=[{'node':p.node_name,'gid':list(p.endpoint_gid)} for p in node.get_publishers_info_by_topic('/clock')]

@@ -11,7 +11,7 @@ from a1_sorting_core.physical_ready import PhysicalReadyMonitor,publisher_identi
 from geometry import ROOT,SUFFIXES,fk,quaternion_matrix,matrix_quaternion
 import numpy as np
 
-def probe(node,run,step,get_last,emit,observations=None,release_test=None):
+def probe(node,run,step,get_last,emit,observations=None,release_test=None,support_context=None):
  def wait(f,timeout=15):
   end=time.monotonic()+timeout
   while not f.done():
@@ -86,50 +86,10 @@ def probe(node,run,step,get_last,emit,observations=None,release_test=None):
    else:raise RuntimeError('probe_physical_stability_timeout')
    if label=='bottom' and release_test is not None:
     def lift_cycle():
-     from a1_sorting_core.retained_scene_sync import observed_object
-     initial=copy.deepcopy(observations['calibration_red4']);until=time.monotonic()+.5
-     while get_last()[2]<initial['stamp']:
-      step()
-      if time.monotonic()>until:raise RuntimeError('held_clock_alignment_timeout')
-     jm,_,stamp=get_last()
-     # Model the measured physical cube attached to the measured tool frame.
-     M=fk('arm2_tool0',dict(zip(jm.name,jm.position)));O=np.eye(4)
-     O[:3,:3]=quaternion_matrix(initial['quaternion']);O[:3,3]=initial['position'];local=np.linalg.inv(M)@O
-     attached=AttachedCollisionObject();attached.link_name='arm2_tool0'
-     attached.object=observed_object('calibration_red4',local[:3,3].tolist(),matrix_quaternion(local[:3,:3]).tolist(),initial['stamp'],stamp)
-     attached.object.header.frame_id='arm2_tool0';attached.touch_links=['arm2_gripper_finger_left_link','arm2_gripper_finger_right_link']
-     removal=ApplyPlanningScene.Request();removal.scene.is_diff=True
-     removed=CollisionObject();removed.id=attached.object.id;removed.operation=removed.REMOVE;removal.scene.world.collision_objects=[removed]
-     if not wait(scene.call_async(removal)).success:raise RuntimeError('held_scene_remove_not_acknowledged')
-     held_rows=[]
-     for stage,tgt in [('lift_32mm',wp['settle_top']),('replace',wp['settle_bottom'])]:
-      step();jm,_,_=get_last();rq=GetMotionPlan.Request();rq.motion_plan_request=copy.deepcopy(p)
-      h=rq.motion_plan_request;h.start_state.joint_state=copy.deepcopy(jm);h.start_state.joint_state.velocity=[0.]*len(jm.name);h.start_state.attached_collision_objects=[attached];h.planner_id='LIN'
-      h.goal_constraints=[Constraints(joint_constraints=[JointConstraint(joint_name=n,position=x,tolerance_above=.01,tolerance_below=.01,weight=1.) for n,x in zip(names,tgt)])]
-      planned=wait(plan.call_async(rq));record={'stage':stage,'request':msgdict(rq),'response':msgdict(planned)};held_rows.append(record)
-      (run/'held-cycle.json').write_text(json.dumps(held_rows,indent=2))
-      if planned.motion_plan_response.error_code.val!=1:raise RuntimeError('held_plan_failed')
-      jt=planned.motion_plan_response.trajectory.joint_trajectory;times=[x.time_from_start.sec*10**9+x.time_from_start.nanosec for x in jt.points]
-      if not times or any(b<=a for a,b in zip(times,times[1:])):raise RuntimeError('held_plan_nonmonotonic')
-      for point in jt.points:
-       v=GetStateValidity.Request();v.robot_state=copy.deepcopy(h.start_state);vals=dict(zip(jm.name,jm.position));vals.update(zip(jt.joint_names,point.positions));v.robot_state.joint_state.position=[vals[n] for n in jm.name]
-       check=wait(valid.call_async(v));record.setdefault('validity',[]).append(msgdict(check))
-       if not check.valid:raise RuntimeError('held_state_collision')
-      g=FollowJointTrajectory.Goal();g.trajectory=jt;handle=wait(action.send_goal_async(g))
-      if not handle.accepted:raise RuntimeError('held_goal_rejected')
-      try:rr=wait(handle.get_result_async(),20)
-      except Exception:handle.cancel_goal_async();raise
-      record['action']=msgdict(rr)
-      if rr.status!=4 or rr.result.error_code!=0:raise RuntimeError('held_controller_failure')
-      after=get_last()[2];deadline=time.monotonic()+2
-      while observations['calibration_red4']['stamp']<after:
-       step()
-       if time.monotonic()>deadline:raise RuntimeError('held_camera_feedback_missing')
-      record['actual_object']=copy.deepcopy(observations['calibration_red4']);record['actual_joints']=msgdict(get_last()[0]);(run/'held-cycle.json').write_text(json.dumps(held_rows,indent=2))
-      delta=record['actual_object']['position'][2]-initial['position'][2]
-      if stage=='lift_32mm' and delta<.020:raise RuntimeError('held_object_did_not_follow_20mm')
-      if stage=='replace' and abs(delta)>.010:raise RuntimeError('held_object_not_replaced')
-     emit(phase='fixture_lift_replace_pass',rows=held_rows)
+     from live_support_cycle import LiveSupportCycle
+     cycle=LiveSupportCycle(node,run,step,get_last,observations,emit,action,wait)
+     if support_context is not None:support_context[0]=cycle
+     return cycle.run_cycle()
     release_test(lift_cycle)
    row['post_action_samples']=samples;(run/'arm-probe.json').write_text(json.dumps(records,indent=2));emit(phase='arm_probe_pass',arm=prefix or 'arm1',stage=label)
   action.destroy()

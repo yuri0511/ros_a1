@@ -2,7 +2,7 @@
 No arm trajectory, part spawn, dispatcher or task submission. Same candidate release
 1.5 N command and 10..14 mm exit gate. Any breach latches the supervisor fault.
 """
-import json,sys,time,threading
+import json,sys,time,threading,subprocess,os
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"voice_four"))
 from task_io import atomic_json
@@ -21,7 +21,7 @@ import numpy as np
 import xml.etree.ElementTree as ET
 
 def main():
- run=Path(sys.argv[1]);rclpy.init();n=rclpy.create_node('isolated_finger_calibration');last=None;monitor=None;holds=[];grasp_active=False;consumer_samples=[];clock=[None,None]
+ run=Path(sys.argv[1]);rclpy.init();n=rclpy.create_node('isolated_finger_calibration');last=None;monitor=None;holds=[];grasp_active=False;support_context=[None];consumer_samples=[];clock=[None,None]
  out=(run/'finger-response.jsonl').open('w',buffering=1)
  def emit(**d):out.write(json.dumps(dict(wall=time.time(),**d))+'\n')
  def fault(reason):
@@ -154,7 +154,7 @@ def main():
     if time.monotonic()>deadline:raise RuntimeError('fixture_bilateral_contact_timeout')
    emit(phase='fixture_bilateral_contact',q=pair,contacts=contacts)
    if '--lift-fixture' in sys.argv:
-    atomic_json(run/'fixture-contact-permit.json',dict(phase='gentle_grasp',expires_wall=time.time()+25))
+    atomic_json(run/'fixture-contact-permit.json',dict(phase='gentle_grasp',expires_wall=time.time()+120))
     # Match the existing executor's light-touch then -8 N lock stage;
     # the previous calibration incorrectly tried lifting on pre-close force alone.
     import yaml
@@ -164,6 +164,15 @@ def main():
     send(pub,lock_force);end=time.monotonic()+.6
     while time.monotonic()<end:step()
     grasp_active=True
+    stable=[];seen=None;deadline=time.monotonic()+2
+    while time.monotonic()<deadline:
+     step();jm,_,stamp=last
+     if stamp==seen:continue
+     seen=stamp;values=dict(zip(jm.name,jm.position));stable.append((stamp,[values[n] for n in names]))
+     stable=[s for s in stable if stamp-s[0]<=.12]
+     if len(stable)>=50 and stamp-stable[0][0]>=.1 and all(max(s[1][i] for s in stable)-min(s[1][i] for s in stable)<.002 for i in (0,1)):break
+    else:raise RuntimeError('locked_fingers_not_settled')
+    emit(phase='locked_finger_stability_pass',samples=stable)
     lift_cycle()
     grasp_active=False
    atomic_json(run/'fixture-contact-permit.json',dict(phase='release',expires_wall=time.time()+5))
@@ -184,14 +193,25 @@ def main():
    obs=observations['calibration_red4'];xyz=obs['position']
    if abs(xyz[0]-.295)>.008 or abs(xyz[1]+.235)>.008 or abs(xyz[2]-.745)>.010:raise RuntimeError('fixture_displaced_outside_slot')
    atomic_json(run/'fixture-contact-permit.json',dict(phase='forbidden',expires_wall=0))
+   if support_context[0] is not None:support_context[0].detach_after_release()
    emit(phase='fixture_release_pass',observation=obs,last_contacts=contacts,sim=last[2])
   if '--arm-probe' in sys.argv:
 
    from arm_probe import probe
-   probe(n,run,step,lambda:last,emit,observations if '--empty-slot' in sys.argv else None,fixture_release if '--release-fixture' in sys.argv else None)
+   probe(n,run,step,lambda:last,emit,observations if '--empty-slot' in sys.argv else None,fixture_release if '--release-fixture' in sys.argv else None,support_context)
   (run/'FINGER_DONE').touch()
  except Exception as e:fault(str(e));emit(failure=str(e))
  finally:
+  if grasp_active or support_context[0] is not None and not support_context[0].detached:
+   # Preserve holding force until the owned simulation is actually paused.
+   command=['gz','service','-s','/world/sorting_cell/control','--reqtype','gz.msgs.WorldControl','--reptype','gz.msgs.Boolean','--timeout','2000','--req','pause: true']
+   try:
+    paused=subprocess.run(command,capture_output=True,text=True,timeout=3)
+    atomic_json(run/'actor-fault-pause.json',dict(returncode=paused.returncode,stdout=paused.stdout,stderr=paused.stderr,wall=time.time()))
+   except Exception as e:emit(pause_error=repr(e))
+  if support_context[0] is not None:
+   try:support_context[0].restore_on_abort()
+   except Exception as e:fault('support_ACM_cleanup:'+str(e));emit(cleanup_error=repr(e))
   monitor=None;holds.clear();timer.cancel()
   for p in pubs:send(p,0.)
   for _ in range(5):time.sleep(.01)

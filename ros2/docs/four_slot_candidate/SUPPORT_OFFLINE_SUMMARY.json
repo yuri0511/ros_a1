@@ -1,0 +1,35 @@
+{
+  "source": "/home/yu/yuri_gazebo_performance/voice_batch_four/bin_capacity_v1/support_transition/offline-20261017T110621",
+  "gazebo_started": false,
+  "motion_sent": false,
+  "all_segments_passed": true,
+  "initial_penetration_m": 5.153073578956224e-08,
+  "samples": 4021,
+  "ACM_restored": true,
+  "segments": [
+    {
+      "stage": "depart_32mm",
+      "direction": "depart",
+      "min_bottom": 0.7199999484692642,
+      "max_penetration_m": 5.153073578956224e-08
+    },
+    {
+      "stage": "exit_above_bin",
+      "direction": "free",
+      "min_bottom": 0.7519999204744983,
+      "max_penetration_m": 0.0
+    },
+    {
+      "stage": "return_above_support",
+      "direction": "free",
+      "min_bottom": 0.7519893988024187,
+      "max_penetration_m": 0.0
+    },
+    {
+      "stage": "land_original_pose",
+      "direction": "land",
+      "min_bottom": 0.7199999484692642,
+      "max_penetration_m": 5.153073578956224e-08
+    }
+  ]
+}
