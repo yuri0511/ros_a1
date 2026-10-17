@@ -21,8 +21,6 @@ class Window(QtWidgets.QWidget):
         self.start.clicked.connect(self.record); self.end.clicked.connect(self.finish); self.play.clicked.connect(self.playback)
         g=group('2  语音识别 · 仅显示已保存记录'); self.asr=QtWidgets.QTextEdit(); self.asr.setReadOnly(True); self.asr.setMaximumHeight(70); g.addWidget(self.asr)
         self.connection=QtWidgets.QLabel('ASR未连接 · 本轮无付费调用 · 耗时：未测量'); g.addWidget(self.connection)
-        row=QtWidgets.QHBoxLayout(); g.addLayout(row); self.history=QtWidgets.QPushButton('查看历史真实三绿五件'); self.fixture=QtWidgets.QPushButton('加载四件文字测试数据'); row.addWidget(self.history); row.addWidget(self.fixture)
-        self.history.clicked.connect(self.load_history); self.fixture.clicked.connect(self.load_four)
         g=group('3  AI任务规划'); self.source=QtWidgets.QLabel('尚未加载计划'); self.source.setWordWrap(True); g.addWidget(self.source)
         self.table=QtWidgets.QLabel('黄色 —    红色 —    绿色 —    蓝色 —\n总任务 —    优先级 —'); self.table.setStyleSheet('font-size:15pt;'); g.addWidget(self.table)
         self.state=QtWidgets.QLabel('计划未确认'); g.addWidget(self.state)

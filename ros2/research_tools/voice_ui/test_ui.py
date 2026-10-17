@@ -1,4 +1,4 @@
-import json, sys, wave
+import json, sys, wave, tempfile
 from pathlib import Path
 from unittest.mock import patch
 from PyQt5 import QtWidgets, QtCore, QtTest
@@ -15,7 +15,7 @@ def test_real_microphone_mouse_buttons():
     w=Window(); w.show(); w.load_four(); QtTest.QTest.mouseClick(w.start,QtCore.Qt.LeftButton); QtTest.QTest.qWait(2200); QtTest.QTest.mouseClick(w.end,QtCore.Qt.LeftButton); QtTest.QTest.qWait(1000)
     assert w.wav is not None
     with wave.open(str(w.wav)) as r:assert r.getnchannels()==1 and r.getframerate()==16000 and r.getnframes()>16000
-    out=ROOT/'audit/ui'; out.mkdir(exist_ok=True); w.grab().save(str(out/'voice-ui.png')); (out/'recording-test.json').write_text(json.dumps({'path':str(w.wav),'test':'QtTest mouse press on real record/stop buttons, actual default ALSA capture','cloud_calls':0},indent=2)); w.close()
+    out=Path(tempfile.mkdtemp(prefix='ui-test-',dir=ROOT/'audit')); w.grab().save(str(out/'voice-ui.png')); (out/'recording-test.json').write_text(json.dumps({'path':str(w.wav),'test':'QtTest mouse press on real record/stop buttons, actual default ALSA capture','cloud_calls':0},indent=2)); w.close()
 def test_cloud_disabled_and_history_cannot_confirm():
     import pytest
     from cloud_port import DisabledCloud
@@ -31,3 +31,12 @@ def test_pipeline_fake_cloud_never_confirms():
         def parse_text(self,text):return json.dumps(json.loads((ROOT/'tasks/four-part-text.json').read_text())['plan']),{'mock':True}
     d=PreviewPipeline(FakeCloud()).preview('mock.wav')
     assert d['plan']['counts']['green']==2 and d['human_confirmed'] is False
+
+def test_main_window_has_no_fixture_or_history_buttons():
+    w=Window()
+    labels={button.text() for button in w.findChildren(QtWidgets.QPushButton)}
+    assert labels=={'开始录音','结束录音','播放本地录音','确认模拟任务…','查看状态'}
+    assert not hasattr(w,'history') and not hasattr(w,'fixture')
+    assert w.asr.isReadOnly() and w.plan is None and not w.confirm.isEnabled()
+    assert '未知' in w.robot.text()
+    w.close()
