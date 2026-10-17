@@ -621,6 +621,7 @@ class PickPlaceExecutorNode(Node):
         cam_xy = [float(v) for v in gp('camera_xy')]
         self._cam_cache = CameraPoseCache((cam_xy[0], cam_xy[1]))
         self._four_slot_xyz={}
+        self._four_slot_observations={}
         if self._pose_from_camera or self._attach_follow == 'verified_only':
             self.create_subscription(LogicalCameraImage, '/overhead_logical',
                                      self._on_logical, 10)
@@ -639,6 +640,12 @@ class PickPlaceExecutorNode(Node):
             own={b:e for b,e in cfg['bins'].items() if b in self._bins}
             self._slot_defs={s['id']:s for e in own.values() for s in e['slots']}
             self._slot_bank=SlotBank(own,inventory)
+            from .retained_scene_sync import RosRetainedSceneSync
+            self._retained_scene=RosRetainedSceneSync(self)
+            from .four_slot_feedback import ReleaseEvidence
+            self._release_evidence=ReleaseEvidence(self._finger_joint_keys())
+            self._release_fault_announced=False
+            self.create_timer(.02,self._four_slot_feedback_tick)
         self._busy = False
         self._pending = []    # 忙时到达的命令排队(不丢弃,防任务黑洞)
         self._terminal_status = None  # 终态暂存(回待机后再发布,见 _run_task)
@@ -659,6 +666,10 @@ class PickPlaceExecutorNode(Node):
             return
         self._ready_monitor.observe(list(msg.name),list(msg.position),list(msg.velocity),
             msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic(),source=source)
+        if getattr(self,'_four_slot',False):
+            self._release_evidence.observe(list(msg.name),list(msg.position),
+                msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic(),source)
+            self._four_slot_feedback_tick()
         self._js_wall = time.time()
         self._store_joint_states(msg)
         if not self._grip_key_checked:
@@ -729,7 +740,16 @@ class PickPlaceExecutorNode(Node):
         stamp = msg.header.stamp.sec + msg.header.stamp.nanosec*1e-9
         for model in msg.model:
             if model.name.startswith('part_'):
-                if getattr(self,'_four_slot',False):self._four_slot_xyz[model.name]=(self._cam_cache.camera_xy[0]+model.pose.position.z,self._cam_cache.camera_xy[1]+model.pose.position.y,2.10-model.pose.position.x)
+                if getattr(self,'_four_slot',False):
+                    from .retained_scene_sync import camera_observation
+                    try:
+                        observation=camera_observation(msg.pose,model.pose,stamp)
+                        self._four_slot_observations[model.name]=observation
+                        self._four_slot_xyz[model.name]=tuple(observation['position'])
+                    except ValueError as exc:
+                        self._arm_fault='invalid_object_pose:'+str(exc)
+                    except RuntimeError as exc:
+                        self._arm_fault='invalid_object_pose:'+str(exc)
                 self._part_source_stamps[model.name] = stamp
                 self._part_source_walls[model.name] = time.monotonic()
         self._cam_cache.update(
@@ -815,6 +835,7 @@ class PickPlaceExecutorNode(Node):
                         if position is None:self._arm_fault='slot_position_missing';return False
                         try:
                             self._slot_bank.occupied(self._active_slot,part.part_id,list(position),self._part_source_stamps.get(part.part_id,-1),self.get_clock().now().nanoseconds*1e-9)
+                            if not self._four_slot_before_plan():return False
                         except Exception as e:self._arm_fault='slot_verification:'+str(e);return False
                     return True
                 self._arm_fault='placement_rejected_requires_inspection';return False
@@ -824,6 +845,8 @@ class PickPlaceExecutorNode(Node):
     def _run_task(self, part: PartInfo):
         self._zone_published=False
         self._active_slot=None
+        self._four_slot_current_part=part
+        self._four_slot_released_part=None
         try:
             if getattr(self,'_slot_bank',None) is not None:
                 target=self._bin_for(part.category,getattr(part,'target_bin_override',''))
@@ -1244,12 +1267,15 @@ class PickPlaceExecutorNode(Node):
                     # 触发 move_group rcl_action 取消竞态崩溃(2026-10-03
                     # 第 3 轮实证),软闸避免重试链放大。
                     z_end = self._tool_z_now()
+                    if getattr(self,'_four_slot',False) and (z_end is None or z_end>self._settle_touch_z):
+                        raise FatalGraspError('four_slot_release_height_unverified')
                     if z_end is not None and z_end > 1.09:
                         raise GraspError(f'settle_stalled_high(z={z_end:.3f})')
                     if z_end is not None and z_end > self._settle_touch_z:
                         self.get_logger().warn(
                             f'梯子终点 z={z_end:.3f} 高于触底线 '
                             f'{self._settle_touch_z},按悬停释放继续')
+                    if getattr(self,'_four_slot',False):self._release_evidence.begin()
                     self._attach.detach()
                     self._grip(close=False, force=0.0, wait=0.6)
                     # 观感修复②(2026-10-08):旧序列"1.5N 慢开 1.2s →
@@ -1263,6 +1289,7 @@ class PickPlaceExecutorNode(Node):
                     # **箱沿之上**才全开(见 settle_rise 之后)。
                     if getattr(self,'_slot_bank',None) is not None:
                         if not self._four_slot_release():raise FatalGraspError('four_slot_release_gap_not_verified')
+                        self._four_slot_released_part=part.part_id
                     else:self._open_to_release_gap()
                     t_wait = time.monotonic()
                     time.sleep(0.4)  # retained: gap alone does not prove settled release
@@ -1275,7 +1302,9 @@ class PickPlaceExecutorNode(Node):
                     try:
                         if getattr(self,'_slot_bank',None) is not None:
                             self._plan_execute(self._down_pose(place[:2],1.08),'four_slot_rise',linear=True)
-                            rise_ok=True
+                            # No calibrated link-envelope/world-clearance proof exists yet.
+                            # Action SUCCESS cannot permit full opening inside a possible wall.
+                            raise FatalGraspError('four_slot_exit_clearance_not_calibrated')
                         else:rise_ok=self._motion.move_to_joints(self._joint_names,carry_anchor[1],'settle_rise')
                         if not rise_ok:
                             raise GraspError('settle_rise_failed')
@@ -1491,6 +1520,39 @@ class PickPlaceExecutorNode(Node):
                 self._down_pose(center_xy, from_z + step * (i + 1)),
                 f'lift_{i + 1}/{self._lift_rungs}', linear=True)
 
+    def _four_slot_feedback_tick(self):
+        monitor=getattr(self,'_release_evidence',None)
+        if monitor is None or monitor.phase not in ('RELEASING','EXITING'):return
+        monitor.check(self.get_clock().now().nanoseconds*1e-9,time.monotonic())
+        if monitor.fault:
+            self._arm_fault='release_feedback:'+monitor.fault
+            if not self._release_fault_announced:
+                self._release_fault_announced=True
+                part=getattr(self,'_four_slot_current_part',None)
+                if part is not None:self._emit_arm_event(part,'ARM_FAULT',self._arm_fault)
+
+    def _four_slot_before_plan(self):
+        if not getattr(self,'_four_slot',False):return True
+        if self._arm_fault:return False
+        try:
+            observations=dict(self._four_slot_observations)
+            inventory={sid:dict(row) for sid,row in self._slot_bank.slots.items()}
+            if getattr(self,'_four_slot_released_part',None):
+                # Include the current released object BEFORE rise planning, without
+                # falsely claiming its persistent placement result is confirmed.
+                inventory[self._active_slot]['state']='RELEASED_UNCONFIRMED'
+            ack=self._retained_scene.sync(inventory,
+                observations,self.get_clock().now().nanoseconds*1e-9)
+            now=self.get_clock().now().nanoseconds*1e-9
+            for row in inventory.values():
+                if row['state'] in ('OCCUPIED','RELEASED_UNCONFIRMED') and not 0<=now-observations[row['part']]['stamp']<=.2:
+                    raise RuntimeError('scene_snapshot_stale_after_ack')
+            self.get_logger().info('RETAINED_SCENE_ACK '+json.dumps(ack))
+            return True
+        except Exception as exc:
+            self._arm_fault='retained_scene_unconfirmed:'+str(exc)
+            return False
+
     def _four_slot_release(self,timeout=3.):
         """New scene only: two individually observed fingers, no soft fallback.
 
@@ -1503,7 +1565,9 @@ class PickPlaceExecutorNode(Node):
                 left,right=self._joint_lookup(jl),self._joint_lookup(jr)
                 if left is None or right is None:return False
                 if max(left,right)>.014:return False
-                if min(left,right)>=.010:return True
+                if self._arm_fault:return False
+                if min(left,right)>=.010:
+                    return self._release_evidence.begin_exit(self.get_clock().now().nanoseconds*1e-9,time.monotonic())
                 self._pub_gripper_cmd(1.5);time.sleep(.01)
             return False
         finally:self._grip_hold_target=None;self._pub_gripper_cmd(0.0)
@@ -1902,6 +1966,11 @@ class PickPlaceExecutorNode(Node):
         屏障上由调用方按悬停释放处理。"""
         top, bot = self._settle_pairs.get(
             (round(carry_anchor[0][0], 3), round(carry_anchor[0][1], 3)))
+        if getattr(self,'_four_slot',False):
+            for label,joints in [('four_slot_settle_top',top),('four_slot_settle_bottom',bot)]:
+                if not self._motion.move_to_joints(self._joint_names,joints,label,timeout=25.,settle_check=False):
+                    raise FatalGraspError(label+'_controller_failed')
+            return self._tool_z_now()
         z = None
         z_prev = None
         for i in range(lvl0, lvl1 + 1):
@@ -2064,6 +2133,8 @@ class PickPlaceExecutorNode(Node):
         msg = Float64MultiArray()
         msg.data = [value] * self._gripper_joints   # 左右指同向滑移
         self._pub_gripper.publish(msg)
+        if getattr(self,'_four_slot',False) and value!=self._grip_hold:
+            self.get_logger().info('FOUR_SLOT_GRIP_EFFORT '+json.dumps({'force_N':value,'sim':self.get_clock().now().nanoseconds*1e-9,'wall':time.time(),'phase':self._release_evidence.phase}))
         self._grip_hold = float(value)
 
     def _grip_hold_tick(self):

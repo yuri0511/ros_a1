@@ -2,10 +2,11 @@
 Mesh/body checks are in real MoveIt/FCL; this independent audit covers the gaps.
 """
 from pathlib import Path
-import json,math,xml.etree.ElementTree as E
+import json,math,os,xml.etree.ElementTree as E
 import numpy as np
 from geometry import ROOT,ROBOT,SUFFIXES,fk,origin
-W=Path(__file__).resolve().parents[2];cfg=json.loads((W/'src/a1_sorting_core/config/four_slot_candidate.json').read_text());plans=json.loads((ROOT/'audit/plans.json').read_text())
+AUDIT=ROOT/'audit'/os.environ.get('FOUR_SLOT_AUDIT_SUBDIR','')
+W=Path(__file__).resolve().parents[2];cfg=json.loads((W/'src/a1_sorting_core/config/four_slot_candidate.json').read_text());plans=json.loads((AUDIT/'plans.json').read_text())
 world=E.parse(W/'src/a1_cell_sim/worlds/four_slot_1ms.sdf');walls=[]
 for m in world.findall('.//model'):
     if m.get('name','').startswith('bin_'):
@@ -47,8 +48,11 @@ for plan in plans:
                 for other,B,sb in obstacles:
                     # Broadphase AABB avoids expensive SAT far from the active bin.
                     if np.any(np.abs(A[:3,3]-B[:3,3])>np.abs(A[:3,:3])@(sa/2)+np.abs(B[:3,:3])@(sb/2)+.05):continue
-                    g=gap(A,sa,B,sb);report['minimum_separating_gap']=min(report['minimum_separating_gap'],g)
+                    g=gap(A,sa,B,sb)
+                    if g<report['minimum_separating_gap']:
+                        report['minimum_separating_gap']=g
+                        report['minimum_witness']={'time':t(a)+u*(t(b)-t(a)),'a':name,'b':other,'A':A.tolist(),'B':B.tolist(),'size_a':sa.tolist(),'size_b':sb.tolist(),'joint_values':vals.copy(),'finger_range_m':[lo,hi]}
                     if g<=0:
                         report['hits']+=1
                         if len(out['intersections'])<150:out['intersections'].append({'slot':slotid,'stage':plan['stage'],'time':t(a)+u*(t(b)-t(a)),'a':name,'b':other,'overlap_m':-g})
-    out['segments'].append(report);(ROOT/'audit/dense-sweep.json').write_text(json.dumps(out,indent=2));print(report,flush=True)
+    out['segments'].append(report);(AUDIT/'dense-sweep.json').write_text(json.dumps(out,indent=2));print(report,flush=True)

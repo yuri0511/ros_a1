@@ -201,7 +201,10 @@ class MotionClient:
                 '停止发送目标(上层判死 FAILED + 受控重启 move_group)')
 
     def _refuse_if_dead(self, label: str) -> bool:
-        """session_dead 后拒发新目标;返回 True=已拒发。"""
+        """Refuse dead sessions and unacknowledged four-slot scene updates."""
+        if getattr(self._node,'_four_slot',False) and (not self._split or not self._node._four_slot_before_plan()):
+            self._node.get_logger().error('four_slot planning blocked: scene/fault gate')
+            return True
         if self._wedge_detect and self.session_dead:
             self._node.get_logger().error(
                 f'{label}: 会话已判死(motion_session_wedged),拒发新目标')
@@ -302,6 +305,7 @@ class MotionClient:
             ok, code = self._send_goal(target, label, timeout, linear)
             if ok:
                 return True
+            if getattr(self._node,'_four_slot',False):return False
             if code == -4 and busy_retries < 3:
                 busy_retries += 1
                 self._node.get_logger().warn(
@@ -333,7 +337,8 @@ class MotionClient:
         log = self._node.get_logger()
         if self._refuse_if_dead(label):
             return False
-        for busy in range(1 if label == "return_standby" else 4):
+        if getattr(self._node,'_four_slot',False):settle_check=False
+        for busy in range(1 if label == "return_standby" or getattr(self._node,'_four_slot',False) else 4):
             ok = self._move_to_joints_once(joint_names, values, label,
                                            timeout, log,
                                            settle_check=settle_check)
@@ -495,6 +500,10 @@ class MotionClient:
         result_future = handle.get_result_async()
         saw_settled = False
         while not result_future.done():
+            if getattr(self._node,'_four_slot',False) and self._node._arm_fault:
+                handle.cancel_goal_async()
+                log.error('four_slot fault: cancel active controller goal')
+                return False
             if not saw_settled and settled_fn():
                 saw_settled = True
             if time.monotonic() > deadline:
@@ -506,7 +515,7 @@ class MotionClient:
         status = wrapped.status
         error_code = getattr(wrapped.result, 'error_code', None)
         self._own_goal_inflight=False
-        strict=label in ('standby','return_standby')
+        strict=label in ('standby','return_standby') or getattr(self._node,'_four_slot',False)
         self.last_controller_result={'label':label,'status':status,'error_code':error_code,'success':status==GoalStatus.STATUS_SUCCEEDED and error_code==0}
         log.info('CONTROLLER_RESULT '+__import__('json').dumps(self.last_controller_result))
         if status == GoalStatus.STATUS_SUCCEEDED and (not strict or error_code==0):

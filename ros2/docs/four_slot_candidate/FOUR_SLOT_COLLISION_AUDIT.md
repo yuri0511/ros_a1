@@ -1,25 +1,17 @@
-# 四格轨迹碰撞审查
+# 实际入口与完整路径碰撞检查
 
-## 方法与实际结果
+规划输入：原始URDF、未改动四格SDF、候选四格JSON与gain1配置哈希见audit/stage2/INPUT_SHA256.txt。规划仅MoveIt/Pilz，allow_trajectory_execution=false。原始请求、轨迹、FCL有效性结果均在plans.json。
 
-原URDF+真实Pilz /plan_kinematic_path，allow_trajectory_execution=false，没有控制器和Gazebo。独立ROS_DOMAIN_ID=91。真实FCL检查静态墙、地板、台基、输送带、推板归位态、挡板、相机立柱和机器人网格；每个目标格规划时其他3格各放一个50 mm虚拟碰撞盒，另一臂设为standby。
+从历史gain1 Rule8完整轮的launch.log提取8个carry_clear结束关节状态（4位小数，量化不确定度约±0.00005 rad）。每个所属机械臂的4个起点分别规划到每格carry，随后carry→settle_top→settle_bottom→LIN rise→return。每格8段、共128段；128成功。不是从standby伪装实际入口。
 
-最终240 mm候选16格×5段，共80/80返回SUCCESS，所有检查的起终状态有效。rise改为LIN，其他PTP。2 ms最大采样间隔按关节轨迹位置/速度/加速度五次插值进行SAT复核，共72,948样本，所审包络0相交；最小分离指标0.961172885 mm。
+持件阶段为tool0下204 mm处50 mm附着碰撞盒，touch_links仅夹爪/tool0预期持件接触；没有扩大世界碰撞允许矩阵。附着姿态是审查假设，非新抓取实测。其他3格静态盒一直存在，rise/return加入当前释放件。工作台、墙、归位推板、相机柱、双臂网格参与FCL；另一臂仅standby。
 
-此前240 mm全PTP方案退出阶段会擦到当前已释放工件包络，原始plans及dense-sweep完整保存在candidate-spread-240-ptp，不删除失败。220 mm历史中间快照存在部分采样，只能作过程资料，不能用作完整通过证据。
+稠密复核127,763个采样点；最大间隔2 ms，五次关节插值。手指精确OBB、持件XY±30 mm、落件XY±8 mm包络内0相交。注意FCL机械臂网格是规划器检查，独立SAT仅覆盖手指/持件与墙和工件，不包含对全臂网格的连续保守膨胀证明。
 
-## 不能据此宣称整条真实作业安全
+完整逐段结果：PATH_CLEARANCE.csv。逐格各阶段结论：SLOT_STAGE_STATUS.csv。每格释放和物理退出都标记BLOCKED，因为没有新世界反馈，而非把规划里的固定finger_q当成实际手指运动。
 
-1. approach起点是standby，而实际程序送料抓取后经carry_clear再转箱，尚未覆盖该实际起点。
-2. FCL其他臂只用standby，不是任意双臂状态。
-3. released cube的±8 mm和held cube的±30 mm是边界假设，没有新场景实测及姿态旋转界。
-4. rise指位[8,14] mm条件没有贯穿0.4秒落稳等待及抬升全过程的反馈保证。释放瞬间门控不足。
-5. 静态存件碰撞盒尚未接到运行期物件观测与场景ACK；工件移动后旧碰撞盒不可靠。
-6. 稠密有限采样不是连续碰撞证明；未以测得跟踪误差膨胀全机器人网格。
+最小见证：红箱slot_4、rise段t=0.372 s，arm2_gripper_finger_left_link与bin_red/slot_4当前释放件包络，SAT分离投影约0.000961172885 m。MINIMUM_WITNESS.json包含两盒变换/尺寸、关节值和指位范围，可逐项复算。不是箱壁0.961 mm，也不是Gazebo测得间隙。
 
-结论：条件性离线规划通过，第二关整体未通过；不得改motion_validated跳过。
+当前实现中还需以真实物理状态确认完全出箱，才允许全开。Action成功不能替代该确认。没有新黄色接触/四件容量/五件任务结果。
 
-证据：plans.json记录完整请求、实际轨迹、FCL结果；planning-scene.json记录实际碰撞场景；dense-sweep.json、release-envelope-sensitivity.json、robot-static.urdf保存原始离线计算依据。无Gazebo动态接触结论。
-
-
-状态：独立候选工程，第二关未完整通过，禁止动态抓放。此次没有启动 Gazebo，没有新的实际 PLACED/READY 或接触测量。原工作树 e4dad347d6ef50d5faa4000fbb7888042e815df6 保持不动。
+完整第二关结论及阻断原因见STAGE2_SAFETY_REVIEW_CN.md。
