@@ -1,0 +1,9 @@
+# 审阅补丁基线
+
+最终本地提交：705d1af26b705aa753723b1ecd3a4200434e7710。
+
+- SOURCE_CHANGES.diff：从a21ee9b续修基线到当前控制稳定性研究分支，包含诊断工具/报告。
+- READY_AND_GAIN1_FROM_REVIEW_81e55c2.diff：从现有审核PR的81e55c2导出READY协议核心、测试和gain1配置；不包含庞大证据或诊断世界。它包含此前READY修复，避免只改gain而漏掉故障槽协议。正式72ab不能被当作该补丁的相同基线。
+- READY_AND_GAIN1_REVIEW.bundle：以81e55c2为前提的本地Git历史包，适用于已具有审核PR基线的仓库；包含研究源码与文档，不含原始运行CSV/gzip。
+
+这些只是本地导出，未向GitHub推送、未创建或合并PR。先在独立审核工作树检查diff；启用gain1需显式controllers_file:=ur5e_cell_controllers_stability_gain1.yaml并使用完整新READY节点协议。不能只改gain而关闭物理检查。
