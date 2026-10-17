@@ -1,0 +1,27 @@
+{
+  "record_version": 1,
+  "source": "new_user_text_static_fixture_NOT_ASR_NOT_LLM",
+  "transcript_unmodified": "开始分拣，一个黄色、一个红色、两个绿色，先完成黄色。",
+  "request_id": "b1badf735a9244a2b1d328fddd3b695c",
+  "plan": {
+    "schema_version": 1,
+    "action": "sort_batch",
+    "counts": {
+      "blue": 0,
+      "yellow": 1,
+      "red": 1,
+      "green": 2
+    },
+    "priority_first": "yellow",
+    "proposed_order": [
+      "yellow",
+      "red",
+      "green",
+      "green"
+    ]
+  },
+  "plan_sha256": "b4dd1a60370d344c7aafc36fb9a98b7bffbd4b10383ceca7f1c5e91a7f879d8b",
+  "human_confirmed": false,
+  "created_local": "2026-10-17",
+  "cloud_calls": 0
+}

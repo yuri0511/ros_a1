@@ -19,7 +19,7 @@ class VoiceBatchState:
     def __init__(self,session_id=None):
         self.session_id=session_id or uuid.uuid4().hex
         self.state='WAITING_FOR_PLAN';self.plan=None;self.request_id=None;self.hardware_ready=False
-        self.issued=[];self.parts={};self.current=None;self.pending_color=None;self.seen_ready=set();self.recycled=set();self.recycle_wall={};self.events=[];self.fault=None;self.deadline=None
+        self.issued=[];self.parts={};self.current=None;self.pending_color=None;self.seen_ready=set();self.recycled=set();self.recycle_wall={};self.recycle_sim={};self.events=[];self.fault=None;self.deadline=None
 
     def emit(self,kind,**data):self.events.append({'event':kind,**data})
     def halt(self,reason):
@@ -39,7 +39,7 @@ class VoiceBatchState:
         self.hardware_ready=True
         if self.plan and self.state=='PLAN_PENDING_READINESS':self.state='RUNNING'
 
-    def reserve(self,now,can_feed,visible_parts=(),logical_wall=0):
+    def reserve(self,now,can_feed,visible_parts=(),logical_wall=0,logical_sim=None):
         if self.state in ('HALTED','COMPLETED') or not self.plan or not self.hardware_ready:return None
         if self.state=='PLAN_PENDING_READINESS':self.state='RUNNING'
         if self.pending_color is not None or self.current is not None or not can_feed:return None
@@ -50,6 +50,9 @@ class VoiceBatchState:
         # fresh logical frame with no previous piece; elapsed recycle delay is not proof.
         same=[p for p,r in self.parts.items() if r['color']==color]
         if any(p not in self.recycled or p in visible_parts or logical_wall<=self.recycle_wall.get(p,float('inf')) for p in same):return None
+        # A queued old image received after the delete ACK is not a fresh frame.
+        # Runtime ACKs always include sim_time; compare actual source timestamps.
+        if any(p in self.recycle_sim and (logical_sim is None or logical_sim<=self.recycle_sim[p]) for p in same):return None
         self.pending_color=color;self.issued.append(color);self.deadline=now+30
         self.emit('SPAWN_REQUEST',index=len(self.issued),color=color)
         return color
@@ -100,8 +103,11 @@ class VoiceBatchState:
         if len(self.parts)==self.plan.total and all(r['released'] for r in self.parts.values()):
             self.state='COMPLETED';self.deadline=None;self.emit('COMPLETED',counts=dict(Counter(r['color'] for r in self.parts.values())))
 
-    def recycle(self,part,now):
+    def recycle(self,part,now,sim_time=None):
         if part not in self.parts or not self.parts[part]['placed']:self.halt('unexpected_recycle_ack');return
+        if sim_time is not None:
+            if type(sim_time) not in (int,float) or not math.isfinite(sim_time) or sim_time<0:self.halt('invalid_recycle_source_time');return
+            self.recycle_sim[part]=sim_time
         self.recycled.add(part);self.recycle_wall[part]=now;self.emit('PART_RECYCLED',part=part)
 
     def check_timeout(self,now):

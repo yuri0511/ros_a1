@@ -14,7 +14,7 @@ class Pub:
  def publish(self,msg):self.messages.append(copy.deepcopy(msg))
 def node():
  n=object.__new__(TaskDispatcherNode);n._voice_mode=True;n._voice=VoiceBatchState();n._lock=threading.Lock();n._halted=False;n._voice_pub=Pub();n._pub_spawn=Pub();n._pub_belt=Pub();n._feed_inflight=False;n._startup_rgb_wall=time.monotonic();n._voice_logical_wall=time.monotonic();n._voice_visible=set();n._spawned=0;n._feed_counts=dict.fromkeys(('blue','yellow','red','green'),0);n._belt_speed=.1;n._belt=N(start=lambda:None)
- n._seq=N(busy_parts=lambda:set(),zone_arm=None);n._spawn_timer=n._next_timer=n._relay_timer=n._settle_timer=None
+ n._seq=N(busy_parts=lambda:set(),zone_arm=None);n._startup_pusher=.12;n._spawn_timer=n._next_timer=n._relay_timer=n._settle_timer=None
  n.get_clock=lambda:N(now=lambda:N(nanoseconds=10**9));n.get_logger=lambda:N(info=lambda *a:None,error=lambda *a:None)
  return n
 

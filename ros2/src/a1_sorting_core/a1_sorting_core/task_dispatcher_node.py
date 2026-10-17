@@ -76,6 +76,7 @@ false 的 legacy 轮专属,pipeline/dual 零差):
 """
 import json
 import threading
+import math
 import time
 
 import rclpy
@@ -244,6 +245,7 @@ class TaskDispatcherNode(Node):
         self._voice = VoiceBatchState() if self._voice_mode else None
         self._voice_visible = set()
         self._voice_logical_wall = 0.0
+        self._voice_logical_sim = None
         self._catalog: dict[str, PartInfo] = {}  # part_id -> 最新来料信息
         self._order: list[str] = []              # 来料顺序
         self._arm2_colors = {
@@ -1010,6 +1012,8 @@ class TaskDispatcherNode(Node):
             with self._lock:
                 self._voice_visible={m.name for m in msg.model if m.name.startswith('part_')}
                 self._voice_logical_wall=time.monotonic()
+                self._voice_logical_sim=msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9
+                self._startup_pusher=self._pusher_world_x(msg)
                 self._voice.observe_entities(self._voice_visible)
                 self._voice_flush_locked()
                 if self._halted:return
@@ -1229,7 +1233,8 @@ class TaskDispatcherNode(Node):
             record=json.loads(msg.data)
             if set(record)!={'part_id','deleted','sim_time'} or record['deleted'] is not True:raise ValueError('invalid recycle ACK')
             with self._lock:
-                self._voice.recycle(record['part_id'],time.monotonic());self._voice_flush_locked()
+                if type(record['sim_time']) not in (int,float) or not math.isfinite(record['sim_time']) or record['sim_time']<0:raise ValueError('invalid recycle timestamp')
+                self._voice.recycle(record['part_id'],time.monotonic(),record['sim_time']);self._voice_flush_locked()
         except (ValueError,TypeError,KeyError):
             with self._lock:self._voice.halt('invalid_recycle_ack');self._voice_flush_locked()
 
@@ -1243,8 +1248,9 @@ class TaskDispatcherNode(Node):
         with self._lock:
             if self._halted:return
             now=time.monotonic()
-            can_feed=(not self._feed_inflight and not self._seq.busy_parts() and self._seq.zone_arm is None and now-self._startup_rgb_wall<1. and now-self._voice_logical_wall<1.)
-            color=self._voice.reserve(now,can_feed,self._voice_visible,self._voice_logical_wall)
+            home=getattr(self,'_startup_pusher',None)
+            can_feed=(not self._feed_inflight and not self._seq.busy_parts() and self._seq.zone_arm is None and home is not None and home<=.14 and now-self._startup_rgb_wall<1. and now-self._voice_logical_wall<1.)
+            color=self._voice.reserve(now,can_feed,self._voice_visible,self._voice_logical_wall,getattr(self,'_voice_logical_sim',None))
             if color is None:return
             self._spawned+=1;self._feed_counts[color]+=1;self._feed_inflight=True
             self._destroy_settle_timer();self._belt.start()

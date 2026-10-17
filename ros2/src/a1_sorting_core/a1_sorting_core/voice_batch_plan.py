@@ -74,13 +74,13 @@ def audit_utterance(text,plan):
         raw=match[1];number=int(raw) if raw.isascii() and raw.isdigit() else NUMBERS.get(raw)
         if number is None:raise PlanRejected('unsupported_number')
         counts[COLOR_ZH[match[2]]]+=number
-    priority=re.findall(r'(?:先(?:分拣|搬运|处理|做)?)([蓝黄红绿])(?:色的?|的)?|([蓝黄红绿])(?:色的?|的)?优先',compact)
+    priority=re.findall(r'(?:先(?:分拣|搬运|处理|做|完成)?)([蓝黄红绿])(?:色的?|的)?|([蓝黄红绿])(?:色的?|的)?优先',compact)
     priorities=[COLOR_ZH[a or b] for a,b in priority]
     if len(priorities)!=1:raise PlanRejected('exactly_one_explicit_priority')
     # Every color occurrence must belong to a recognized quantity or priority clause.
     covered=set()
     for match in quantities:covered.update(range(match.start(),match.end()))
-    for match in re.finditer(r'(?:先(?:分拣|搬运|处理|做)?)([蓝黄红绿])(?:色的?|的)?|([蓝黄红绿])(?:色的?|的)?优先',compact):covered.update(range(match.start(),match.end()))
+    for match in re.finditer(r'(?:先(?:分拣|搬运|处理|做|完成)?)([蓝黄红绿])(?:色的?|的)?|([蓝黄红绿])(?:色的?|的)?优先',compact):covered.update(range(match.start(),match.end()))
     if any(i not in covered for i,c in enumerate(compact) if c in COLOR_ZH):raise PlanRejected('unparsed_color_reference')
     residual=''.join(c for i,c in enumerate(compact) if i not in covered)
     for word in ('开始分拣','开始分类','开始搬运','请帮我','请','帮我','工件','物块','分拣','分类','搬运','开始','需要','我要','把','和','及','各'):
