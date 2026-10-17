@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "stage": 2,
+  "dynamic_execution_allowed": false,
+  "real_gazebo_runs": 0,
+  "slots": 16,
+  "planned_segments": 80,
+  "successful_plans": 80,
+  "dense_samples": 72948,
+  "dense_intersections": 0,
+  "minimum_separating_gap_m": 0.0009611728852686116,
+  "blockers": [
+    "Release-to-rise finger envelope [0.008,0.014] m not continuously enforced or physically verified; zero-effort release may drift.",
+    "Held object +/-30mm XY, fixed orientation and deposited +/-8mm XY are audit assumptions, not verified new-scene observations.",
+    "Actual pickup/carry_clear-to-carry path is not the standby-to-carry path audited here.",
+    "Other arm checked at standby only; retained parts represented statically in plan audit, not yet synchronized at runtime.",
+    "Logical-camera Z mapping not cross-checked with native Gazebo; launch overlay and evidence gates are not yet a complete dynamic integration."
+  ]
+}

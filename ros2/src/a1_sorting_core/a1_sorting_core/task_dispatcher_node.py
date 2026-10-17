@@ -112,6 +112,12 @@ class TaskDispatcherNode(Node):
         self._startup_rgb_wall = 0.0
         self._first_feed_t0 = time.monotonic()
         self._first_feed_logged = False
+        self.declare_parameter('four_slot_mode',False)
+        self.declare_parameter('four_slot_config','')
+        self._four_slot=bool(self.get_parameter('four_slot_mode').value)
+        if self._four_slot:
+            from .four_slot_capacity import load_motion_candidate
+            load_motion_candidate(self.get_parameter('four_slot_config').value)
         self.declare_parameter('voice_batch_mode', False)
         self._voice_mode = bool(self.get_parameter('voice_batch_mode').value)
         self.declare_parameter('auto_start', False)   # 来料后是否自动开始分拣
@@ -242,7 +248,7 @@ class TaskDispatcherNode(Node):
 
         self._lock = threading.Lock()
         from a1_sorting_core.voice_batch_state import VoiceBatchState
-        self._voice = VoiceBatchState() if self._voice_mode else None
+        self._voice = VoiceBatchState(retain_capacity=4 if self._four_slot else 0) if self._voice_mode else None
         self._voice_visible = set()
         self._voice_logical_wall = 0.0
         self._voice_logical_sim = None
@@ -1210,9 +1216,9 @@ class TaskDispatcherNode(Node):
     def _voice_on_submit(self,request,response):
         from a1_sorting_core.voice_batch_plan import validate_candidate,PlanRejected
         try:
-            plan=validate_candidate(json.dumps({'schema_version':1,'action':'sort_batch','counts':dict(zip(('blue','yellow','red','green'),(request.blue,request.yellow,request.red,request.green))),'priority_first':request.priority_first,'proposed_order':list(request.proposed_order)}))
+            plan=validate_candidate(json.dumps({'schema_version':1,'action':'sort_batch','counts':dict(zip(('blue','yellow','red','green'),(request.blue,request.yellow,request.red,request.green))),'priority_first':request.priority_first,'proposed_order':list(request.proposed_order)}),max_per_color=4 if self._four_slot else 3)
             from a1_sorting_core.voice_batch_safety import ensure_geometry_review
-            ensure_geometry_review(plan)
+            if not self._four_slot:ensure_geometry_review(plan)
             with self._lock:
                 self._voice.accept(request.session_id,request.request_id,request.user_confirmed,plan,request.plan_sha256,time.monotonic())
                 self._voice_flush_locked()
@@ -1324,7 +1330,7 @@ def main(args=None):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == '__main__':

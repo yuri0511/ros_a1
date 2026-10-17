@@ -31,3 +31,13 @@ def test_both_commands_missing_still_bounded_and_recorded(tmp_path):
     records=stop_requests(tmp_path,{},runner)
     assert calls==[('gz',4),('ros2',3)]
     assert len(records)==2 and not any(r['acknowledged'] for r in records)
+
+
+def test_repeated_stop_preserves_each_attempt(tmp_path):
+    def runner(cmd,**kwargs):
+        return SimpleNamespace(returncode=0,stdout='data: true' if cmd[0]=='gz' else 'success=True',stderr='')
+    first=stop_requests(tmp_path,{},runner);second=stop_requests(tmp_path,{},runner)
+    assert first[0]['attempt']!=second[0]['attempt']
+    assert all((tmp_path/r['evidence']).exists() for r in first+second)
+    assert len((tmp_path/'stop-timeline.jsonl').read_text().splitlines())==4
+    assert all(r['acknowledged'] and r['duration_monotonic_s']>=0 for r in first+second)

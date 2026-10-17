@@ -1,0 +1,1966 @@
+<?xml version='1.0' encoding='utf-8'?>
+<sdf version="1.11">
+  <world name="sorting_cell">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>4.0</real_time_factor>
+    </physics>
+    <plugin name="gz::sim::systems::Physics" filename="gz-sim-physics-system" />
+    <plugin name="gz::sim::systems::UserCommands" filename="gz-sim-user-commands-system" />
+    <plugin name="gz::sim::systems::SceneBroadcaster" filename="gz-sim-scene-broadcaster-system" />
+    <plugin name="gz::sim::systems::Contact" filename="gz-sim-contact-system" />
+    <plugin name="gz::sim::systems::Sensors" filename="gz-sim-sensors-system">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+    <plugin name="gz::sim::systems::LogicalCamera" filename="gz-sim-logical-camera-system" />
+    <gravity>0 0 -9.8</gravity>
+    <light name="sun" type="directional">
+      <pose>0 0 3 0 0 0</pose>
+      <diffuse>0.9 0.9 0.9 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <direction>-0.5 0.3 -1</direction>
+      <cast_shadows>true</cast_shadows>
+    </light>
+    <light name="warm_key" type="directional">
+      <pose>1 1 3 0 0 0</pose>
+      <diffuse>0.6 0.57 0.5 1</diffuse>
+      <specular>0.3 0.3 0.28 1</specular>
+      <direction>0.4 -0.3 -0.9</direction>
+      <cast_shadows>false</cast_shadows>
+      <attenuation>
+        <range>20</range>
+        <constant>1</constant>
+        <linear>0</linear>
+        <quadratic>0</quadratic>
+      </attenuation>
+    </light>
+    <light name="cool_fill" type="directional">
+      <pose>-1 -1 2 0 0 0</pose>
+      <diffuse>0.25 0.28 0.32 1</diffuse>
+      <specular>0.05 0.05 0.05 1</specular>
+      <direction>-0.3 0.4 -0.6</direction>
+      <cast_shadows>false</cast_shadows>
+      <attenuation>
+        <range>20</range>
+        <constant>1</constant>
+        <linear>0</linear>
+        <quadratic>0</quadratic>
+      </attenuation>
+    </light>
+    <scene>
+      <ambient>0.6 0.6 0.6 1</ambient>
+      <background>0.35 0.4 0.45 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <model name="ground">
+      <static>true</static>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>6 6</size>
+            </plane>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <plane>
+              <normal>0 0 1</normal>
+              <size>6 6</size>
+            </plane>
+          </geometry>
+          <material>
+            <ambient>0.12 0.20 0.17 1</ambient>
+            <diffuse>0.20 0.32 0.27 1</diffuse>
+            <specular>0.1 0.1 0.1 1</specular>
+            <shininess>8</shininess>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="table">
+      <static>true</static>
+      <pose>0.65 0 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>1.2 0.8 0.72</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="slab_top">
+          <pose>0 0 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.2 0.4 0.07</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a00">
+          <pose>-0.3839 0.2083 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4322 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b00">
+          <pose>0.3339 0.2083 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5322 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a01">
+          <pose>-0.3957 0.2250 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4086 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b01">
+          <pose>0.3457 0.2250 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5086 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a02">
+          <pose>-0.4049 0.2417 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3901 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b02">
+          <pose>0.3549 0.2417 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4901 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a03">
+          <pose>-0.4124 0.2583 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3752 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b03">
+          <pose>0.3624 0.2583 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4752 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a04">
+          <pose>-0.4185 0.2750 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3629 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b04">
+          <pose>0.3685 0.2750 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4629 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a05">
+          <pose>-0.4236 0.2917 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3528 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b05">
+          <pose>0.3736 0.2917 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4528 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a06">
+          <pose>-0.4277 0.3083 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3445 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b06">
+          <pose>0.3777 0.3083 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4445 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a07">
+          <pose>-0.4311 0.3250 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3379 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b07">
+          <pose>0.3811 0.3250 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4379 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a08">
+          <pose>-0.4337 0.3417 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3327 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b08">
+          <pose>0.3837 0.3417 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4327 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a09">
+          <pose>-0.4356 0.3583 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3289 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b09">
+          <pose>0.3856 0.3583 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4289 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a10">
+          <pose>-0.4368 0.3750 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3264 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b10">
+          <pose>0.3868 0.3750 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4264 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_a11">
+          <pose>-0.4374 0.3917 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3252 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_north_b11">
+          <pose>0.3874 0.3917 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4252 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a00">
+          <pose>-0.4374 -0.3917 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3252 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b00">
+          <pose>0.3874 -0.3917 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4252 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a01">
+          <pose>-0.4368 -0.3750 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3264 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b01">
+          <pose>0.3868 -0.3750 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4264 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a02">
+          <pose>-0.4356 -0.3583 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3289 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b02">
+          <pose>0.3856 -0.3583 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4289 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a03">
+          <pose>-0.4337 -0.3417 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3327 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b03">
+          <pose>0.3837 -0.3417 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4327 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a04">
+          <pose>-0.4311 -0.3250 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3379 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b04">
+          <pose>0.3811 -0.3250 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4379 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a05">
+          <pose>-0.4277 -0.3083 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3445 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b05">
+          <pose>0.3777 -0.3083 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4445 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a06">
+          <pose>-0.4236 -0.2917 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3528 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b06">
+          <pose>0.3736 -0.2917 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4528 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a07">
+          <pose>-0.4185 -0.2750 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3629 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b07">
+          <pose>0.3685 -0.2750 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4629 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a08">
+          <pose>-0.4124 -0.2583 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3752 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b08">
+          <pose>0.3624 -0.2583 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4752 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a09">
+          <pose>-0.4049 -0.2417 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.3901 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b09">
+          <pose>0.3549 -0.2417 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4901 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a10">
+          <pose>-0.3957 -0.2250 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4086 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b10">
+          <pose>0.3457 -0.2250 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5086 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_a11">
+          <pose>-0.3839 -0.2083 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.4322 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="notch_south_b11">
+          <pose>0.3339 -0.2083 0.6850 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.5322 0.0167 0.0700</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.42 0.30 0.18 1</ambient>
+            <diffuse>0.52 0.38 0.24 1</diffuse>
+            <specular>0.25 0.25 0.25 1</specular>
+            <shininess>20</shininess>
+          </material>
+        </visual>
+        <visual name="leg_ne">
+          <pose>0.575 0.375 0.3250 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.05 0.65</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.16 0.18 1</ambient>
+            <diffuse>0.24 0.24 0.27 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
+            <shininess>40</shininess>
+          </material>
+        </visual>
+        <visual name="leg_nw">
+          <pose>-0.575 0.375 0.3250 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.05 0.65</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.16 0.18 1</ambient>
+            <diffuse>0.24 0.24 0.27 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
+            <shininess>40</shininess>
+          </material>
+        </visual>
+        <visual name="leg_se">
+          <pose>0.575 -0.375 0.3250 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.05 0.65</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.16 0.18 1</ambient>
+            <diffuse>0.24 0.24 0.27 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
+            <shininess>40</shininess>
+          </material>
+        </visual>
+        <visual name="leg_sw">
+          <pose>-0.575 -0.375 0.3250 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.05 0.05 0.65</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.16 0.18 1</ambient>
+            <diffuse>0.24 0.24 0.27 1</diffuse>
+            <specular>0.4 0.4 0.4 1</specular>
+            <shininess>40</shininess>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="tabletop">
+      <static>true</static>
+      <pose>0.70 0 0.71 0 0 0</pose>
+      <link name="link">
+        <collision name="floor_blue">
+          <pose>-0.44999999999999996 0.28 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.24 0.24 0.02</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="floor_yellow">
+          <pose>0.3500000000000001 0.28 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.24 0.24 0.02</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="floor_red">
+          <pose>-0.44999999999999996 -0.28 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.24 0.24 0.02</size>
+            </box>
+          </geometry>
+        </collision>
+        <collision name="floor_green">
+          <pose>0.3500000000000001 -0.28 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.24 0.24 0.02</size>
+            </box>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+    <model name="belt">
+      <static>true</static>
+      <link name="belt_link">
+        <collision name="belt_collision">
+          <pose>0.45 0 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.60 0.16 0.06</size>
+            </box>
+          </geometry>
+          <surface>
+            <friction>
+              <ode>
+                <mu>1.0</mu>
+                <mu2>2.0</mu2>
+                <fdir1>0 1 0</fdir1>
+              </ode>
+            </friction>
+          </surface>
+        </collision>
+        <visual name="belt_visual">
+          <pose>0.45 0 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.60 0.16 0.06</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.03 0.03 0.03 1</ambient>
+            <diffuse>0.05 0.05 0.055 1</diffuse>
+            <specular>0.18 0.18 0.18 1</specular>
+            <shininess>10</shininess>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="belt_side_rails">
+      <static>true</static>
+      <link name="link">
+        <visual name="belt_rail_north">
+          <pose>0.45 0.093 0.764 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.60 0.014 0.028</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+            <specular>0.3 0.3 0.3 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <visual name="belt_rail_south">
+          <pose>0.45 -0.093 0.764 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.60 0.014 0.028</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+            <specular>0.3 0.3 0.3 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <visual name="belt_rib_00">
+          <pose>0.18 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_01">
+          <pose>0.23 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_02">
+          <pose>0.28 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_03">
+          <pose>0.33 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_04">
+          <pose>0.38 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_05">
+          <pose>0.42 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_06">
+          <pose>0.47 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_07">
+          <pose>0.52 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_08">
+          <pose>0.57 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_09">
+          <pose>0.62 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_10">
+          <pose>0.67 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+        <visual name="belt_rib_11">
+          <pose>0.72 0 0.7525 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.012 0.17 0.065</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.11 1</ambient>
+            <diffuse>0.14 0.14 0.16 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="pusher">
+      <pose>0.12 0 0.805 0 0 0</pose>
+      <link name="pusher_link">
+        <inertial>
+          <mass>1.0</mass>
+          <inertia>
+            <ixx>0.0005</ixx>
+            <iyy>0.0005</iyy>
+            <izz>0.001</izz>
+          </inertia>
+        </inertial>
+        <collision name="c">
+          <geometry>
+            <box>
+              <size>0.02 0.18 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="v">
+          <geometry>
+            <box>
+              <size>0.02 0.18 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.8 0.5 0.1 1</ambient>
+            <diffuse>0.8 0.5 0.1 1</diffuse>
+          </material>
+        </visual>
+      </link>
+      <joint name="pusher_slide" type="prismatic">
+        <parent>world</parent>
+        <child>pusher_link</child>
+        <axis>
+          <xyz>1 0 0</xyz>
+          <limit>
+            <lower>0.0</lower>
+            <upper>0.59</upper>
+          </limit>
+          <dynamics>
+            <damping>5.0</damping>
+          </dynamics>
+        </axis>
+      </joint>
+      <plugin name="gz::sim::systems::JointController" filename="gz-sim-joint-controller-system">
+        <joint_name>pusher_slide</joint_name>
+      </plugin>
+    </model>
+    <model name="stop_plate">
+      <static>true</static>
+      <pose>0.71 0 0.79 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>0.01 0.18 0.02</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="stripe_back">
+          <pose>0.002 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.006 0.18 0.02</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.08 0.08 0.08 1</diffuse>
+          </material>
+        </visual>
+        <visual name="stripe_a_front">
+          <pose>-0.0021 -0.135 0.002 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.006 0.045 0.024</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+          </material>
+        </visual>
+        <visual name="stripe_a_front2">
+          <pose>-0.0021 -0.045 0.002 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.006 0.045 0.024</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+          </material>
+        </visual>
+        <visual name="stripe_a_front3">
+          <pose>-0.0021 0.045 0.002 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.006 0.045 0.024</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+          </material>
+        </visual>
+        <visual name="stripe_a_front4">
+          <pose>-0.0021 0.135 0.002 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.006 0.045 0.024</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+          </material>
+        </visual>
+        <visual name="stripe_b_back">
+          <pose>0.0021 -0.09 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.006 0.045 0.022</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.08 0.08 0.08 1</diffuse>
+          </material>
+        </visual>
+        <visual name="stripe_b_back2">
+          <pose>0.0021 0 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.006 0.045 0.022</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.08 0.08 0.08 1</diffuse>
+          </material>
+        </visual>
+        <visual name="stripe_b_back3">
+          <pose>0.0021 0.09 0 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.006 0.045 0.022</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.05 0.05 0.05 1</ambient>
+            <diffuse>0.08 0.08 0.08 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="bin_blue">
+      <static>true</static>
+      <pose>0.25 0.28 0.0 0.0 0.0 0.0</pose>
+      <link name="link">
+        <collision name="wall_y_pos_collision">
+          <pose>0.0 0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_y_pos_visual">
+          <pose>0.0 0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.045 0.135 0.315 1</ambient>
+            <diffuse>0.100 0.300 0.700 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_y_neg_collision">
+          <pose>0.0 -0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_y_neg_visual">
+          <pose>0.0 -0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.045 0.135 0.315 1</ambient>
+            <diffuse>0.100 0.300 0.700 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_x_pos_collision">
+          <pose>0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_x_pos_visual">
+          <pose>0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.045 0.135 0.315 1</ambient>
+            <diffuse>0.100 0.300 0.700 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_x_neg_collision">
+          <pose>-0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_x_neg_visual">
+          <pose>-0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.045 0.135 0.315 1</ambient>
+            <diffuse>0.100 0.300 0.700 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <visual name="floor_visual">
+          <pose>0 0 0.7225 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.22 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.12 0.28 0.72 1</ambient>
+            <diffuse>0.15 0.35 0.90 1</diffuse>
+          </material>
+        </visual>
+        <visual name="rim_y_pos">
+          <pose>0.0 0.115 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.30 0.55 1</ambient>
+            <diffuse>0.45 0.65 0.98 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_y_neg">
+          <pose>0.0 -0.115 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.30 0.55 1</ambient>
+            <diffuse>0.45 0.65 0.98 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_x_pos">
+          <pose>0.115 0.0 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.30 0.55 1</ambient>
+            <diffuse>0.45 0.65 0.98 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_x_neg">
+          <pose>-0.115 0.0 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.30 0.55 1</ambient>
+            <diffuse>0.45 0.65 0.98 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="bin_yellow">
+      <static>true</static>
+      <pose>1.05 0.28 0.0 0.0 0.0 0.0</pose>
+      <link name="link">
+        <collision name="wall_y_pos_collision">
+          <pose>0.0 0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_y_pos_visual">
+          <pose>0.0 0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.383 0.306 0.045 1</ambient>
+            <diffuse>0.850 0.680 0.100 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_y_neg_collision">
+          <pose>0.0 -0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_y_neg_visual">
+          <pose>0.0 -0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.383 0.306 0.045 1</ambient>
+            <diffuse>0.850 0.680 0.100 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_x_pos_collision">
+          <pose>0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_x_pos_visual">
+          <pose>0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.383 0.306 0.045 1</ambient>
+            <diffuse>0.850 0.680 0.100 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_x_neg_collision">
+          <pose>-0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_x_neg_visual">
+          <pose>-0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.383 0.306 0.045 1</ambient>
+            <diffuse>0.850 0.680 0.100 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <visual name="floor_visual">
+          <pose>0 0 0.7225 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.22 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.80 0.68 0.08 1</ambient>
+            <diffuse>0.95 0.80 0.10 1</diffuse>
+          </material>
+        </visual>
+        <visual name="rim_y_pos">
+          <pose>0.0 0.115 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_y_neg">
+          <pose>0.0 -0.115 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_x_pos">
+          <pose>0.115 0.0 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_x_neg">
+          <pose>-0.115 0.0 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.62 0.50 0.05 1</ambient>
+            <diffuse>0.88 0.70 0.08 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="bin_red">
+      <static>true</static>
+      <pose>0.25 -0.28 0.0 0.0 0.0 0.0</pose>
+      <link name="link">
+        <collision name="wall_y_pos_collision">
+          <pose>0.0 0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_y_pos_visual">
+          <pose>0.0 0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.338 0.054 0.054 1</ambient>
+            <diffuse>0.750 0.120 0.120 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_y_neg_collision">
+          <pose>0.0 -0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_y_neg_visual">
+          <pose>0.0 -0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.338 0.054 0.054 1</ambient>
+            <diffuse>0.750 0.120 0.120 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_x_pos_collision">
+          <pose>0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_x_pos_visual">
+          <pose>0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.338 0.054 0.054 1</ambient>
+            <diffuse>0.750 0.120 0.120 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_x_neg_collision">
+          <pose>-0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_x_neg_visual">
+          <pose>-0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.338 0.054 0.054 1</ambient>
+            <diffuse>0.750 0.120 0.120 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <visual name="floor_visual">
+          <pose>0 0 0.7225 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.22 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.70 0.08 0.08 1</ambient>
+            <diffuse>0.85 0.10 0.10 1</diffuse>
+          </material>
+        </visual>
+        <visual name="rim_y_pos">
+          <pose>0.0 0.115 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.50 0.10 0.10 1</ambient>
+            <diffuse>0.98 0.38 0.38 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_y_neg">
+          <pose>0.0 -0.115 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.50 0.10 0.10 1</ambient>
+            <diffuse>0.98 0.38 0.38 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_x_pos">
+          <pose>0.115 0.0 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.50 0.10 0.10 1</ambient>
+            <diffuse>0.98 0.38 0.38 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_x_neg">
+          <pose>-0.115 0.0 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.50 0.10 0.10 1</ambient>
+            <diffuse>0.98 0.38 0.38 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="bin_green">
+      <static>true</static>
+      <pose>1.05 -0.28 0.0 0.0 0.0 0.0</pose>
+      <link name="link">
+        <collision name="wall_y_pos_collision">
+          <pose>0.0 0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_y_pos_visual">
+          <pose>0.0 0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.045 0.270 0.081 1</ambient>
+            <diffuse>0.100 0.600 0.180 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_y_neg_collision">
+          <pose>0.0 -0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_y_neg_visual">
+          <pose>0.0 -0.115 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.045 0.270 0.081 1</ambient>
+            <diffuse>0.100 0.600 0.180 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_x_pos_collision">
+          <pose>0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_x_pos_visual">
+          <pose>0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.045 0.270 0.081 1</ambient>
+            <diffuse>0.100 0.600 0.180 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <collision name="wall_x_neg_collision">
+          <pose>-0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="wall_x_neg_visual">
+          <pose>-0.115 0.0 0.7675 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.095</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.045 0.270 0.081 1</ambient>
+            <diffuse>0.100 0.600 0.180 1</diffuse>
+            <specular>0.30 0.30 0.30 1</specular>
+            <shininess>24</shininess>
+          </material>
+        </visual>
+        <visual name="floor_visual">
+          <pose>0 0 0.7225 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.22 0.005</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.08 0.62 0.12 1</ambient>
+            <diffuse>0.10 0.75 0.15 1</diffuse>
+          </material>
+        </visual>
+        <visual name="rim_y_pos">
+          <pose>0.0 0.115 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.42 0.16 1</ambient>
+            <diffuse>0.38 0.85 0.48 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_y_neg">
+          <pose>0.0 -0.115 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.22 0.01 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.42 0.16 1</ambient>
+            <diffuse>0.38 0.85 0.48 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_x_pos">
+          <pose>0.115 0.0 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.42 0.16 1</ambient>
+            <diffuse>0.38 0.85 0.48 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+        <visual name="rim_x_neg">
+          <pose>-0.115 0.0 0.812 0.0 0.0 0.0</pose>
+          <geometry>
+            <box>
+              <size>0.01 0.24 0.006</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.42 0.16 1</ambient>
+            <diffuse>0.38 0.85 0.48 1</diffuse>
+            <specular>0.35 0.35 0.35 1</specular>
+            <shininess>30</shininess>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="camera_pole">
+      <static>true</static>
+      <pose>-0.10 -0.48 1.05 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry>
+            <cylinder>
+              <radius>0.015</radius>
+              <length>2.10</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <cylinder>
+              <radius>0.015</radius>
+              <length>2.10</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.15 0.15 0.15 1</ambient>
+            <diffuse>0.2 0.2 0.2 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="overhead_camera_model">
+      <static>true</static>
+      <pose>-0.10 -0.48 2.10 0 1.5707963 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>0.06 0.06 0.06</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.1 0.1 0.1 1</ambient>
+            <diffuse>0.1 0.1 0.1 1</diffuse>
+          </material>
+        </visual>
+        <sensor name="overhead_camera" type="camera">
+          <topic>overhead_camera</topic>
+          <update_rate>10</update_rate>
+          <always_on>1</always_on>
+          <visualize>false</visualize>
+          <camera>
+            <horizontal_fov>1.35</horizontal_fov>
+            <image>
+              <width>640</width>
+              <height>480</height>
+              <format>RGB_INT8</format>
+            </image>
+            <clip>
+              <near>0.05</near>
+              <far>5</far>
+            </clip>
+          </camera>
+        </sensor>
+        <sensor name="overhead_logical" type="logical_camera">
+          <topic>overhead_logical</topic>
+          <update_rate>10</update_rate>
+          <always_on>1</always_on>
+          <visualize>false</visualize>
+          <logical_camera>
+            <horizontal_fov>2.2</horizontal_fov>
+            <near>0.1</near>
+            <far>2.5</far>
+          </logical_camera>
+        </sensor>
+      </link>
+    </model>
+  </world>
+</sdf>

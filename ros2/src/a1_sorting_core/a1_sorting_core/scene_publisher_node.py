@@ -41,15 +41,22 @@ class ScenePublisherNode(Node):
 
     def __init__(self):
         super().__init__('scene_publisher')
+        self.declare_parameter('four_slot_mode',False)
+        self.declare_parameter('four_slot_world','')
+        self._four_slot_objects=[]
+        if self.get_parameter('four_slot_mode').value:
+            from .four_slot_scene import collision_objects
+            self._four_slot_objects=collision_objects(self.get_parameter('four_slot_world').value)
         self.declare_parameter('publish_period', 2.0)
         period = float(self.get_parameter('publish_period').value)
         self._pub = self.create_publisher(CollisionObject, '/collision_object', 10)
         self._timer = self.create_timer(period, self._publish_all)
         self.get_logger().info(
-            f'静态规划场景发布器就绪:{len(_SCENE)} 个碰撞体,'
+            f'静态规划场景发布器就绪:{len(_SCENE)+len(self._four_slot_objects)} 个碰撞体,'
             f'周期 {period}s(/collision_object)')
 
     def _publish_all(self):
+        for msg in self._four_slot_objects:self._pub.publish(msg)
         for obj_id, size, xyz, is_cyl in _SCENE:
             msg = CollisionObject()
             msg.header.frame_id = 'world'

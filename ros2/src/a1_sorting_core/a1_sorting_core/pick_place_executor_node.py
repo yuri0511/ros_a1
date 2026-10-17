@@ -440,6 +440,9 @@ class PickPlaceExecutorNode(Node):
             self.declare_parameter(f'{name}.x', 0.70)
             self.declare_parameter(f'{name}.y', 0.0)
             self.declare_parameter(f'{name}.z', 0.75)
+        self.declare_parameter('four_slot_mode', False)
+        self.declare_parameter('four_slot_config', '')
+        self.declare_parameter('four_slot_inventory', '')
         self.declare_parameter('bin_grid_offsets.x', [-0.05, 0.05, -0.05, 0.05])
         self.declare_parameter('bin_grid_offsets.y', [-0.035, -0.035, 0.035, 0.035])
         # ---- 仿真附着(运动学跟随,见 attach_helper 模块注释) ----
@@ -617,6 +620,7 @@ class PickPlaceExecutorNode(Node):
         self._pose_from_camera = bool(gp('pose_from_camera'))
         cam_xy = [float(v) for v in gp('camera_xy')]
         self._cam_cache = CameraPoseCache((cam_xy[0], cam_xy[1]))
+        self._four_slot_xyz={}
         if self._pose_from_camera or self._attach_follow == 'verified_only':
             self.create_subscription(LogicalCameraImage, '/overhead_logical',
                                      self._on_logical, 10)
@@ -626,6 +630,15 @@ class PickPlaceExecutorNode(Node):
                                          camera_xy=(cam_xy[0], cam_xy[1]))
         self._motion = None   # 运动客户端,首件任务时惰性初始化(等 move_group)
         self._place_counts = {name: 0 for name in bin_names}
+        self._four_slot = bool(gp('four_slot_mode'));self._slot_bank=None;self._active_slot=None
+        if self._four_slot:
+            from .four_slot_capacity import SlotBank,load_motion_candidate
+            cfg=load_motion_candidate(str(gp('four_slot_config')))
+            inventory=str(gp('four_slot_inventory'))
+            if not inventory:raise ValueError('four_slot_inventory must be independent and persistent')
+            own={b:e for b,e in cfg['bins'].items() if b in self._bins}
+            self._slot_defs={s['id']:s for e in own.values() for s in e['slots']}
+            self._slot_bank=SlotBank(own,inventory)
         self._busy = False
         self._pending = []    # 忙时到达的命令排队(不丢弃,防任务黑洞)
         self._terminal_status = None  # 终态暂存(回待机后再发布,见 _run_task)
@@ -716,6 +729,7 @@ class PickPlaceExecutorNode(Node):
         stamp = msg.header.stamp.sec + msg.header.stamp.nanosec*1e-9
         for model in msg.model:
             if model.name.startswith('part_'):
+                if getattr(self,'_four_slot',False):self._four_slot_xyz[model.name]=(self._cam_cache.camera_xy[0]+model.pose.position.z,self._cam_cache.camera_xy[1]+model.pose.position.y,2.10-model.pose.position.x)
                 self._part_source_stamps[model.name] = stamp
                 self._part_source_walls[model.name] = time.monotonic()
         self._cam_cache.update(
@@ -795,17 +809,31 @@ class PickPlaceExecutorNode(Node):
         key=(part.part_id,self._active_task_id);deadline=time.monotonic()+timeout
         while time.monotonic()<deadline:
             if key in self._placement_ack:
-                if self._placement_ack[key]=='PART_PLACED':return True
+                if self._placement_ack[key]=='PART_PLACED':
+                    if getattr(self,'_slot_bank',None) is not None:
+                        position=self._four_slot_xyz.get(part.part_id)
+                        if position is None:self._arm_fault='slot_position_missing';return False
+                        try:
+                            self._slot_bank.occupied(self._active_slot,part.part_id,list(position),self._part_source_stamps.get(part.part_id,-1),self.get_clock().now().nanoseconds*1e-9)
+                        except Exception as e:self._arm_fault='slot_verification:'+str(e);return False
+                    return True
                 self._arm_fault='placement_rejected_requires_inspection';return False
             self._placement_event.wait(.05);self._placement_event.clear()
         self._arm_fault='placement_result_unconfirmed';return False
 
     def _run_task(self, part: PartInfo):
         self._zone_published=False
+        self._active_slot=None
         try:
+            if getattr(self,'_slot_bank',None) is not None:
+                target=self._bin_for(part.category,getattr(part,'target_bin_override',''))
+                self._active_slot=self._slot_bank.reserve(target,part.part_id)
+                self.get_logger().info('BIN_SLOT_RESERVED '+json.dumps({'part':part.part_id,'slot':self._active_slot}))
             self._run_task_impl(part)
         except Exception as e:
             self.get_logger().error(f'{part.part_id} 执行器异常: {e!r}')
+            if getattr(self,'_slot_bank',None) is not None:
+                self._arm_fault='four_slot_task_failed:'+str(e)
             if self._terminal_status is None:
                 self._terminal_status=(getattr(self,'_active_task_id',''),part,TaskState.FAILED,f'executor_error({e})')
                 self._emit_arm_event(part,'FAILED',f'executor_error({e})')
@@ -823,6 +851,7 @@ class PickPlaceExecutorNode(Node):
                 if not fresh['ready']:
                     self._arm_fault='ready_changed_before_publication:'+fresh['reason'];ready=False
             if not ready:
+                if getattr(self,'_slot_bank',None) is not None and self._active_slot:self._slot_bank.fault(self._active_slot,'arm_fault_or_unconfirmed_placement')
                 self._at_standby=False
                 self._arm_fault=self._arm_fault or 'return_standby_failed'
                 self._emit_arm_event(part,'ARM_FAULT',self._arm_fault)
@@ -1080,6 +1109,10 @@ class PickPlaceExecutorNode(Node):
                     key=lambda a: (a[0][0] - above[0]) ** 2
                     + (a[0][1] - above[1]) ** 2,
                     default=None) if self._carry_anchors else None
+                if getattr(self,'_slot_bank',None) is not None:
+                    definition=self._slot_defs[self._active_slot];wp=definition['waypoints']
+                    carry_anchor=(definition['xyz'][:2],wp['carry']);use_place_joints=False
+                    self._settle_pairs[tuple(round(x,3) for x in definition['xyz'][:2])]=(wp['settle_top'],wp['settle_bottom'])
                 if use_place_joints or carry_anchor is not None:
                     # 转向前先竖直离开取件高度。0.10 m 是在 carry_safe_z
                     # 之上再抬的一段,流水线里 tool0 从 1.08 到 1.18。
@@ -1228,7 +1261,9 @@ class PickPlaceExecutorNode(Node):
                     # 新序列:位置闸小开到刚脱件(q≈0.001,与壁带重叠
                     # 仅 4mm 且随 0N 内收收窄)→ 保持小开抬臂出箱 →
                     # **箱沿之上**才全开(见 settle_rise 之后)。
-                    self._open_to_release_gap()
+                    if getattr(self,'_slot_bank',None) is not None:
+                        if not self._four_slot_release():raise FatalGraspError('four_slot_release_gap_not_verified')
+                    else:self._open_to_release_gap()
                     t_wait = time.monotonic()
                     time.sleep(0.4)  # retained: gap alone does not prove settled release
                     self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'release_settle','wall':time.monotonic()-t_wait,'fast':self._fast_waits}))
@@ -1238,11 +1273,14 @@ class PickPlaceExecutorNode(Node):
                     # return_standby 会再尝试;move_group 偶发取消竞态
                     # 崩溃时重试只会拖时间,2026-10-03 实证)
                     try:
-                        if not self._motion.move_to_joints(
-                                self._joint_names, carry_anchor[1],
-                                'settle_rise'):
+                        if getattr(self,'_slot_bank',None) is not None:
+                            self._plan_execute(self._down_pose(place[:2],1.08),'four_slot_rise',linear=True)
+                            rise_ok=True
+                        else:rise_ok=self._motion.move_to_joints(self._joint_names,carry_anchor[1],'settle_rise')
+                        if not rise_ok:
                             raise GraspError('settle_rise_failed')
                     except GraspError as e:
+                        if getattr(self,'_slot_bank',None) is not None:raise FatalGraspError('four_slot_rise_failed') from e
                         self.get_logger().warn(
                             f'{task_id} 放置后抬升失败({e}),不影响本件结果')
                     # 观感修复②后半:此刻指尖整体已出箱沿(carry 高位
@@ -1453,7 +1491,28 @@ class PickPlaceExecutorNode(Node):
                 self._down_pose(center_xy, from_z + step * (i + 1)),
                 f'lift_{i + 1}/{self._lift_rungs}', linear=True)
 
+    def _four_slot_release(self,timeout=3.):
+        """New scene only: two individually observed fingers, no soft fallback.
+
+        q=10..14mm gives a 72..80mm inner opening; it remains well inside the
+        220mm inner bin. Unknown/asymmetric over-travel fails closed.
+        """
+        jl,jr=self._finger_joint_keys();deadline=time.monotonic()+timeout
+        try:
+            while time.monotonic()<deadline:
+                left,right=self._joint_lookup(jl),self._joint_lookup(jr)
+                if left is None or right is None:return False
+                if max(left,right)>.014:return False
+                if min(left,right)>=.010:return True
+                self._pub_gripper_cmd(1.5);time.sleep(.01)
+            return False
+        finally:self._grip_hold_target=None;self._pub_gripper_cmd(0.0)
+
     def _place_pose(self, bin_name: str):
+        if getattr(self,'_slot_bank',None) is not None:
+            row=self._slot_bank.slots[self._active_slot]
+            if row['bin']!=bin_name or row['state']!='RESERVED':raise FatalGraspError('slot_identity_mismatch')
+            return tuple(row['xyz'])
         idx = self._place_counts.get(bin_name, 0) % len(self._grid_x)
         x, y, z = self._bins[bin_name]
         return (x + self._grid_x[idx], y + self._grid_y[idx], z)

@@ -38,7 +38,7 @@ class BatchPlan:
     def sha256(self):
         return hashlib.sha256(json.dumps(self.as_dict(),sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
-def validate_candidate(payload):
+def validate_candidate(payload,*,max_per_color=3):
     if not isinstance(payload,str) or len(payload.encode())>4096:raise PlanRejected('payload_size')
     try:obj=json.loads(payload,object_pairs_hook=_object,parse_constant=lambda _: (_ for _ in ()).throw(PlanRejected('nonfinite_json')))
     except (ValueError,TypeError) as e:raise PlanRejected('invalid_json') from e
@@ -46,7 +46,7 @@ def validate_candidate(payload):
     if type(obj['schema_version']) is not int or obj['schema_version']!=1 or obj['action']!='sort_batch':raise PlanRejected('unsupported_action_or_schema')
     counts=obj['counts']
     if not isinstance(counts,dict) or set(counts)!=set(COLORS):raise PlanRejected('four_color_counts_required')
-    if any(type(v) is not int or not 0<=v<=3 for v in counts.values()):raise PlanRejected('integer_count_0_to_3')
+    if any(type(v) is not int or not 0<=v<=max_per_color for v in counts.values()):raise PlanRejected('integer_count_0_to_3')
     total=sum(counts.values())
     if not 1<=total<=8:raise PlanRejected('total_1_to_8')
     first=obj['priority_first'];order=obj['proposed_order']

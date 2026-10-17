@@ -16,7 +16,8 @@ def physical_ready_claim(detail):
     except (ValueError,TypeError,KeyError):return False
 
 class VoiceBatchState:
-    def __init__(self,session_id=None):
+    def __init__(self,session_id=None,retain_capacity=0):
+        self.retain_capacity=retain_capacity
         self.session_id=session_id or uuid.uuid4().hex
         self.state='WAITING_FOR_PLAN';self.plan=None;self.request_id=None;self.hardware_ready=False
         self.issued=[];self.parts={};self.current=None;self.pending_color=None;self.seen_ready=set();self.recycled=set();self.recycle_wall={};self.recycle_sim={};self.events=[];self.fault=None;self.deadline=None
@@ -32,6 +33,7 @@ class VoiceBatchState:
         if confirmed is not True:raise PlanRejected('human_confirmation_required')
         if not isinstance(request_id,str) or not re.fullmatch(r'[0-9a-f]{32}',request_id):raise PlanRejected('local_uuid_required')
         if plan.sha256!=plan_sha256:raise PlanRejected('confirmation_hash_mismatch')
+        if self.retain_capacity and any(n>self.retain_capacity for n in plan.counts):raise PlanRejected('bin_capacity_exceeded')
         self.plan=plan;self.request_id=request_id;self.state='PLAN_PENDING_READINESS';self.deadline=now+60
         self.emit('VOICE_PLAN',request_id=request_id,plan=plan.as_dict(),plan_sha256=plan.sha256)
 
@@ -49,10 +51,11 @@ class VoiceBatchState:
         # Same-bin placement must additionally await actual deletion ACK and a later
         # fresh logical frame with no previous piece; elapsed recycle delay is not proof.
         same=[p for p,r in self.parts.items() if r['color']==color]
-        if any(p not in self.recycled or p in visible_parts or logical_wall<=self.recycle_wall.get(p,float('inf')) for p in same):return None
+        if not self.retain_capacity and any(p not in self.recycled or p in visible_parts or logical_wall<=self.recycle_wall.get(p,float('inf')) for p in same):return None
         # A queued old image received after the delete ACK is not a fresh frame.
         # Runtime ACKs always include sim_time; compare actual source timestamps.
-        if any(p in self.recycle_sim and (logical_sim is None or logical_sim<=self.recycle_sim[p]) for p in same):return None
+        if not self.retain_capacity and any(p in self.recycle_sim and (logical_sim is None or logical_sim<=self.recycle_sim[p]) for p in same):return None
+        if self.retain_capacity and len(same)>=self.retain_capacity:self.halt('retained_bin_full');return None
         self.pending_color=color;self.issued.append(color);self.deadline=now+30
         self.emit('SPAWN_REQUEST',index=len(self.issued),color=color)
         return color
