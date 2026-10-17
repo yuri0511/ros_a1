@@ -1,0 +1,7 @@
+# Review candidate only; do not deploy before READY diagnosis is resolved.
+task_dispatcher:
+  ros__parameters:
+    q_package_dir: codex_rl_v2
+    q_config_path: codex_rl_v2/config/timing.v2.json
+    q_table_path: codex_rl_v2/artifacts/v2/q-v2-general.json
+    q_batch: [2, 2, 2, 2]

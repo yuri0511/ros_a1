@@ -1,0 +1,110 @@
+[
+  {
+    "path": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/metadata.json",
+    "bytes": 2447,
+    "sha256": "920a8ad50a9c650c2f633a3fdc0dfca8751ec2df24586dcbd933331e91700dc2",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/summary.json",
+    "bytes": 4890,
+    "sha256": "af5b91fcbfce356102a6062f1f2e9f02064a2fbc4e957bc2db79361e2b850258",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/instance-1/results.csv",
+    "bytes": 533,
+    "sha256": "d07b7fbb77885a2e3b319410d85a81e7ff40edfd13c31d95ba1de7947e00eb01",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/instance-1/launch.log",
+    "bytes": 612921,
+    "sha256": "0c671c70363ddf68a7e6d739217dc7979e03ce4b5a14f1e9d8f1533ef21657a0",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/instance-1/high-rate.jsonl.gz",
+    "bytes": 72716344,
+    "sha256": "8510d8506a9941f8bc28e51c346197e83ff5ea9663e83d377ab631b4c74b10f9",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/instance-1/native-joints.csv",
+    "bytes": 248159355,
+    "sha256": "6b2cb1a3bf572a3f1fd37f0410f7e1b810f4bea1fbbcf8479a505d7bc3d4104f",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/instance-1/contacts.csv",
+    "bytes": 152359455,
+    "sha256": "a9992fe30f654ad6ebc68f6443d097c36ecf5685a847da8692d97abb2ffaec94",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/instance-1/stats.jsonl",
+    "bytes": 575345,
+    "sha256": "01f6e37cc62048f055007dc4deb7641f87f1a344827c7b8a5c613b59958d0c98",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/control_stability/runs/20261017T031609-gain1-rule-eight/instance-1/launch-environment.json",
+    "bytes": 1530,
+    "sha256": "11590bb3ebcf5cd882a1fa8714593dc95f4b20756f1fc9ff7d93191e2a869952",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight/metadata.json",
+    "bytes": 2690,
+    "sha256": "71d440936b4e683f5b2168ae96746f0fb4eefbb79af1898738e121fc430d05e7",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight/summary.json",
+    "bytes": 5133,
+    "sha256": "eefe2541fe566e0b1555b1744250bc82b829d67bc7d438f56ffc89fe69ae2e0b",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight/instance-1/results.csv",
+    "bytes": 533,
+    "sha256": "037e3c7ab8e71dc6a91b14aa3f1e953e062b16ddd3c6df06c6de1eb066a4895f",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight/instance-1/launch.log",
+    "bytes": 620117,
+    "sha256": "cb6acac20db8b72887152474d93dba8d1508a51ce4ba2fc1f40a651cc2ea8c12",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight/instance-1/high-rate.jsonl.gz",
+    "bytes": 74930124,
+    "sha256": "c55b20a29280717de22f014c4054c410a436bb37d1aa2ae425428ff69cb9e060",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight/instance-1/native-joints.csv",
+    "bytes": 258419513,
+    "sha256": "b220d9d0e900d0cf716ad27db7e6684b41b3fcee3c71196f9d5077109c69baaf",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight/instance-1/contacts.csv",
+    "bytes": 160836253,
+    "sha256": "23586f08dbdd72a28db2dbdb1d1d14d274503e08edbfe2937b250e7602c98f4e",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight/instance-1/stats.jsonl",
+    "bytes": 383244,
+    "sha256": "83c9a47f3062ff82ea8bc8e54e7cfbd0520aba57b089d3be79b10de9b40a0ef0",
+    "upload": "raw retained locally; selected small summaries only"
+  },
+  {
+    "path": "/home/yu/yuri_gazebo_performance/final_delivery_v2/runs/20261017T034152-gain1-q-v2-general-eight/instance-1/launch-environment.json",
+    "bytes": 1695,
+    "sha256": "c81df78c753a7f5913aeb7d2f6712077b06b8c77587403f8e14473c5a2c6a0c2",
+    "upload": "raw retained locally; selected small summaries only"
+  }
+]

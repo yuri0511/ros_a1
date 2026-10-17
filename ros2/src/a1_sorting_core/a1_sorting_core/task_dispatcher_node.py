@@ -74,6 +74,7 @@ false 的 legacy 轮专属,pipeline/dual 零差):
   NO_IK/重试通道读数不失真)。无观测放行(no_camera_pose 重试语义兜底)。
   纯逻辑与计数在 pipeline_logic.DispatchWindowGate(离线可单测)。
 """
+import json
 import threading
 import time
 
@@ -103,6 +104,13 @@ class TaskDispatcherNode(Node):
 
     def __init__(self):
         super().__init__('task_dispatcher')
+        self.declare_parameter('fast_sim_waits', False)
+        self._fast_waits = bool(self.get_parameter('fast_sim_waits').value)
+        self._startup_logical_wall = 0.0
+        self._startup_pusher = None
+        self._startup_rgb_wall = 0.0
+        self._first_feed_t0 = time.monotonic()
+        self._first_feed_logged = False
         self.declare_parameter('auto_start', False)   # 来料后是否自动开始分拣
         self.declare_parameter('dispatch_delay', 1.0)  # 上一件结束后延迟派发(秒)
         # ---- 双臂接力 ----
@@ -269,6 +277,7 @@ class TaskDispatcherNode(Node):
             relay_mode=relay_mode and not parallel_active,
             relay_delay=float(self.get_parameter('relay_delay').value),
             dispatch_delay=float(self.get_parameter('dispatch_delay').value),
+            require_arm_ready=True,
             per_arm_slots=self._per_arm_slots)
         self._next_timer = None   # dispatch_delay 定时器
         self._relay_timer = None  # relay_delay 定时器
@@ -329,6 +338,7 @@ class TaskDispatcherNode(Node):
         self._pub_relay = self.create_publisher(PartInfo, relay_topic, 10)
         self.create_subscription(PartInfo, '/parts/arrival', self._on_arrival, 10)
         self.create_subscription(TaskStatus, '/task/status', self._on_status, 10)
+        self.create_subscription(TaskStatus,'/task/placement_result',self._on_status,10)
         self.create_service(SortTask, '/sort_task', self._on_sort_task)
         if parallel_active:
             mode = (f'双臂并联分色(arm2 专收: {sorted(self._arm2_colors)}'
@@ -363,7 +373,9 @@ class TaskDispatcherNode(Node):
             # 首件请求 + 推板前进。首条命令延迟 belt_first_cmd_delay(墙钟
             # Timer)发布:防止早于 gz 桥/TrackController 订阅就绪被丢
             # (见参数注释);延迟期间无任何来料,门控/计数均不受影响
-            if self._belt_first_cmd_delay > 0.0:
+            if self._fast_waits:
+                self._start_ready_feed()
+            elif self._belt_first_cmd_delay > 0.0:
                 self._destroy_spawn_timer()
                 self._spawn_timer = threading.Timer(
                     self._belt_first_cmd_delay,
@@ -399,6 +411,9 @@ class TaskDispatcherNode(Node):
 
     # ---------------------------------------------------------------- 服务
     def _on_sort_task(self, request, response):
+        if self._halted:
+            response.accepted=False;response.message="ARM_FAULT: controlled full restart required"
+            return response
         with self._lock:
             known = set(self._catalog)
             # 既有按色路由结果作为 default_arm(并联激活且队列为空时
@@ -447,7 +462,29 @@ class TaskDispatcherNode(Node):
         if msg.state == 'ZONE_CLEAR':
             self._on_zone_clear(msg)
             return
-        if msg.state not in TERMINAL_STATES:
+        arm = msg.arm or 'arm1'
+        outcome_event=msg.state in ('PART_PLACED','PART_REJECTED','FAILED')
+        if outcome_event:
+            with self._lock:
+                accepted=self._seq.note_outcome(msg.part_id,arm,'FAILED' if msg.state=='PART_REJECTED' else msg.state)
+                seen_ready=self._seq.has_ready(msg.part_id,arm)
+                if self._seq.is_faulted(arm):self._halted=True
+            if self._halted:
+                self._destroy_spawn_timer();self._destroy_next_timer();self._destroy_relay_timer()
+                stop=Float64();stop.data=0.;self._pub_belt.publish(stop)
+                self.get_logger().error('ARM_OUTCOME_FAULT '+msg.part_id+' '+arm)
+                return
+            if not accepted or not seen_ready:return
+        if msg.state == 'ARM_FAULT':
+            with self._lock:
+                accepted=self._seq.arm_fault(msg.part_id,arm)
+                if accepted:self._halted=True
+            if accepted:
+                self._destroy_spawn_timer(); self._destroy_next_timer(); self._destroy_relay_timer()
+                stop=Float64();stop.data=0.;self._pub_belt.publish(stop)
+                self.get_logger().error('ARM_FAULT_HALT '+msg.part_id+' '+arm+' '+msg.detail)
+            return
+        if msg.state != 'ARM_READY' and not outcome_event:
             return
         # R1-P1 停轮:执行器报告 move_group 会话楔死判死 ⇒ 停派发+停来料
         # (中毒会话内任何后续件都只会产出 -4 假 FAILED,读数失真)
@@ -467,14 +504,15 @@ class TaskDispatcherNode(Node):
         actions = None
         full_terminal = False
         with self._lock:
-            accepted, actions = self._seq.on_terminal(
-                msg.part_id, msg.arm, msg.state)
+            accepted, actions, terminal_state = self._seq.arm_ready(
+                msg.part_id, arm)
             if accepted:
                 arm = msg.arm or 'arm1'   # 空串视为 arm1(兼容旧消息)
                 self._arm_post[arm] = None
+                self.get_logger().info('ARM_SLOT_RELEASE '+json.dumps({'part':msg.part_id,'arm':arm,'slot_arm1':self._seq.slot('arm1'),'slot_arm2':self._seq.slot('arm2'),'zone_arm':self._seq.zone_arm,'trigger':msg.state}))
                 stage = 'arm2 接力' if arm == 'arm2' else 'arm1 分拣'
                 summary = (f'{msg.part_id} {stage}完成'
-                           if msg.state == 'COMPLETED'
+                           if terminal_state == 'COMPLETED'
                            else f'{msg.part_id} {stage}失败({msg.detail})')
                 self.get_logger().info(f'任务终态: {summary},'
                                        f'队列剩余 {self._seq.queue_size} 件')
@@ -536,6 +574,117 @@ class TaskDispatcherNode(Node):
         self._spawn_timer.daemon = True
         self._spawn_timer.start()
 
+    def _start_ready_feed(self):
+        """Wall-bounded readiness; no feed on timeout. Physical/scheduling gates remain."""
+        import subprocess
+        from controller_manager_msgs.srv import ListControllers
+        from ros_gz_interfaces.srv import SpawnEntity
+        from sensor_msgs.msg import Image
+        from moveit_msgs.action import MoveGroup
+        from rclpy.action import ActionClient
+        from rclpy.qos import qos_profile_sensor_data
+        from gz.transport13 import Node as GzNode
+        self._ready_control = self.create_client(ListControllers, '/controller_manager/list_controllers')
+        self._ready_spawn = self.create_client(SpawnEntity, '/world/sorting_cell/create')
+        self._startup_readiness_complete = False
+        def observe_startup_rgb(message):
+            self._startup_rgb_wall = time.monotonic()
+            if self._startup_readiness_complete and self._ready_image is not None:
+                subscription = self._ready_image
+                self._ready_image = None
+                # Destroy our temporary observer inside its own executor callback.
+                # Gazebo, the original vision node and the performance probe remain.
+                self.destroy_subscription(subscription)
+                self.get_logger().info('STARTUP_OBSERVER_RELEASED: temporary RGB readiness subscriber only')
+        self._ready_image = self.create_subscription(
+            Image, '/overhead_camera', observe_startup_rgb,
+            qos_profile_sensor_data)
+        self._ready_gz = GzNode()
+        self._ready_move = ActionClient(self, MoveGroup, '/move_action')
+        def run():
+            deadline = time.monotonic() + 60.0
+            required = {'joint_state_broadcaster', 'joint_trajectory_controller',
+                        'arm2_joint_trajectory_controller', 'gripper_controller',
+                        'arm2_gripper_controller'}
+            active = set(); future = None; last_sim = 0.0; checks = {}
+            query_started = 0.0; response_at = 0.0; next_query = 0.0
+            transport_at = 0.0; next_cli = 0.0; next_diagnostic = 0.0
+            query_timeouts = 0; query_error = ''; transport_error = ''
+            while rclpy.ok() and time.monotonic() < deadline:
+                now = time.monotonic(); sim = self.get_clock().now().nanoseconds / 1e9
+                if future is not None and future.done():
+                    try:
+                        active = {c.name for c in future.result().controller if c.state == 'active'}
+                        response_at = now; query_error = ''
+                    except Exception as exc:
+                        active = set(); query_error = str(exc)
+                    future = None; next_query = now + .5
+                if future is not None and now - query_started >= 2.0:
+                    # One lost RPC must not occupy the whole startup deadline.
+                    self._ready_control.remove_pending_request(future)
+                    future.cancel(); future = None
+                    query_timeouts += 1; next_query = now + .1
+                if future is None and now >= next_query and self._ready_control.service_is_ready():
+                    future = self._ready_control.call_async(ListControllers.Request())
+                    query_started = now
+                try:
+                    _, subscribers = self._ready_gz.topic_info(self._belt_speed_topic)
+                    if subscribers:
+                        transport_at = time.monotonic(); transport_error = ''
+                except Exception as exc:
+                    transport_error = str(exc)
+                if now - transport_at > 3.0 and now >= next_cli:
+                    # Harmonic Python discovery can miss an existing subscriber.
+                    # Independently require a real typed subscriber; never bypass.
+                    remaining = deadline - time.monotonic()
+                    if remaining > .1:
+                        try:
+                            result = subprocess.run(
+                                ['gz', 'topic', '-i', '-t', self._belt_speed_topic],
+                                capture_output=True, text=True,
+                                timeout=min(2.0, remaining), check=False)
+                            subscriber_section = result.stdout.partition('Subscribers [Address, Message Type]:')[2]
+                            if result.returncode == 0 and any(
+                                    'tcp://' in line and 'gz.msgs.Double' in line
+                                    for line in subscriber_section.splitlines()):
+                                transport_at = time.monotonic(); transport_error = ''
+                            else:
+                                transport_error = 'no typed subscriber in CLI discovery'
+                        except (subprocess.TimeoutExpired, OSError) as exc:
+                            transport_error = str(exc)
+                    next_cli = time.monotonic() + 2.0
+                now = time.monotonic()
+                transport_ok = now - transport_at < 3.0
+                checks = {
+                    'world_clock_advances': sim > last_sim > 0.0,
+                    'logical_fresh': now-self._startup_logical_wall < 1.0,
+                    'rgb_fresh': now-self._startup_rgb_wall < 1.0,
+                    'pusher_at_home': self._startup_pusher is not None and self._startup_pusher <= .14,
+                    'spawn_bridge_service': self._ready_spawn.service_is_ready(),
+                    'spawn_subscriber': self._pub_spawn.get_subscription_count() > 0,
+                    'pusher_bridge_subscriber': self._pub_belt.get_subscription_count() > 0,
+                    'pusher_transport_subscriber': transport_ok,
+                    'controllers_active': required.issubset(active) and now-response_at < 3.0,
+                    'move_group_ready': self._ready_move.server_is_ready(),
+                }
+                if all(checks.values()):
+                    self.get_logger().info('STARTUP_READY '+json.dumps({'checks':checks,'active':sorted(active),'wall_wait':now-self._first_feed_t0,'sim':sim}))
+                    self._startup_readiness_complete = True
+                    self._request_spawn_and_start_belt()
+                    return
+                if now >= next_diagnostic:
+                    self.get_logger().info('STARTUP_CHECK '+json.dumps({
+                        'checks': checks, 'active': sorted(active),
+                        'controller_reply_age_s': now-response_at if response_at else None,
+                        'controller_rpc_timeouts': query_timeouts,
+                        'controller_error': query_error, 'transport_error': transport_error}))
+                    next_diagnostic = now + 5.0
+                last_sim = sim
+                time.sleep(.1)
+            self._halted = True
+            self.get_logger().error('STARTUP_READINESS_TIMEOUT: no feed; '+json.dumps(checks))
+        threading.Thread(target=run, daemon=True).start()
+
     def _note_sim(self, stamp):
         """记下状态消息上的仿真秒。没有戳时保持上一次的值。"""
         sim = float(stamp.sec) + float(stamp.nanosec) * 1e-9
@@ -562,6 +711,16 @@ class TaskDispatcherNode(Node):
             self.get_logger().error(describe_q_load(False, str(exc)))
             return
         self._q_package_dir = package_dir
+        from pathlib import Path
+        import hashlib
+        self.get_logger().info('Q_AUDIT_LOAD '+json.dumps({
+            'config_path': config_path, 'table_path': table_path,
+            'config_sha256': self._q_table['config_sha256'],
+            'config_file_sha256': hashlib.sha256(Path(config_path).read_bytes()).hexdigest(),
+            'table_file_sha256': hashlib.sha256(Path(table_path).read_bytes()).hexdigest(),
+            'allow_prefeed_busy_arm': self._q_config['allow_prefeed_busy_arm'],
+            'deployment_ready': self._q_table['deployment_ready'],
+            'overlap_validated': self._q_config['overlap_validated']}))
         self.get_logger().info(describe_q_load(
             True,
             f'{len(self._q_table["q_values"])} 个状态, '
@@ -604,6 +763,21 @@ class TaskDispatcherNode(Node):
         choice, stats = decide_feed(
             self._q_config, self._q_table, remaining, arms, now,
             self._q_package_dir)
+        from dual_arm_rl.model import Model
+        from dual_arm_rl.qtable import state_key
+        audit_config = dict(self._q_config, allow_prefeed_busy_arm=False)
+        audit_model = Model(audit_config, remaining)
+        audit_model.time = now
+        for target, obs in zip(audit_model.arms, arms):
+            target.phase = obs['phase']; target.color = obs['color']
+            target.phase_start = obs['phase_start']
+        if any(a.phase != 'READY' for a in audit_model.arms):
+            audit_model._schedule(1.0, 'ARM_READY', 0)
+        self.get_logger().info('Q_DECISION '+json.dumps({
+            'state_key': state_key(audit_model.state()),
+            'legal_actions': audit_model.legal_actions(), 'sim': now,
+            'choice': choice, 'action': COLOR_INDEX[choice[1]] if choice else 4,
+            'stats': stats, 'remaining': remaining, 'arms': arms}))
         if choice is None:
             return None, 'Q 来料: 这步选择等待,先不推新的一件'
         arm, _color = choice
@@ -656,19 +830,24 @@ class TaskDispatcherNode(Node):
             if self._belt_control:
                 self._destroy_settle_timer()
                 self._belt.start()   # 复位本轮回位/settle,门控关闭
-        request = String()
-        request.data = color
-        self._pub_spawn.publish(request)
-        self.get_logger().info(
-            f'按需来料: 已请求 {spawned}'
-            + ('' if self._demand_unlimited
-               else f'/{self._demand_parts}')
-            + f'({self._spawn_topic} <- {color}{feed_note})')
-        if self._belt_control:
-            cmd = Float64()
-            cmd.data = self._belt_speed
-            self._pub_belt.publish(cmd)
-            self.get_logger().info(f'推板前进: {self._belt_speed} m/s')
+        with self._lock:
+            if self._halted:return
+            request = String()
+            request.data = color
+            if not self._first_feed_logged:
+                self._first_feed_logged = True
+                self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'first_feed','wall':time.monotonic()-self._first_feed_t0,'fast':self._fast_waits,'sim':self.get_clock().now().nanoseconds/1e9}))
+            self._pub_spawn.publish(request)
+            self.get_logger().info(
+                f'按需来料: 已请求 {spawned}'
+                + ('' if self._demand_unlimited
+                   else f'/{self._demand_parts}')
+                + f'({self._spawn_topic} <- {color}{feed_note})')
+            if self._belt_control:
+                cmd = Float64()
+                cmd.data = self._belt_speed
+                self._pub_belt.publish(cmd)
+                self.get_logger().info(f'推板前进: {self._belt_speed} m/s')
 
     # ---------------------------------------------------------------- 推板控制
     def _prime_maybe_start(self, force=False):
@@ -783,6 +962,8 @@ class TaskDispatcherNode(Node):
         等它回到起点附近再发板停;时间戳用消息上的仿真时间做兜底,
         不再用墙钟 2.6 秒。
         """
+        self._startup_logical_wall = time.monotonic()
+        self._startup_pusher = self._pusher_world_x(msg)
         self._cam_cache.update(
             (m.name, m.pose.position.x, m.pose.position.y, m.pose.position.z)
             for m in msg.model)
@@ -849,6 +1030,7 @@ class TaskDispatcherNode(Node):
             self._try_dispatch()
 
     def _schedule(self, actions):
+        if self._halted:return
         """按 RelaySequencer 给出的延迟动作起墙钟 timer(见模块注释)。"""
         for kind, delay in actions:
             if kind == RELAY:
@@ -857,6 +1039,10 @@ class TaskDispatcherNode(Node):
                 self._relay_timer.daemon = True
                 self._relay_timer.start()
             elif kind == DISPATCH:
+                self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'dispatch_delay_path','configured':delay,'fast':self._fast_waits,'per_arm':self._per_arm_slots}))
+                if self._fast_waits and self._per_arm_slots:
+                    self._try_dispatch()  # existing atomic slot/zone/belt/dedup gates
+                    continue
                 if self._next_timer is None:
                     self._next_timer = threading.Timer(delay, self._try_dispatch)
                     self._next_timer.daemon = True
@@ -868,6 +1054,7 @@ class TaskDispatcherNode(Node):
         if self._halted:      # R1-P1 停轮闸(见 halt_on_wedge)
             return
         with self._lock:
+            if self._halted:return
             # L1 方案 a(仅 legacy prime 链激活):串推未完成前挂起派发
             if self._priming:
                 self.get_logger().info('派发挂起: L1 串推链进行中')
@@ -934,22 +1121,24 @@ class TaskDispatcherNode(Node):
                     # 派发副本注入覆盖(不污染缓存:缓存即命令本身时
                     # 已在服务回调写入,这里仅兜底同步)
                     command.target_bin_override = ovr
-        if command is not None:
-            ovr_note = (f' [指定箱 {command.target_bin_override}]'
-                        if getattr(command, 'target_bin_override', '')
-                        else '')
-            if to_arm2:
-                self._pub_relay.publish(command)
-                self.get_logger().info(
-                    f'并联派发: {part_id} (类别 {command.category})'
-                    f' -> arm2{ovr_note}'
-                    + ('，取件区上锁' if self._per_arm_slots else ''))
-            else:
-                self._pub_command.publish(command)
-                self.get_logger().info(
-                    f'派发任务: {part_id} (类别 {command.category})'
-                    f'{ovr_note}'
-                    + ('，取件区上锁' if self._per_arm_slots else ''))
+        with self._lock:
+            if self._halted:return
+            if command is not None:
+                ovr_note = (f' [指定箱 {command.target_bin_override}]'
+                            if getattr(command, 'target_bin_override', '')
+                            else '')
+                if to_arm2:
+                    self._pub_relay.publish(command)
+                    self.get_logger().info(
+                        f'并联派发: {part_id} (类别 {command.category})'
+                        f' -> arm2{ovr_note}'
+                        + ('，取件区上锁' if self._per_arm_slots else ''))
+                else:
+                    self._pub_command.publish(command)
+                    self.get_logger().info(
+                        f'派发任务: {part_id} (类别 {command.category})'
+                        f'{ovr_note}'
+                        + ('，取件区上锁' if self._per_arm_slots else ''))
 
     def _window_recheck(self):
         """停位窗越窗后的复检触发(2s 墙钟;窗口自愈=件被碰回带内,
@@ -960,12 +1149,15 @@ class TaskDispatcherNode(Node):
     def _send_relay(self):
         self._destroy_relay_timer()
         with self._lock:
+            if self._halted:return
             part_id = self._seq.on_relay_ready()
             command = self._catalog[part_id] if part_id is not None else None
-        if command is not None:
-            self._pub_relay.publish(command)
-            self.get_logger().info(
-                f'派发接力任务: {part_id} -> arm2 (类别 {command.category})')
+        with self._lock:
+            if self._halted:return
+            if command is not None:
+                self._pub_relay.publish(command)
+                self.get_logger().info(
+                    f'派发接力任务: {part_id} -> arm2 (类别 {command.category})')
 
     def _destroy_next_timer(self):
         if self._next_timer is not None:

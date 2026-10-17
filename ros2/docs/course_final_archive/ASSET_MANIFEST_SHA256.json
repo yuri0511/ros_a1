@@ -1,0 +1,77 @@
+[
+  {
+    "file": "COURSE_FINAL_DELIVERY_evidence.zip",
+    "bytes": 180652,
+    "sha256": "0bd28211ec56cbe7bb43623264940b48c560740cbc7f5cfc47de892b02b8a02e"
+  },
+  {
+    "file": "baseline-A_evidence.zip",
+    "bytes": 336293,
+    "sha256": "33703e121355a3e1071e8f0577e5114671b69750f83756057310f5c3ecb1027c"
+  },
+  {
+    "file": "control_stability_evidence.zip",
+    "bytes": 252390426,
+    "sha256": "1978a610ed86a7a443ed0fcac8f3d30257e89a9b1512450ccb3c966159853aea"
+  },
+  {
+    "file": "fast_sim_8da998b_evidence.zip",
+    "bytes": 47686850,
+    "sha256": "690ee2864c4e6bcd194cdae861faf57a1af9a0af150ae1b3fd4f3591256467e5"
+  },
+  {
+    "file": "final_delivery_evidence.zip",
+    "bytes": 551033,
+    "sha256": "1d6aa63aa7a99098fe55375f623d17aec0bf1f3a2b2f66f602ddd1be4a38107d"
+  },
+  {
+    "file": "final_delivery_v2_evidence.zip",
+    "bytes": 125317368,
+    "sha256": "3e1c4a14f66d4f4e37fe21a9014f8587eaec6c6e9fc46f8aa00158887e7939bd"
+  },
+  {
+    "file": "initial_performance_evidence.zip",
+    "bytes": 63578,
+    "sha256": "1cf66c6c42641da33772dc8642d1dbd0e20734a01d66d513a6290d4ae0e00a01"
+  },
+  {
+    "file": "integration_72ab6f2_evidence.zip",
+    "bytes": 26977755,
+    "sha256": "00f38ee0c369e95a70bc55ff9a63bbc1816a55c3b9c6ef01cda9392db38de3a3"
+  },
+  {
+    "file": "model_calibration_v2_evidence.zip",
+    "bytes": 417021,
+    "sha256": "b0ad2769340ba4e22708599a8c7c207be31b34fcbc3b375f83ed661cc8e1a7dd"
+  },
+  {
+    "file": "ready_bugfix_evidence.zip",
+    "bytes": 30175030,
+    "sha256": "c99973f1996d4efa301f3d05eda778f9d08bc3cce369cd8d1b7fda972709e91f"
+  },
+  {
+    "file": "runs_evidence.zip",
+    "bytes": 5181636,
+    "sha256": "6339f6cf35319ef4fc0b40dec4d33431cba319c6c12e0108dc6a07412f4d03dc"
+  },
+  {
+    "file": "tools_evidence.zip",
+    "bytes": 30510,
+    "sha256": "4222a46e5f0933e13de60a58da21f193d203fbccc74c1af616bb130c19159bfc"
+  },
+  {
+    "file": "voice_batch_aliyun_evidence.zip",
+    "bytes": 7337735,
+    "sha256": "d5d3de61e70a4d67ff7aa06b2a185af87b721f1c499eafe47f4bc022dd424136"
+  },
+  {
+    "file": "voice_batch_four_evidence.zip",
+    "bytes": 401910481,
+    "sha256": "a3cbca992f97b5ac372a620744e87bd7eae8c67662c464b3c0b19c07dace2d05"
+  },
+  {
+    "file": "yuri_review_evidence.zip",
+    "bytes": 301193,
+    "sha256": "75193e61af2267e0d4ffdfac26d5ac7c83ccb0d470338bc59c1305291ec4e8b5"
+  }
+]

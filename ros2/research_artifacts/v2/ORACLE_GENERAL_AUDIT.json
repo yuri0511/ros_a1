@@ -1,0 +1,202 @@
+[
+  {
+    "seed": 202700,
+    "clairvoyant_min_time": 177.50806303158427,
+    "q_time": 180.53360328598296,
+    "gap": 3.025540254398692,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 177.97357870170597,
+    "general_q_gap": 0.4655156701217038
+  },
+  {
+    "seed": 202701,
+    "clairvoyant_min_time": 164.29485028902388,
+    "q_time": 166.96545471768297,
+    "gap": 2.6706044286590895,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 164.40543013340596,
+    "general_q_gap": 0.11057984438207313
+  },
+  {
+    "seed": 202702,
+    "clairvoyant_min_time": 164.12395851860413,
+    "q_time": 170.57650143957937,
+    "gap": 6.452542920975247,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 164.12395851860413,
+    "general_q_gap": 0.0
+  },
+  {
+    "seed": 202703,
+    "clairvoyant_min_time": 164.7633453993147,
+    "q_time": 168.99175860190343,
+    "gap": 4.22841320258874,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 164.7633453993147,
+    "general_q_gap": 0.0
+  },
+  {
+    "seed": 202704,
+    "clairvoyant_min_time": 151.22199747659153,
+    "q_time": 158.2858345691307,
+    "gap": 7.063837092539188,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 151.2219974765915,
+    "general_q_gap": -2.842170943040401e-14
+  },
+  {
+    "seed": 202705,
+    "clairvoyant_min_time": 153.5184171245214,
+    "q_time": 156.8509623077199,
+    "gap": 3.332545183198505,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 153.54267793608216,
+    "general_q_gap": 0.024260811560765205
+  },
+  {
+    "seed": 202706,
+    "clairvoyant_min_time": 152.18148722520075,
+    "q_time": 156.19829458893417,
+    "gap": 4.01680736373342,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 152.18148722520078,
+    "general_q_gap": 2.842170943040401e-14
+  },
+  {
+    "seed": 202707,
+    "clairvoyant_min_time": 186.4532928573415,
+    "q_time": 193.21296942078732,
+    "gap": 6.759676563445822,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 187.35960794070877,
+    "general_q_gap": 0.9063150833672751
+  },
+  {
+    "seed": 202708,
+    "clairvoyant_min_time": 173.67621894420725,
+    "q_time": 177.87826887850872,
+    "gap": 4.202049934301471,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 174.45279719739744,
+    "general_q_gap": 0.7765782531901948
+  },
+  {
+    "seed": 202709,
+    "clairvoyant_min_time": 163.67650145024714,
+    "q_time": 166.7267750962218,
+    "gap": 3.0502736459746416,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 164.1667505119448,
+    "general_q_gap": 0.4902490616976536
+  },
+  {
+    "seed": 202710,
+    "clairvoyant_min_time": 176.0965395608431,
+    "q_time": 179.80182144349143,
+    "gap": 3.705281882648336,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 176.09653956084304,
+    "general_q_gap": -5.684341886080802e-14
+  },
+  {
+    "seed": 202711,
+    "clairvoyant_min_time": 176.75189077590295,
+    "q_time": 179.83041302860335,
+    "gap": 3.0785222527003953,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 177.05433258132797,
+    "general_q_gap": 0.3024418054250191
+  },
+  {
+    "seed": 202712,
+    "clairvoyant_min_time": 164.12710831368423,
+    "q_time": 167.82677319349477,
+    "gap": 3.699664879810541,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 164.4013015123835,
+    "general_q_gap": 0.2741931986992654
+  },
+  {
+    "seed": 202713,
+    "clairvoyant_min_time": 163.38464584442247,
+    "q_time": 167.83547115890667,
+    "gap": 4.450825314484206,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 163.58243793569414,
+    "general_q_gap": 0.19779209127167974
+  },
+  {
+    "seed": 202714,
+    "clairvoyant_min_time": 151.83185830907445,
+    "q_time": 156.53161685489624,
+    "gap": 4.699758545821794,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 151.83185830907442,
+    "general_q_gap": -2.842170943040401e-14
+  },
+  {
+    "seed": 202715,
+    "clairvoyant_min_time": 175.00210133577653,
+    "q_time": 181.76177789922238,
+    "gap": 6.759676563445851,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 175.90841641914383,
+    "general_q_gap": 0.9063150833673035
+  },
+  {
+    "seed": 202716,
+    "clairvoyant_min_time": 164.4205558451817,
+    "q_time": 168.61752950806263,
+    "gap": 4.196973662880936,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 164.4205558451817,
+    "general_q_gap": 0.0
+  },
+  {
+    "seed": 202717,
+    "clairvoyant_min_time": 164.6242837315254,
+    "q_time": 168.18702471384725,
+    "gap": 3.5627409823218557,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 164.69779869419725,
+    "general_q_gap": 0.07351496267185098
+  },
+  {
+    "seed": 202718,
+    "clairvoyant_min_time": 163.92211845235653,
+    "q_time": 167.8392819137004,
+    "gap": 3.9171634613438755,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 163.92211845235659,
+    "general_q_gap": 5.684341886080802e-14
+  },
+  {
+    "seed": 202719,
+    "clairvoyant_min_time": 162.7390044867597,
+    "q_time": 166.9410544210612,
+    "gap": 4.202049934301499,
+    "nodes": 292,
+    "wait_edges": 212,
+    "general_q_time": 163.0238909597174,
+    "general_q_gap": 0.2848864729576803
+  }
+]

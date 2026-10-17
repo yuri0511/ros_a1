@@ -1,0 +1,5 @@
+# 动态批次API阶段边界
+
+已实现云候选结构：schema_version=1/action=sort_batch/counts四非负整数/priority_first/proposed_order。每色0..3，总数1..8，顺序库存完全一致，首色必须存在并匹配；request_id不允许云输出。validate_candidate只返回不可变BatchPlan；audit_utterance是有限显式语法交叉核验，不能纠正ASR或替代真实LLM。
+
+ROS SubmitBatchPlan服务、voice_batch_mode及动态回执尚待阶段3实现。计划已校验不等于用户已确认；用户已授权付费API也不等于已批准Gazebo执行。当前所有CLI不导入ROS、不调用/sort_task、不创建工件或发推板指令。

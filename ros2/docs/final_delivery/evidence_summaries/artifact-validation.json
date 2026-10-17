@@ -1,0 +1,17 @@
+{
+  "read_only": true,
+  "no_gazebo": true,
+  "no_training": true,
+  "schema": 2,
+  "package": "/home/yu/yuri_gazebo_performance/final_delivery/worktree/ros2/codex_rl_v2",
+  "config_sha256": "ce65cec200920de7f3116ddedffcee900aba21b8d07af405bc84359017c1ca0b",
+  "all_165_batches_complete_and_legal": 165,
+  "unknown_fallbacks": 4,
+  "model_decisions": 1822,
+  "future_hidden_and_eta_and_wait_tests": true,
+  "initial_adapter_choice_not_forced": [
+    "arm2",
+    "red"
+  ],
+  "deployment_ready": false
+}

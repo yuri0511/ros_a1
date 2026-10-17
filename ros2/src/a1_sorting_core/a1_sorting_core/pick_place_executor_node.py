@@ -24,9 +24,11 @@
   attach(现状)。verified_only 下即使 pose_from_camera=false 也订阅
   逻辑相机(无条件缓存采样)。
 """
+import json
 import math
 import threading
 import time
+from a1_sorting_core.physical_ready import PhysicalReadyMonitor, publisher_identity
 
 import rclpy
 from geometry_msgs.msg import PoseStamped
@@ -78,6 +80,11 @@ class _FollowSampler:
         self._thread = None
         self._gripper: list[tuple[float, float]] = []
         self._part: list[tuple[float, float]] = []
+        self._sample_times = []
+        self._source_stamps = []
+        self._source_fn = lambda: None
+        self._source_fresh = lambda: True
+        self._condition = threading.Condition()
 
     def start(self):
         self._thread = threading.Thread(target=self._run, daemon=True)
@@ -88,9 +95,27 @@ class _FollowSampler:
             g = self._grip_fn()
             p = self._part_fn()
             if g is not None and p is not None:
-                self._gripper.append((float(g[0]), float(g[1])))
-                self._part.append((float(p[0]), float(p[1])))
+                with self._condition:
+                    self._gripper.append((float(g[0]), float(g[1])))
+                    self._part.append((float(p[0]), float(p[1])))
+                    self._sample_times.append(time.monotonic())
+                    self._source_stamps.append(self._source_fn())
+                    self._condition.notify_all()
             self._stop.wait(self._period)
+
+    def wait_evidence(self, span, verifier):
+        """Never shorten an unsuccessful/undersampled probe; retain original wall cap."""
+        deadline = time.monotonic() + span
+        with self._condition:
+            while True:
+                count = len(self._sample_times)
+                elapsed = self._sample_times[-1]-self._sample_times[0] if count>1 else 0.
+                distinct = len({x for x in self._source_stamps if x is not None})
+                enough = count >= math.ceil(span/self._period)+1 and elapsed >= span and distinct >= max(2, math.ceil(span*10))
+                if enough and self._source_fresh() and verifier(self._gripper,self._part)[0]:return True
+                remaining = deadline-time.monotonic()
+                if remaining <= 0:return False
+                self._condition.wait(remaining)
 
     def stop(self) -> tuple[list, list]:
         """停止采样并返回两路序列(重复调用返回同一结果)。"""
@@ -239,6 +264,10 @@ class PickPlaceExecutorNode(Node):
         self.declare_parameter('attach_rate_hz', 40.0)
         self.declare_parameter('verify_gripper_move', 0.03)  # GraspVerifier 阈值
         self.declare_parameter('verify_follow_move', 0.02)
+        self.declare_parameter('fast_sim_waits', False)
+        self._fast_waits = bool(self.get_parameter('fast_sim_waits').value)
+        self._part_source_stamps = {}
+        self._part_source_walls = {}
         self.declare_parameter('verify_sample_span', 0.5)  # 抬升后追加采样秒数
         # 水平验证探针(组长仲裁方案 B):verified_only 抬升完成后、verify
         # 前往返 LIN 平移该偏移(+x 去/回),给验证器一个夹爪水平位移窗
@@ -496,6 +525,13 @@ class PickPlaceExecutorNode(Node):
                               else _place_anchor)
         self._joint_names = [str(v) for v in gp('joint_names')]
         self._at_standby = False
+        self._arm_fault = None
+        self._command_ids = set()
+        self._command_lock = threading.Lock()
+        self._ready_monitor = PhysicalReadyMonitor()
+        self._placement_ack={}
+        self._placement_event=threading.Event()
+        self.create_subscription(TaskStatus,'/task/placement_result',self._on_placement_result,10)
         self._steps = max(1, int(gp('descend_steps')))
         self._vel_scale = float(gp('vel_scale'))
         self._acc_scale = float(gp('acc_scale'))
@@ -601,7 +637,15 @@ class PickPlaceExecutorNode(Node):
             f' 注入失败工件 {self._inject or "无"}')
 
     # ================================================================ 命令入口
-    def _on_joint_state(self, msg: JointState):
+    def _on_joint_state(self, msg: JointState, info):
+        try:
+            source=publisher_identity(info,self.get_publishers_info_by_topic('/joint_states'))
+        except ValueError as e:
+            self._ready_monitor.invalidate(str(e))
+            self._arm_fault='joint_publisher_ambiguous'
+            return
+        self._ready_monitor.observe(list(msg.name),list(msg.position),list(msg.velocity),
+            msg.header.stamp.sec+msg.header.stamp.nanosec*1e-9,time.monotonic(),source=source)
         self._js_wall = time.time()
         self._store_joint_states(msg)
         if not self._grip_key_checked:
@@ -669,6 +713,11 @@ class PickPlaceExecutorNode(Node):
 
     def _on_logical(self, msg: LogicalCameraImage):
         """逻辑相机观测 -> 真值 xy 缓存(只缓存 part_ 开头的模型名)。"""
+        stamp = msg.header.stamp.sec + msg.header.stamp.nanosec*1e-9
+        for model in msg.model:
+            if model.name.startswith('part_'):
+                self._part_source_stamps[model.name] = stamp
+                self._part_source_walls[model.name] = time.monotonic()
         self._cam_cache.update(
             (m.name, m.pose.position.x, m.pose.position.y, m.pose.position.z)
             for m in msg.model)
@@ -696,79 +745,108 @@ class PickPlaceExecutorNode(Node):
         self.get_logger().info(f'[标定] {bin_name} 放置关节角: {vals}')
 
     def _on_command(self, msg: PartInfo):
-        if self._busy:
-            self._pending.append(msg)
-            self.get_logger().info(
-                f'排队命令: 正在执行任务, {msg.part_id} 等待({len(self._pending)} 待处理)')
-            return
-        self._busy = True
-        threading.Thread(target=self._run_task, args=(msg,), daemon=True).start()
+        with self._command_lock:
+            if self._arm_fault:
+                self.get_logger().error('COMMAND_REJECTED_ARM_FAULT '+msg.part_id)
+                return
+            if msg.part_id in self._command_ids:
+                self.get_logger().warn('DUPLICATE_COMMAND_IGNORED '+msg.part_id)
+                return
+            self._command_ids.add(msg.part_id)
+            if self._busy:
+                self._pending.append(msg)
+                return
+            self._busy=True
+        threading.Thread(target=self._run_task,args=(msg,),daemon=True).start()
 
     # ================================================================ 任务主流程
+    def _emit_arm_event(self, part, state, detail):
+        msg=TaskStatus();msg.header.stamp=self.get_clock().now().to_msg()
+        msg.task_id=getattr(self,'_active_task_id','') or f'task_{self._seq:04d}'
+        msg.part_id=part.part_id;msg.arm=self._arm_name
+        msg.state=state;msg.detail=detail;self._pub_status.publish(msg)
+        self.get_logger().info('ARM_EVENT '+json.dumps({'part':part.part_id,'arm':self._arm_name,'state':state,'detail':detail}))
+
+    def _current_ready_evidence(self):
+        result=getattr(self._motion,'last_controller_result',None) or {}
+        return self._ready_monitor.evaluate(self._joint_names,self._standby_joints,
+            self.get_clock().now().nanoseconds*1e-9,time.monotonic(),
+            controller_ok=bool(result.get('success')),
+            no_active_goal=not getattr(self._motion,'_own_goal_inflight',True) and getattr(self._motion,'_own_controller_active',1)==0)
+
+    def _wait_physical_ready(self, timeout=8.):
+        self._ready_monitor.begin(time.monotonic());deadline=time.monotonic()+timeout;last={};next_log=0
+        while time.monotonic()<deadline:
+            last=self._current_ready_evidence()
+            if time.monotonic()>=next_log or last['ready']:
+                self.get_logger().info('READY_CHECK '+json.dumps(last));next_log=time.monotonic()+.2
+            if last['ready']:return True
+            time.sleep(.02)
+        self._arm_fault='physical_ready_timeout:'+last.get('reason','unknown')
+        return False
+
+    def _on_placement_result(self,msg):
+        if (msg.arm==self._arm_name and msg.state in ('PART_PLACED','PART_REJECTED')):
+            self._placement_ack[(msg.part_id,msg.task_id)]=msg.state
+            self._placement_event.set()
+
+    def _await_placement_result(self,part,timeout=4.):
+        if self._terminal_status is None or self._terminal_status[2]!=TaskState.COMPLETED:return True
+        key=(part.part_id,self._active_task_id);deadline=time.monotonic()+timeout
+        while time.monotonic()<deadline:
+            if key in self._placement_ack:
+                if self._placement_ack[key]=='PART_PLACED':return True
+                self._arm_fault='placement_rejected_requires_inspection';return False
+            self._placement_event.wait(.05);self._placement_event.clear()
+        self._arm_fault='placement_result_unconfirmed';return False
+
     def _run_task(self, part: PartInfo):
-        self._zone_published = False
+        self._zone_published=False
         try:
             self._run_task_impl(part)
-        except Exception as e:   # noqa: BLE001 R1-P2(2026-10-04)
-            # 终态发布保证:任务线程任何未捕获异常(含 _init_motion 的
-            # RuntimeError 等)都必须落 FAILED 终态,否则调度器永等、
-            # _busy 恒 True,整条流水线黑洞(forensics H1 定位:
-            # 原 finally 里 return_standby 先于 flush,且 impl 异常时
-            # _terminal_status 从未置位)。此处兜底,不掩盖 GraspError
-            # (那已在 impl 内部落 FAILED)
+        except Exception as e:
             self.get_logger().error(f'{part.part_id} 执行器异常: {e!r}')
             if self._terminal_status is None:
-                self._terminal_status = (
-                    f'task_{self._seq:04d}', part, TaskState.FAILED,
-                    f'executor_error({e})')
+                self._terminal_status=(getattr(self,'_active_task_id',''),part,TaskState.FAILED,f'executor_error({e})')
+                self._emit_arm_event(part,'FAILED',f'executor_error({e})')
         finally:
-            # 收尾:尽力回到待机位(失败不影响本件结果,只为下一件任务
-            # 提供固定起点,使所有大转移都走 standby<->工作区的确定路径)
-            self._try_return_standby()
-            # 失败路径:没有走过 carry_clear。回到待命成功才算离开取件区。
-            # FAILED 本身不放锁。已经在 carry_clear 放过的不再发。
-            if self._at_standby:
-                self._publish_zone_clear(part, 'return_standby')
-            # 终态在回待机运动结束之后才发布:双臂共用一个 move_group 的
-            # 轨迹执行器,"另一轨迹执行中"时新轨迹会被整体拒绝
-            # (CONTROL_FAILED);提前报 COMPLETED 会让调度器在收尾轨迹
-            # 还在跑时就派发下一棒,两臂请求重叠会卡死轨迹执行管理器
+            ready=False
+            if self._terminal_status is not None and self._terminal_status[2]==TaskState.FAILED:
+                self._arm_fault=self._arm_fault or 'task_failed_requires_inspection'
             try:
-                self._flush_terminal_status()
-            except Exception as e:   # noqa: BLE001 R1-P2:flush 自身异常
-                self.get_logger().error(f'终态发布异常: {e!r}')
-                self._terminal_status = None
-            if self._pending:
-                nxt = self._pending.pop(0)
-                self.get_logger().info(f'继续排队任务: {nxt.part_id}')
-                threading.Thread(target=self._run_task, args=(nxt,),
-                                 daemon=True).start()
-            else:
-                self._busy = False   # 无排队任务,允许接收新命令
+                if not self._arm_fault:ready=self._try_return_standby()
+            except Exception as e:
+                self._arm_fault=f'return_exception:{e!r}'
+            if ready and not self._await_placement_result(part):ready=False
+            if ready:
+                fresh=self._current_ready_evidence()
+                if not fresh['ready']:
+                    self._arm_fault='ready_changed_before_publication:'+fresh['reason'];ready=False
+            if not ready:
+                self._at_standby=False
+                self._arm_fault=self._arm_fault or 'return_standby_failed'
+                self._emit_arm_event(part,'ARM_FAULT',self._arm_fault)
+                # No terminal flush, new motion, pending command or slot release.
+                return
+            self._publish_zone_clear(part,'verified_return_standby')
+            self._flush_terminal_status()  # Legacy result compatibility only.
+            self._emit_arm_event(part,'ARM_READY',json.dumps({'evidence':fresh,
+                'controller_result':getattr(getattr(self,'_motion',None),'last_controller_result',None),
+                'no_active_goal':not getattr(getattr(self,'_motion',None),'_own_goal_inflight',True) and getattr(getattr(self,'_motion',None),'_own_controller_active',1)==0}))
+            with self._command_lock:
+                nxt=self._pending.pop(0) if self._pending else None
+                if nxt is None:self._busy=False
+            if nxt is not None:threading.Thread(target=self._run_task,args=(nxt,),daemon=True).start()
 
     def _try_return_standby(self):
-        # 关节空间目标:直接命令回标定构型,不依赖 IK(位姿目标在个别
-        # 分支上会无解)。motion 未初始化(_init_motion 失败/未执行)时
-        # 无可回归,只告警——不能让 None 异常炸掉 finally 的终态发布
-        if self._motion is None:
-            self.get_logger().warn('motion 未初始化,跳过返回待机位')
-            self._at_standby = False
-            return
-        # R1-P1:会话判死后收尾也不发目标(每个都 -4,纯拖时间)
-        if (self._wedge_detect
-                and getattr(self._motion, 'session_dead', False)):
-            self.get_logger().warn('会话已判死,跳过返回待机位')
-            self._at_standby = False
-            return
-        try:
-            if not self._motion.move_to_joints(
-                    self._joint_names, self._standby_joints,
-                    'return_standby'):
-                raise GraspError('return_standby_failed')
-            self._at_standby = True
-        except GraspError as e:
-            self.get_logger().warn(f'返回待机位失败({e}),下一件任务将原地出发')
-            self._at_standby = False
+        self._at_standby=False
+        if self._motion is None or getattr(self._motion,'session_dead',False):
+            self._arm_fault='motion_unavailable_or_session_dead';return False
+        if not self._motion.move_to_joints(self._joint_names,self._standby_joints,
+                'return_standby',settle_check=False):
+            self._arm_fault='return_standby_action_failed';return False
+        self._at_standby=self._wait_physical_ready()
+        return self._at_standby
 
     def _run_task_impl(self, part: PartInfo):
         self._seq += 1
@@ -792,8 +870,12 @@ class PickPlaceExecutorNode(Node):
                 self._plan_execute(
                     self._down_pose(self._standby, self._standby[2]), 'standby')
             except GraspError as e:
-                self.get_logger().warn(f'待机位运动失败({e}),继续任务')
-            self._at_standby = True
+                self._arm_fault=f'initial_standby_failed:{e}'
+                raise FatalGraspError(self._arm_fault) from e
+            if not self._wait_physical_ready():
+                raise FatalGraspError(self._arm_fault)
+            self._at_standby=True
+        self._at_standby=False  # Ready is not a sticky flag during motion.
         for attempt in range(1, self._attempts + 1):
             attached_joint = None
             if attempt > 1:
@@ -913,7 +995,13 @@ class PickPlaceExecutorNode(Node):
                         self._confirm_clamped('锁紧段')
                         self._lift(center, center[2] + self._tcp_z)
                         self._verify_probe(center)
-                        time.sleep(self._verify_sample_span)
+                        t_wait = time.monotonic(); sim_wait = self.get_clock().now().nanoseconds/1e9
+                        evidence = False
+                        if self._fast_waits:
+                            evidence = sampler.wait_evidence(self._verify_sample_span, self._verifier.verify)
+                        else:
+                            time.sleep(self._verify_sample_span)
+                        self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'grasp_extra','wall':time.monotonic()-t_wait,'sim_start':sim_wait,'sim_end':self.get_clock().now().nanoseconds/1e9,'fast':self._fast_waits,'evidence':evidence,'pairs':len(sampler._gripper),'sample_wall_span':sampler._sample_times[-1]-sampler._sample_times[0] if len(sampler._sample_times)>1 else 0.,'distinct_source_frames':len(set(sampler._source_stamps))}))
                     finally:
                         gripper_xy, part_xy = sampler.stop()
                     ok, reason = self._verify_follow(gripper_xy, part_xy)
@@ -963,6 +1051,7 @@ class PickPlaceExecutorNode(Node):
                 # ---------------- CARRYING ----------------
                 self._set_state(sm, task_id, part, TaskState.CARRYING, '')
                 place = self._place_pose(target)
+                self.get_logger().info('POSE_TARGET '+json.dumps({'part':part.part_id,'task':task_id,'bin':target,'xyz':list(place)}))
                 # 落入模式下松爪高度(clearance)可能高于抬升高度(lift_h):
                 # above 取二者较大值,保证 carry_descend 不低于松爪点
                 above = (place[0], place[1],
@@ -1140,7 +1229,9 @@ class PickPlaceExecutorNode(Node):
                     # 仅 4mm 且随 0N 内收收窄)→ 保持小开抬臂出箱 →
                     # **箱沿之上**才全开(见 settle_rise 之后)。
                     self._open_to_release_gap()
-                    time.sleep(0.4)
+                    t_wait = time.monotonic()
+                    time.sleep(0.4)  # retained: gap alone does not prove settled release
+                    self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'release_settle','wall':time.monotonic()-t_wait,'fast':self._fast_waits}))
                     # 原路抬升回同格高位 anchor(逆向下探的已验证路径),
                     # 再走既有 return_standby。抬升失败不否定本件结果:
                     # 工件已释放到位,失败只影响下一件起始构型(收尾的
@@ -1173,7 +1264,9 @@ class PickPlaceExecutorNode(Node):
                     # 稳定误差超位姿闸 2.5cm 反而 60s 挂。终案 = 直接
                     # return_standby 关节 PTP(FK 实测全程工件底 ≥0.830,
                     # 高于壁顶 0.815)。
+                    t_wait = time.monotonic()
                     time.sleep(1.5)
+                    self.get_logger().info('WAIT_METRIC '+json.dumps({'label':'drop_return_branch','wall':time.monotonic()-t_wait,'fast':self._fast_waits}))
                     # 全开补齐:保证下一件取件前指在开限位(状态确定性)
                     self._grip(close=False)
                 if self._place_drop_clearance <= 0.0:
@@ -1235,6 +1328,7 @@ class PickPlaceExecutorNode(Node):
         if state in (TaskState.COMPLETED, TaskState.FAILED):
             # 终态暂存,待回待机运动结束后统一发布(见 _run_task 注释)
             self._terminal_status = (task_id, part, state, detail)
+            self._emit_arm_event(part,'PLACEMENT_FINISHED' if state==TaskState.COMPLETED else 'FAILED',detail)
             self.get_logger().info(
                 f'{task_id} {part.part_id}: {state.value} {detail}'
                 f'(待收尾后上报)')
@@ -1298,7 +1392,8 @@ class PickPlaceExecutorNode(Node):
                 wedge_detect=self._wedge_detect,
                 tool_settle_fix=self._tool_settle_fix,
                 split_plan_execute=self._split_plan_execute,
-                controller_action=self._controller_action)
+                controller_action=self._controller_action,
+                fast_sim_waits=self._fast_waits)
         except Exception as e:   # noqa: BLE001 R1-P2(2026-10-04)
             # 构造失败保持 _motion=None 并转为可重试 GraspError:
             # 原样上抛 RuntimeError 会在 _run_task 的兜底层落 FAILED,
@@ -1790,6 +1885,8 @@ class PickPlaceExecutorNode(Node):
         sampler = _FollowSampler(
             gripper_xy_fn=self._gripper_world_xy,
             part_xy_fn=lambda: self._cam_cache.get(part_id))
+        sampler._source_fn = lambda: self._part_source_stamps.get(part_id)
+        sampler._source_fresh = lambda: (time.monotonic()-self._part_source_walls.get(part_id,0.) < .5 and abs(self.get_clock().now().nanoseconds/1e9-self._part_source_stamps.get(part_id,-100.)) < .2)
         sampler.start()
         return sampler
 

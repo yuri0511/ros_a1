@@ -1,0 +1,9 @@
+time,part_id,category,target_bin,final_bin,result,arm,phase
+03:42:32,part_1,red,bin_red,bin_red,PLACED,arm2,relay
+03:42:50,part_2,blue,bin_blue,bin_blue,PLACED,arm1,sort
+03:43:10,part_3,green,bin_green,bin_green,PLACED,arm2,relay
+03:43:28,part_4,yellow,bin_yellow,bin_yellow,PLACED,arm1,sort
+03:43:48,part_5,red,bin_red,bin_red,PLACED,arm2,relay
+03:44:07,part_6,blue,bin_blue,bin_blue,PLACED,arm1,sort
+03:44:26,part_7,green,bin_green,bin_green,PLACED,arm2,relay
+03:44:44,part_8,yellow,bin_yellow,bin_yellow,PLACED,arm1,sort
