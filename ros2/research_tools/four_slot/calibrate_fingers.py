@@ -17,11 +17,12 @@ from a1_sorting_core.four_slot_feedback import ReleaseEvidence
 from a1_sorting_core.physical_ready import publisher_identity
 from a1_sorting_core.four_slot_grip_control import opening_efforts
 from geometry import ROBOT,fk,origin
+from lock_window import LockWindow
 import numpy as np
 import xml.etree.ElementTree as ET
 
 def main():
- run=Path(sys.argv[1]);rclpy.init();n=rclpy.create_node('isolated_finger_calibration');last=None;monitor=None;holds=[];grasp_active=False;support_context=[None];consumer_samples=[];clock=[None,None]
+ run=Path(sys.argv[1]);rclpy.init();n=rclpy.create_node('isolated_finger_calibration');last=None;monitor=None;holds=[];grasp_active=False;support_context=[None];consumer_samples=[];clock=[None,None];lock_window=[None]
  out=(run/'finger-response.jsonl').open('w',buffering=1)
  def emit(**d):out.write(json.dumps(dict(wall=time.time(),**d))+'\n')
  def fault(reason):
@@ -35,6 +36,8 @@ def main():
   consumer_samples.append(dict(stamp=stamp,receipt=time.monotonic(),clock=clock[0],q=dict(zip(m.name,m.position))))
   try:
    source=publisher_identity(info,n.get_publishers_info_by_topic('/joint_states'))
+   active_window=lock_window[0]
+   if active_window is not None:active_window.observe(m.name,m.position,stamp,source)
    for mon in ([monitor] if monitor else [])+[h[2] for h in holds]:
     previous=mon.last
     mon.observe(m.name,m.position,stamp,time.monotonic(),source)
@@ -164,14 +167,15 @@ def main():
     send(pub,lock_force);end=time.monotonic()+.6
     while time.monotonic()<end:step()
     grasp_active=True
-    stable=[];seen=None;deadline=time.monotonic()+2
+    lock_window[0]=LockWindow(names);deadline=time.monotonic()+2
     while time.monotonic()<deadline:
-     step();jm,_,stamp=last
-     if stamp==seen:continue
-     seen=stamp;values=dict(zip(jm.name,jm.position));stable.append((stamp,[values[n] for n in names]))
-     stable=[s for s in stable if stamp-s[0]<=.12]
-     if len(stable)>=50 and stamp-stable[0][0]>=.1 and all(max(s[1][i] for s in stable)-min(s[1][i] for s in stable)<.002 for i in (0,1)):break
-    else:raise RuntimeError('locked_fingers_not_settled')
+     step();passed,stable,window_fault=lock_window[0].snapshot()
+     if window_fault:raise RuntimeError(window_fault)
+     if passed:break
+    else:
+     emit(phase='locked_finger_stability_timeout',samples=stable)
+     raise RuntimeError('locked_fingers_not_settled')
+    lock_window[0]=None
     emit(phase='locked_finger_stability_pass',samples=stable)
     lift_cycle()
     grasp_active=False

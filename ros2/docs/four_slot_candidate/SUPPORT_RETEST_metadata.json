@@ -1,0 +1,46 @@
+{
+  "stage": "C",
+  "scope": "isolated_calibration",
+  "fingers": true,
+  "arm_probe": true,
+  "fixture": true,
+  "release_fixture": true,
+  "lift_fixture": true,
+  "gate2": "BLOCKED",
+  "task_authorized": false,
+  "reference_task_only": false,
+  "command": [
+    "ros2",
+    "launch",
+    "a1_cell_sim",
+    "cell_bringup.launch.py",
+    "dual:=true",
+    "spawn_mode:=service",
+    "gazebo_gui:=false",
+    "gpu_offload:=false",
+    "world_file:=four_slot_1ms.sdf",
+    "controllers_file:=ur5e_cell_controllers_stability_gain1.yaml",
+    "fast_sim_waits:=true"
+  ],
+  "environment": {
+    "ROS_DOMAIN_ID": "95",
+    "GZ_PARTITION": "C-20261017T111639-43f307",
+    "DISPLAY": ":0",
+    "LP_NUM_THREADS": "2",
+    "LIBGL_ALWAYS_SOFTWARE": "1"
+  },
+  "sha256": {
+    "research_tools/four_slot/support_contact.py": "0227ff522da10ab180cb90feeec37d0291f72f0c0f43cc0dfa3a5b1a73720192",
+    "research_tools/four_slot/live_support_cycle.py": "148a96db53d06a7827e80ceeafd57cd7fd035502c6aef88114f62fe55adbb26c",
+    "research_tools/voice_four/support_evidence.py": "dea8ed5e77d2633a862a22838c3fff8e59960ec76a83a77c215bbf6168472280",
+    "research_tools/four_slot/arm_probe.py": "ed14c6d75d3d0dcf84b06be6df19eeedd4beff118022b1b83471de9ec98bca6b",
+    "src/a1_sorting_core/a1_sorting_core/four_slot_grip_control.py": "aaee5e58281359973ed5b965ea763b4c28585d6492304d2ef83eeea802edfe4a",
+    "research_tools/four_slot/calibrate_fingers.py": "8930541dfd2e8a857a6a2b61761f8b9a9b176c9bdbecddc5881cb52779e219b6",
+    "research_tools/four_slot/geometry.py": "0223adc054140bcd1d0f93d9cd28f16de80ca3638303f9842398fcc94a2f2ecf",
+    "src/a1_cell_sim/worlds/four_slot_1ms.sdf": "0127cc278100a0eb8019f05a17cb7bf09fe60c8e238e7098a5968d696c7a2bdf",
+    "src/a1_cell_sim/config/ur5e_cell_controllers_stability_gain1.yaml": "c96a32325ac2d66b958cb4c75ac82b794e1fe64802e25394c717436121b9a5b9",
+    "research_tools/four_slot/calibrate_idle.py": "93e7b546c78aaa7b0dbcb8d5a2159a762e1c730c8e05f0da79c1c93daad3a49f",
+    "research_tools/voice_four/observe_four.py": "57bc2095357ca748b2591aaaef5d43e544bf613a110cd8519f7fe8bbd821cae3"
+  },
+  "commit": "bc0c4cde4ab79c901e0ee1a29d61684cc205fe58"
+}

@@ -1,0 +1,12 @@
+{
+  "type": "offline_replay_only",
+  "first_passing_window": {
+    "samples": 50,
+    "span_sim": 0.10700000000000287,
+    "wall": 1792207031.3017514
+  },
+  "final_pass": true,
+  "final_fault": null,
+  "source_identity": "replay label, not live publisher attestation",
+  "runtime_commit": "bc0c4cde4ab79c901e0ee1a29d61684cc205fe58"
+}

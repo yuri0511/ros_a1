@@ -1,0 +1,54 @@
+{
+  "outcome": "guard_fault",
+  "observer_exit": 0,
+  "scene_exit": 0,
+  "stop": [
+    {
+      "attempt": 89244837182865,
+      "evidence": "89244837182865-pause.log",
+      "step": "pause_world",
+      "start_wall": 1792207033.23002,
+      "command": [
+        "gz",
+        "service",
+        "-s",
+        "/world/sorting_cell/control",
+        "--reqtype",
+        "gz.msgs.WorldControl",
+        "--reptype",
+        "gz.msgs.Boolean",
+        "--timeout",
+        "2000",
+        "--req",
+        "pause: true"
+      ],
+      "timeout_s": 4,
+      "returncode": 0,
+      "acknowledged": true,
+      "end_wall": 1792207033.5947523,
+      "duration_monotonic_s": 0.3647472520096926
+    },
+    {
+      "attempt": 89244837182865,
+      "evidence": "89244837182865-stop-service.log",
+      "step": "halt_new_feed",
+      "start_wall": 1792207033.594815,
+      "command": [
+        "ros2",
+        "service",
+        "call",
+        "/voice_batch/stop",
+        "std_srvs/srv/Trigger",
+        "{}"
+      ],
+      "timeout_s": 3,
+      "error": "Command '['ros2', 'service', 'call', '/voice_batch/stop', 'std_srvs/srv/Trigger', '{}']' timed out after 3 seconds",
+      "acknowledged": false,
+      "end_wall": 1792207036.601724,
+      "duration_monotonic_s": 3.0069181729923002
+    }
+  ],
+  "task_sent": false,
+  "arm_goals_enabled": true,
+  "gate2": "BLOCKED"
+}

@@ -1,0 +1,141 @@
+{
+  "runtime_commit": "bc0c4cde4ab79c901e0ee1a29d61684cc205fe58",
+  "fault": {
+    "kind": "finger_calibration",
+    "reason": "locked_fingers_not_settled",
+    "wall": 1792207033.2011728
+  },
+  "lock_wall": 1792207030.5971591,
+  "analysis_wall_window": [
+    1792207031.197159,
+    1792207033.2011728
+  ],
+  "raw_joint_messages": 899,
+  "unique_joint_stamps": 885,
+  "replay_passing_windows": 677,
+  "first_passing_window": {
+    "samples": 50,
+    "span": 0.10700000000000287,
+    "q_ranges_m": [
+      3.921188579392165e-08,
+      6.467592762108947e-08
+    ],
+    "first_sim": 28.621,
+    "last_sim": 28.728
+  },
+  "last_passing_window": {
+    "samples": 56,
+    "span": 0.1180000000000021,
+    "q_ranges_m": [
+      9.115610279412587e-10,
+      9.115630902022109e-10
+    ],
+    "first_sim": 30.54,
+    "last_sim": 30.658
+  },
+  "contact_pairs": [
+    {
+      "pair": "calibration_red4::link::collision | tabletop::link::floor_red",
+      "count": 18851,
+      "max_depth_m": 5.7999999999863716e-05
+    },
+    {
+      "pair": "calibration_red4::link::collision | ur::arm2_gripper_finger_right_link::arm2_gripper_finger_right_link_fixed_joint_lump__arm2_gripper_finger_right_collision_collision",
+      "count": 23000,
+      "max_depth_m": 5.355671579955999e-05
+    },
+    {
+      "pair": "calibration_red4::link::collision | ur::arm2_gripper_finger_left_link::arm2_gripper_finger_left_link_fixed_joint_lump__arm2_gripper_finger_left_collision_collision",
+      "count": 22984,
+      "max_depth_m": 6.0963313137494916e-05
+    }
+  ],
+  "arm_actions": [
+    {
+      "stage": "carry",
+      "action": {
+        "status": 4,
+        "result": {
+          "error_code": 0,
+          "error_string": "Goal successfully reached!"
+        }
+      }
+    },
+    {
+      "stage": "top",
+      "action": {
+        "status": 4,
+        "result": {
+          "error_code": 0,
+          "error_string": "Goal successfully reached!"
+        }
+      }
+    },
+    {
+      "stage": "bottom",
+      "action": {
+        "status": 4,
+        "result": {
+          "error_code": 0,
+          "error_string": "Goal successfully reached!"
+        }
+      }
+    }
+  ],
+  "held_cycle_started": false,
+  "support_attestation": false,
+  "shutdown": {
+    "outcome": "guard_fault",
+    "observer_exit": 0,
+    "scene_exit": 0,
+    "stop": [
+      {
+        "attempt": 89244837182865,
+        "evidence": "89244837182865-pause.log",
+        "step": "pause_world",
+        "start_wall": 1792207033.23002,
+        "command": [
+          "gz",
+          "service",
+          "-s",
+          "/world/sorting_cell/control",
+          "--reqtype",
+          "gz.msgs.WorldControl",
+          "--reptype",
+          "gz.msgs.Boolean",
+          "--timeout",
+          "2000",
+          "--req",
+          "pause: true"
+        ],
+        "timeout_s": 4,
+        "returncode": 0,
+        "acknowledged": true,
+        "end_wall": 1792207033.5947523,
+        "duration_monotonic_s": 0.3647472520096926
+      },
+      {
+        "attempt": 89244837182865,
+        "evidence": "89244837182865-stop-service.log",
+        "step": "halt_new_feed",
+        "start_wall": 1792207033.594815,
+        "command": [
+          "ros2",
+          "service",
+          "call",
+          "/voice_batch/stop",
+          "std_srvs/srv/Trigger",
+          "{}"
+        ],
+        "timeout_s": 3,
+        "error": "Command '['ros2', 'service', 'call', '/voice_batch/stop', 'std_srvs/srv/Trigger', '{}']' timed out after 3 seconds",
+        "acknowledged": false,
+        "end_wall": 1792207036.601724,
+        "duration_monotonic_s": 3.0069181729923002
+      }
+    ],
+    "task_sent": false,
+    "arm_goals_enabled": true,
+    "gate2": "BLOCKED"
+  }
+}
